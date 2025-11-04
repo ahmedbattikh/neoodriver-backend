@@ -1,0 +1,49 @@
+version: "3"
+volumes:
+  volume_database_project:
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: project_mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+      MYSQL_ROOT_PASSWORD:
+      MYSQL_DATABASE: project
+      MYSQL_USER: project
+      MYSQL_PASSWORD: project
+    volumes:
+      - volume_database_project:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: project_phpmyadmin
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - "81:80"
+
+  web:
+    build: ./.docker
+    container_name: project_web
+    volumes:
+      - ./:/var/www/html
+      - ./.docker/virtualhost.conf:/etc/apache2/sites-available/000-default.conf
+      - ./.docker/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - mysql
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: project_mailhog
+    ports:
+      - "1025:1025" # smtp server
+      - "8025:8025" # web ui
