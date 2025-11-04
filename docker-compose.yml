@@ -30,7 +30,9 @@ services:
       - "81:80"
 
   web:
-    build: ./.docker
+    build:
+      context: .
+      dockerfile: ./.docker/Dockerfile
     container_name: project_web
     volumes:
       - ./:/var/www/html

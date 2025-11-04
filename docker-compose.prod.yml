@@ -1,0 +1,23 @@
+version: "3"
+services:
+  web:
+    image: ghcr.io/ahmedbattikh/neoodriver-backend:${TAG}
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: '0'
+    env_file:
+      - .env.prod
+    # In production, do not mount source or dev configs
+    volumes: []
+    depends_on:
+      - mysql
+
+  # Disable dev-only services by assigning them to the 'dev' profile
+  phpmyadmin:
+    profiles:
+      - dev
+
+  mailhog:
+    profiles:
+      - dev

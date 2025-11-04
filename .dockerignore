@@ -1,0 +1,11 @@
+/.git
+/.idea
+/.vscode
+/.phpunit.cache
+/.env*
+/var/
+/vendor/
+/node_modules/
+docker-compose.*
+docker-compose.yml
+docker-compose.xdebug.yml
