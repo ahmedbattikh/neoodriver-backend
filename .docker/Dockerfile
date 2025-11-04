@@ -3,6 +3,8 @@ FROM php:8.4-apache
 # Build-time configuration
 ARG APP_ENV=prod
 ARG ENABLE_XDEBUG=0
+ENV APP_ENV=$APP_ENV
+ENV APP_DEBUG=0
 
 # Set the working directory inside the container
 WORKDIR /var/www/html
@@ -58,8 +60,7 @@ RUN echo "umask 0000" >> /root/.bashrc
 
 # Install dependencies (optimize for production) and warm cache when APP_ENV=prod
 RUN if [ "$APP_ENV" = "prod" ]; then \
-    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader && \
-    php bin/console cache:warmup; \
+    COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader; \
   else \
     COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --no-interaction; \
   fi

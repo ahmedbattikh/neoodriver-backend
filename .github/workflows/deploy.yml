@@ -41,6 +41,15 @@ jobs:
     needs: build-and-push
     environment: production
     steps:
+      - name: Upload compose files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "docker-compose.yml,docker-compose.prod.yml"
+          target: "~/apps/neoodriver-backend"
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -52,6 +61,8 @@ jobs:
           command_timeout: 30m
           script: |
             set -eu
+            mkdir -p ~/apps/neoodriver-backend
+            cd ~/apps/neoodriver-backend
             docker login ghcr.io -u "${{ secrets.GHCR_READ_USER }}" -p "${{ secrets.GHCR_READ_TOKEN }}"
             export IMAGE_NAME="ghcr.io/ahmedbattikh/neoodriver-backend"
             export TAG="${{ github.ref_name }}"
@@ -64,6 +75,6 @@ jobs:
 
             # Optional: migrations and cache clear
             docker compose exec -T web php bin/console doctrine:migrations:migrate --no-interaction
-            docker compose exec -T web php bin/console cache:clear --no-warmup
+            docker compose exec -T web php bin/console cache:warmup
 
             docker image prune -f
