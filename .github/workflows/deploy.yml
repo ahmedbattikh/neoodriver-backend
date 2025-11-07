@@ -109,6 +109,12 @@ jobs:
             # Use only the production compose to avoid dev mounts
             docker compose -f docker-compose.prod.yml up -d --remove-orphans web mysql
 
+            # Run certbot to get the certificate
+            docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path=/var/www/html -d server.neoodriver.com --email admin@neoodriver.com --agree-tos --no-eff-email --force-renewal
+
+            # Restart the web server to apply the new certificate
+            docker compose -f docker-compose.prod.yml restart web
+
             # Optional: migrations and cache clear
             docker compose exec -T web php bin/console doctrine:migrations:migrate --no-interaction
             docker compose exec -T web php bin/console cache:warmup

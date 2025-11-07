@@ -48,7 +48,7 @@ services:
     volumes:
       - certbot-web:/var/www/html/.well-known/acme-challenge
       - certbot-certs:/etc/letsencrypt
-    command: certonly --webroot --webroot-path=/var/www/html -d server.neoodriver.com --email admin@neoodriver.com --agree-tos --no-eff-email --force-renewal
+    command: ["echo", "skipping certbot command"]
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
