@@ -65,20 +65,13 @@ jobs:
           else
             echo "DEPLOY_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
-      - name: Prepare SSH key
-        shell: bash
-        run: |
-          set -eu
-          mkdir -p "${{ github.workspace }}/.ssh"
-          # Write SSH private key from secret to a file in the workspace
-          printf "%s" "${{ secrets.SSH_KEY }}" > "${{ github.workspace }}/.ssh/deploy_key"
-          chmod 600 "${{ github.workspace }}/.ssh/deploy_key"
       - name: Upload compose files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key_path: ./.ssh/deploy_key
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
           source: "docker-compose.prod.yml,.env.prod.example"
           target: "~/apps/neoodriver-backend"
@@ -87,7 +80,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key_path: ./.ssh/deploy_key
+          key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
           script_stop: true
