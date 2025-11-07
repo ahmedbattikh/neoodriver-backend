@@ -34,7 +34,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   # Disable dev-only services by assigning them to the 'dev' profile
   phpmyadmin:

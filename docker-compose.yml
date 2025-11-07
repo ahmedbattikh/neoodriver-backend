@@ -44,7 +44,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   mailhog:
     image: mailhog/mailhog
