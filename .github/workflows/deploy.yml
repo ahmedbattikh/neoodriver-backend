@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to build/deploy (e.g., v1.0.3 or latest)'
+        required: false
+        default: 'latest'
 
 permissions:
   contents: read
@@ -22,6 +28,13 @@ jobs:
       - name: Login to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Set IMAGE_TAG
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "IMAGE_TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
 
       - name: Build image
         run: |
@@ -29,12 +42,12 @@ jobs:
             -f .docker/Dockerfile \
             --build-arg APP_ENV=prod \
             --build-arg ENABLE_XDEBUG=0 \
-            -t $IMAGE_NAME:${{ github.ref_name }} \
+            -t $IMAGE_NAME:$IMAGE_TAG \
             .
 
       - name: Push image
         run: |
-          docker push $IMAGE_NAME:${{ github.ref_name }}
+          docker push $IMAGE_NAME:$IMAGE_TAG
 
   deploy:
     runs-on: ubuntu-latest
@@ -45,6 +58,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+      - name: Set DEPLOY_TAG
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "DEPLOY_TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
       - name: Prepare SSH key
         shell: bash
         run: |
@@ -68,6 +88,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key_path: ./.ssh/deploy_key
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
           script_stop: true
           command_timeout: 30m
@@ -75,9 +96,14 @@ jobs:
             set -eu
             mkdir -p ~/apps/neoodriver-backend
             cd ~/apps/neoodriver-backend
-            docker login ghcr.io -u "${{ secrets.GHCR_READ_USER }}" -p "${{ secrets.GHCR_READ_TOKEN }}"
+            # Login to GHCR only if read credentials are provided (public images can skip)
+            if [ -n "${{ secrets.GHCR_READ_USER }}" ] && [ -n "${{ secrets.GHCR_READ_TOKEN }}" ]; then
+              docker login ghcr.io -u "${{ secrets.GHCR_READ_USER }}" -p "${{ secrets.GHCR_READ_TOKEN }}"
+            else
+              echo "GHCR_READ_USER/TOKEN not set; skipping docker login. Ensure package is public or set secrets."
+            fi
             export IMAGE_NAME="ghcr.io/ahmedbattikh/neoodriver-backend"
-            export TAG="${{ github.ref_name }}"
+            export TAG="$DEPLOY_TAG"
 
             # Pull the new version
             docker pull "$IMAGE_NAME:$TAG"
