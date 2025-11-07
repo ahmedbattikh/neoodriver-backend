@@ -2,7 +2,19 @@ volumes:
   volume_database_project:
 
 services:
-
+  mysql:
+    image: mysql:8.0
+    container_name: project_mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_ROOT_PASSWORD:
+      MYSQL_DATABASE: project
+      MYSQL_USER: project
+      MYSQL_PASSWORD: project
+    volumes:
+      - volume_database_project:/var/lib/mysql
+    ports:
+      - "3306:3306"
 
   web:
     image: ghcr.io/ahmedbattikh/neoodriver-backend:${TAG}
@@ -10,14 +22,15 @@ services:
     restart: unless-stopped
     environment:
       APP_ENV: prod
-      APP_DEBUG: '0'
+      APP_DEBUG: "0"
     env_file:
       - .env.prod.example
     # In production, do not mount source or dev configs
     volumes: []
     ports:
       - "80:80"
-
+    depends_on:
+      - mysql
 
   # Disable dev-only services by assigning them to the 'dev' profile
   phpmyadmin:
