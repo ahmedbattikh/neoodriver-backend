@@ -103,13 +103,33 @@ jobs:
             # Pull the new version
             docker pull "$IMAGE_NAME:$TAG"
 
-            # Bring down services and remove volumes
-            docker compose -f docker-compose.prod.yml down --volumes
+            # Stop existing services, but keep persistent volumes
+            docker compose -f docker-compose.prod.yml down
 
-            # Use only the production compose to avoid dev mounts
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans web mysql
+            # Create dummy certificate for first-time startup if needed
+            docker run --rm --name dummy-cert-creator \
+              -v neoodriver-backend_certbot-certs:/etc/letsencrypt \
+              certbot/certbot:latest \
+              sh -c "if [ ! -d '/etc/letsencrypt/live/server.neoodriver.com' ]; then \
+                echo '### Creating dummy certificate for initial startup ...'; \
+                mkdir -p /etc/letsencrypt/live/server.neoodriver.com; \
+                openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+                  -keyout '/etc/letsencrypt/live/server.neoodriver.com/privkey.pem' \
+                  -out '/etc/letsencrypt/live/server.neoodriver.com/fullchain.pem' \
+                  -subj '/CN=localhost'; \
+                fi"
 
-            # Run certbot to get the certificate
+            # Start all services
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Wait and check for web server readiness
+            echo "Waiting for web server to start..."
+            sleep 5
+            echo "Checking local web server connectivity..."
+            curl -I http://localhost/
+
+            # Now, obtain the real certificate from Let's Encrypt
+            # This will replace the dummy certs
             docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path=/var/www/html -d server.neoodriver.com --email admin@neoodriver.com --agree-tos --no-eff-email --force-renewal
 
             # Restart the web server to apply the new certificate
