@@ -75,12 +75,7 @@ jobs:
             set -eu
             mkdir -p ~/apps/neoodriver-backend
             cd ~/apps/neoodriver-backend
-            # Login to GHCR only if secrets are provided
-            if [ -n "${{ secrets.GHCR_READ_USER }}" ] && [ -n "${{ secrets.GHCR_READ_TOKEN }}" ]; then
-              docker login ghcr.io -u "${{ secrets.GHCR_READ_USER }}" -p "${{ secrets.GHCR_READ_TOKEN }}"
-            else
-              echo "GHCR_READ_USER/TOKEN not set; skipping docker login. Ensure package is public or set secrets."
-            fi
+            docker login ghcr.io -u "${{ secrets.GHCR_READ_USER }}" -p "${{ secrets.GHCR_READ_TOKEN }}"
             export IMAGE_NAME="ghcr.io/ahmedbattikh/neoodriver-backend"
             export TAG="${{ github.ref_name }}"
 
