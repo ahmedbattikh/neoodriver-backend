@@ -60,7 +60,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key_path: ~/.ssh/deploy_key
           port: ${{ secrets.SSH_PORT }}
-          source: "docker-compose.yml,docker-compose.prod.yml"
+          source: "docker-compose.prod.yml,.env.prod.example"
           target: "~/apps/neoodriver-backend"
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.0.0
@@ -82,8 +82,8 @@ jobs:
             # Pull the new version
             docker pull "$IMAGE_NAME:$TAG"
 
-            # Bring up only the web and mysql services with prod override
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans web mysql
+            # Use only the production compose to avoid dev mounts
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans web mysql
 
             # Optional: migrations and cache clear
             docker compose exec -T web php bin/console doctrine:migrations:migrate --no-interaction
