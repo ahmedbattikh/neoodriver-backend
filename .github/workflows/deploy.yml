@@ -103,6 +103,9 @@ jobs:
             # Pull the new version
             docker pull "$IMAGE_NAME:$TAG"
 
+            # Bring down services and remove volumes
+            docker compose -f docker-compose.prod.yml down --volumes
+
             # Use only the production compose to avoid dev mounts
             docker compose -f docker-compose.prod.yml up -d --remove-orphans web mysql
 
