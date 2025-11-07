@@ -86,6 +86,7 @@ jobs:
           script_stop: true
           command_timeout: 30m
           script: |
+            export DEPLOY_TAG=${{ env.DEPLOY_TAG }}
             set -eu
             mkdir -p ~/apps/neoodriver-backend
             cd ~/apps/neoodriver-backend
