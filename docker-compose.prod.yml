@@ -1,5 +1,7 @@
 volumes:
   volume_database_project:
+  certbot-web:
+  certbot-certs:
 
 services:
   mysql:
@@ -30,12 +32,23 @@ services:
     env_file:
       - .env.prod.example
     # In production, do not mount source or dev configs
-    volumes: []
+    volumes:
+      - certbot-web:/var/www/html/.well-known/acme-challenge
+      - certbot-certs:/etc/letsencrypt
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       mysql:
         condition: service_healthy
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-web:/var/www/html/.well-known/acme-challenge
+      - certbot-certs:/etc/letsencrypt
+    command: certonly --webroot --webroot-path=/var/www/html -d server.neoodriver.com --email admin@neoodriver.com --agree-tos --no-eff-email --force-renewal
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin

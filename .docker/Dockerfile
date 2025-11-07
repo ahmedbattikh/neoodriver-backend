@@ -50,6 +50,7 @@ COPY .docker/pma.conf /etc/apache2/sites-available/pma.conf
 RUN a2ensite pma.conf
 RUN a2enmod proxy
 RUN a2enmod proxy_http
+RUN a2enmod ssl
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Setup crontab
