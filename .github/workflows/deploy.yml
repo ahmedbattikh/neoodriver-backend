@@ -39,6 +39,7 @@ jobs:
       - name: Build image
         run: |
           docker build \
+            --no-cache \
             -f .docker/Dockerfile \
             --build-arg APP_ENV=prod \
             --build-arg ENABLE_XDEBUG=0 \
