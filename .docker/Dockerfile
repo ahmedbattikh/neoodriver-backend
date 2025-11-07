@@ -45,6 +45,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy application source and configs
 COPY . /var/www/html
 COPY .docker/virtualhost.conf /etc/apache2/sites-available/000-default.conf
+COPY .docker/pma.conf /etc/apache2/sites-available/pma.conf
+
+RUN a2ensite pma.conf
+RUN a2enmod proxy
+RUN a2enmod proxy_http
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Setup crontab
