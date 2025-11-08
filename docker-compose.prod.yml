@@ -1,9 +1,19 @@
 volumes:
   volume_database_project:
-  certbot-web:
-  certbot-certs:
 
 services:
+  app:
+    image: ${IMAGE_NAME}:${TAG}
+    container_name: project_app
+    restart: unless-stopped
+    env_file:
+      - .env.prod.example
+    ports:
+      - "127.0.0.1:9000:9000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   mysql:
     image: mysql:8.0
     container_name: project_mysql

@@ -9,10 +9,9 @@ ENV APP_DEBUG=0
 # Set the working directory inside the container
 WORKDIR /var/www/html
 
-# Install system dependencies
+# Install system dependencies (without nginx; managed on VPS)
 RUN apt-get update \
     && apt-get install -y \
-        nginx \
         libicu-dev \
         libpq-dev \
         libzip-dev \
@@ -45,7 +44,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 # Copy application source and configs
 COPY . /var/www/html
-COPY .docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Setup crontab
@@ -65,6 +63,9 @@ RUN if [ "$APP_ENV" = "prod" ]; then \
   else \
     COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --no-interaction; \
   fi
+
+# Expose php-fpm port for reverse proxy on VPS
+EXPOSE 9000
 
 # Start Supervisor, which will run cron -f by default.
 CMD ["/usr/bin/supervisord"]
