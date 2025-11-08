@@ -66,8 +66,12 @@ jobs:
           else
             echo "DEPLOY_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
+      - name: Check initial permissions
+        run: ls -l .docker/nginx.conf
       - name: Fix nginx.conf permissions
         run: chmod 644 .docker/nginx.conf
+      - name: Check final permissions
+        run: ls -l .docker/nginx.conf
       - name: Upload compose files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
