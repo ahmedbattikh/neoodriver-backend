@@ -138,6 +138,10 @@ jobs:
 
             # Restart services
             docker compose -f docker-compose.prod.yml down
+            
+            # Create dummy certificate
+            docker compose -f docker-compose.prod.yml run --rm certbot /bin/sh -c "mkdir -p /etc/letsencrypt/live/server.neoodriver.com && openssl req -x509 -nodes -newkey rsa:4096 -days 1 -keyout /etc/letsencrypt/live/server.neoodriver.com/privkey.pem -out /etc/letsencrypt/live/server.neoodriver.com/fullchain.pem -subj '/CN=localhost'"
+
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
             echo "Waiting for service to be ready..."
