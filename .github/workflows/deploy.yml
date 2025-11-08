@@ -19,42 +19,8 @@ env:
   IMAGE_NAME: ghcr.io/ahmedbattikh/neoodriver-backend
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Login to GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Set IMAGE_TAG
-        run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "IMAGE_TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_ENV
-          else
-            echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
-          fi
-
-      - name: Build image
-        run: |
-          docker build \
-            --no-cache \
-            -f .docker/Dockerfile \
-            --build-arg APP_ENV=prod \
-            --build-arg ENABLE_XDEBUG=0 \
-            -t $IMAGE_NAME:$IMAGE_TAG \
-            .
-
-      - name: Push image
-        run: |
-          docker push $IMAGE_NAME:$IMAGE_TAG
-
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-push
     environment: production
 
     steps:
@@ -102,7 +68,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
-          source: "docker-compose.prod.yml,.env.prod.example,.docker/nginx.conf"
+          source: "docker-compose.prod.yml,.env.prod.example"
           target: "~/apps/neoodriver-backend"
           overwrite: true
 
@@ -138,29 +104,7 @@ jobs:
 
             # Restart services
             docker compose -f docker-compose.prod.yml down
-            
-            # Create dummy certificate
-            docker compose -f docker-compose.prod.yml run --rm certbot /bin/sh -c "mkdir -p /etc/letsencrypt/live/server.neoodriver.com && openssl req -x509 -nodes -newkey rsa:4096 -days 1 -keyout /etc/letsencrypt/live/server.neoodriver.com/privkey.pem -out /etc/letsencrypt/live/server.neoodriver.com/fullchain.pem -subj '/CN=localhost'"
-
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
-
-            echo "Waiting for service to be ready..."
-            sleep 5
-            curl -I http://localhost/ || true
-
-            # Request Let's Encrypt cert
-            docker compose -f docker-compose.prod.yml run --rm certbot certonly \
-              --webroot --webroot-path=/var/www/html \
-              -d server.neoodriver.com \
-              --email admin@neoodriver.com \
-              --agree-tos --no-eff-email --force-renewal
-
-            # Restart nginx/web
-            docker compose -f docker-compose.prod.yml restart web
-
-            # Run Symfony migrations & cache warmup
-            docker compose exec -T web php bin/console doctrine:migrations:migrate --no-interaction
-            docker compose exec -T web php bin/console cache:warmup
 
             # Cleanup old docker images
             docker image prune -f

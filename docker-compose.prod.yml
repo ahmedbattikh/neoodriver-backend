@@ -22,35 +22,6 @@ services:
     ports:
       - "3306:3306"
 
-  web:
-    image: ghcr.io/ahmedbattikh/neoodriver-backend:${TAG}
-    container_name: project_web
-    restart: unless-stopped
-    environment:
-      APP_ENV: prod
-      APP_DEBUG: "0"
-    env_file:
-      - .env.prod.example
-    # In production, do not mount source or dev configs
-    volumes:
-      - ./.docker/nginx.conf:/etc/nginx/conf.d/default.conf
-      - certbot-certs:/etc/letsencrypt
-      - certbot-web:/var/www/html
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      mysql:
-        condition: service_healthy
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-certs:/etc/letsencrypt
-      - certbot-web:/var/www/html
-    command: ["echo", "skipping certbot command"]
-
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: project_phpmyadmin
