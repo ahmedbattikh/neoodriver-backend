@@ -1,4 +1,4 @@
-FROM php:8.4-apache
+FROM php:8.4-fpm
 
 # Build-time configuration
 ARG APP_ENV=prod
@@ -12,6 +12,7 @@ WORKDIR /var/www/html
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y \
+        nginx \
         libicu-dev \
         libpq-dev \
         libzip-dev \
@@ -44,13 +45,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 # Copy application source and configs
 COPY . /var/www/html
-COPY .docker/virtualhost.conf /etc/apache2/sites-available/000-default.conf
-COPY .docker/pma.conf /etc/apache2/sites-available/pma.conf
-
-RUN a2ensite pma.conf
-RUN a2enmod proxy
-RUN a2enmod proxy_http
-RUN a2enmod ssl
+COPY .docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Setup crontab

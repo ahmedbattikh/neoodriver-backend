@@ -74,7 +74,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
-          source: "docker-compose.prod.yml,.env.prod.example"
+          source: "docker-compose.prod.yml,.env.prod.example,.docker/nginx.conf"
           target: "~/apps/neoodriver-backend"
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.0.0
@@ -105,19 +105,6 @@ jobs:
 
             # Stop existing services, but keep persistent volumes
             docker compose -f docker-compose.prod.yml down
-
-            # Create dummy certificate for first-time startup if needed
-            docker run --rm --name dummy-cert-creator \
-              -v neoodriver-backend_certbot-certs:/etc/letsencrypt \
-              certbot/certbot:latest \
-              sh -c "if [ ! -d '/etc/letsencrypt/live/server.neoodriver.com' ]; then \
-                echo '### Creating dummy certificate for initial startup ...'; \
-                mkdir -p /etc/letsencrypt/live/server.neoodriver.com; \
-                openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-                  -keyout '/etc/letsencrypt/live/server.neoodriver.com/privkey.pem' \
-                  -out '/etc/letsencrypt/live/server.neoodriver.com/fullchain.pem' \
-                  -subj '/CN=localhost'; \
-                fi"
 
             # Start all services
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
