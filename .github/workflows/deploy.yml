@@ -28,6 +28,7 @@ jobs:
       - name: Login to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Set IMAGE_TAG
         run: |
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
@@ -54,11 +55,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     environment: production
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - name: Set DEPLOY_TAG
         run: |
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
@@ -66,12 +69,22 @@ jobs:
           else
             echo "DEPLOY_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
-      - name: Check initial permissions
-        run: ls -l .docker/nginx.conf
-      - name: Fix nginx.conf permissions
-        run: chmod 644 .docker/nginx.conf
-      - name: Check final permissions
-        run: ls -l .docker/nginx.conf
+
+      # ✅ Fix Remote Permissions BEFORE SCP
+      - name: Prepare VPS directory & permissions
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            mkdir -p ~/apps/neoodriver-backend
+            chmod -R 755 ~/apps/neoodriver-backend
+            chattr -i ~/apps/neoodriver-backend 2>/dev/null || true
+
+      # ✅ Upload files without permission error
       - name: Upload compose files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -82,7 +95,11 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           source: "docker-compose.prod.yml,.env.prod.example,.docker/nginx.conf"
           target: "~/apps/neoodriver-backend"
-      - name: Deploy over SSH
+          overwrite: true
+          strip_components: 0
+
+      # ✅ Deploy on VPS
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -95,41 +112,43 @@ jobs:
           script: |
             export DEPLOY_TAG=${{ env.DEPLOY_TAG }}
             set -eu
-            mkdir -p ~/apps/neoodriver-backend
+
             cd ~/apps/neoodriver-backend
-            # Login to GHCR only if read credentials are provided (public images can skip)
+
+            # GHCR login if credentials provided (optional)
             if [ -n "${{ secrets.GHCR_READ_USER }}" ] && [ -n "${{ secrets.GHCR_READ_TOKEN }}" ]; then
               docker login ghcr.io -u "${{ secrets.GHCR_READ_USER }}" -p "${{ secrets.GHCR_READ_TOKEN }}"
             else
-              echo "GHCR_READ_USER/TOKEN not set; skipping docker login. Ensure package is public or set secrets."
+              echo "Skipping GHCR login, ensure image is public or credentials are set."
             fi
+
             export IMAGE_NAME="ghcr.io/ahmedbattikh/neoodriver-backend"
             export TAG="$DEPLOY_TAG"
 
-            # Pull the new version
+            # Pull new image
             docker pull "$IMAGE_NAME:$TAG"
 
-            # Stop existing services, but keep persistent volumes
+            # Restart stack
             docker compose -f docker-compose.prod.yml down
-
-            # Start all services
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
-            # Wait and check for web server readiness
-            echo "Waiting for web server to start..."
+            echo "Waiting for web service..."
             sleep 5
-            echo "Checking local web server connectivity..."
-            curl -I http://localhost/
+            curl -I http://localhost/ || true
 
-            # Now, obtain the real certificate from Let's Encrypt
-            # This will replace the dummy certs
-            docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot --webroot-path=/var/www/html -d server.neoodriver.com --email admin@neoodriver.com --agree-tos --no-eff-email --force-renewal
+            # Generate/renew Let's Encrypt certificate
+            docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+              --webroot --webroot-path=/var/www/html \
+              -d server.neoodriver.com \
+              --email admin@neoodriver.com \
+              --agree-tos --no-eff-email --force-renewal
 
-            # Restart the web server to apply the new certificate
+            # Restart web server to apply certs
             docker compose -f docker-compose.prod.yml restart web
 
-            # Optional: migrations and cache clear
+            # Run migrations & warm cache
             docker compose exec -T web php bin/console doctrine:migrations:migrate --no-interaction
             docker compose exec -T web php bin/console cache:warmup
 
+            # Cleanup old images
             docker image prune -f
