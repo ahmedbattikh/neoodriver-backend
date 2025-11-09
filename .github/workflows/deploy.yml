@@ -57,20 +57,21 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -eu
-            cat > ~/apps/neoodriver-backend/.env <<'EOF'
-APP_ENV=prod
-APP_DEBUG=0
-APP_SECRET=${{ secrets.APP_SECRET }}
-SERVER_NAME=${{ secrets.SERVER_NAME }}
-CADDY_MERCURE_JWT_SECRET=${{ secrets.CADDY_MERCURE_JWT_SECRET }}
-
-# MySQL
-MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-MYSQL_USER=${{ secrets.MYSQL_USER }}
-MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-MYSQL_VERSION=8.0
-MYSQL_CHARSET=utf8mb4
-EOF
+            ENV_PATH=~/apps/neoodriver-backend/.env
+            {
+              echo "APP_ENV=prod"
+              echo "APP_DEBUG=0"
+              echo "APP_SECRET=${{ secrets.APP_SECRET }}"
+              echo "SERVER_NAME=${{ secrets.SERVER_NAME }}"
+              echo "CADDY_MERCURE_JWT_SECRET=${{ secrets.CADDY_MERCURE_JWT_SECRET }}"
+              echo ""
+              echo "# MySQL"
+              echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}"
+              echo "MYSQL_USER=${{ secrets.MYSQL_USER }}"
+              echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}"
+              echo "MYSQL_VERSION=8.0"
+              echo "MYSQL_CHARSET=utf8mb4"
+            } > "$ENV_PATH"
 
       - name: Build and run services on VPS
         uses: appleboy/ssh-action@v1.0.0
