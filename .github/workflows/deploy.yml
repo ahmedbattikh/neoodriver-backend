@@ -66,7 +66,7 @@ jobs:
               echo "DEFAULT_URI=https://${{ secrets.SERVER_NAME }}"
               echo "COMPOSE_PROJECT_NAME=neoodriver-backend"
               # Prevent redirect loops: container serves plain HTTP; Nginx handles TLS
-              echo "CADDY_GLOBAL_OPTIONS=auto_https off"
+              echo "CADDY_GLOBAL_OPTIONS=\"auto_https off\""
               echo ""
               echo "# MySQL"
               echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}"
