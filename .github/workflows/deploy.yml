@@ -64,6 +64,7 @@ jobs:
               echo "APP_SECRET=${{ secrets.APP_SECRET }}"
               echo "SERVER_NAME=${{ secrets.SERVER_NAME }}"
               echo "DEFAULT_URI=https://${{ secrets.SERVER_NAME }}"
+              echo "COMPOSE_PROJECT_NAME=neoodriver-backend"
               echo "CADDY_MERCURE_JWT_SECRET=${{ secrets.CADDY_MERCURE_JWT_SECRET }}"
               echo ""
               echo "# MySQL"
@@ -88,6 +89,6 @@ jobs:
           script: |
             set -eu
             cd ~/apps/neoodriver-backend
-            docker compose -f compose.yaml -f compose.prod.yaml down --remove-orphans
-            docker compose -f compose.yaml -f compose.prod.yaml pull --ignore-pull-failures
-            docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml down --remove-orphans
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml pull --ignore-pull-failures
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans
