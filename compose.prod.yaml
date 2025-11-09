@@ -11,6 +11,8 @@ services:
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
       MERCURE_PUBLISHER_JWT_ALG: ${MERCURE_PUBLISHER_JWT_ALG:-HS256}
       MERCURE_SUBSCRIBER_JWT_ALG: ${MERCURE_SUBSCRIBER_JWT_ALG:-HS256}
+      # Disable automatic HTTPS in Caddy; TLS is terminated by Nginx on host
+      CADDY_GLOBAL_OPTIONS: auto_https off
     # Bind HTTP only to localhost:8080 to avoid conflicts with host Nginx/Caddy
     ports:
       - "127.0.0.1:8080:80"
