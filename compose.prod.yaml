@@ -7,7 +7,7 @@ services:
       target: frankenphp_prod
     environment:
       APP_SECRET: ${APP_SECRET}
-      SERVER_NAME: ${SERVER_NAME}
+      SERVER_NAME: ${SERVER_NAME}, :80
       DEFAULT_URI: ${DEFAULT_URI}
       # Disable automatic HTTPS in Caddy; TLS is terminated by Nginx on host
       CADDY_GLOBAL_OPTIONS: auto_https off
