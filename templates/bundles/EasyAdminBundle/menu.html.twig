@@ -1,0 +1,66 @@
+{# @var ea \EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext #}
+<nav id="main-menu" class="adminator-sidebar">
+    {% block main_menu_before %}{% endblock %}
+
+    <ul class="menu sidebar-menu list-unstyled">
+        {% block main_menu %}
+            {% for menuItem in ea().mainMenu.items %}
+                {% block menu_item %}
+                    {% set is_submenu_item_with_no_items = menuItem.type == constant('EasyCorp\\Bundle\\EasyAdminBundle\\Dto\\MenuItemDto::TYPE_SUBMENU') and not menuItem.hasSubItems %}
+                    {% if is_submenu_item_with_no_items %}
+                        {# hide empty submenu sections #}
+                    {% else %}
+                        <li class="{{ menuItem.isMenuSection ? 'menu-header' : 'menu-item' }} {{ menuItem.hasSubItems ? 'has-submenu' }} {{ menuItem.isSelected ? 'active' }} {{ menuItem.isExpanded ? 'expanded' }}">
+                            {{ _self.render_menu_item(menuItem) }}
+
+                            {% if menuItem.hasSubItems %}
+                                <ul class="submenu list-unstyled">
+                                    {% for menuSubItem in menuItem.subItems %}
+                                        {% block menu_subitem %}
+                                            <li class="{{ menuSubItem.isMenuSection ? 'menu-header' : 'menu-item' }} {{ menuSubItem.isSelected ? 'active' }}">
+                                                {{ _self.render_menu_item(menuSubItem) }}
+                                            </li>
+                                        {% endblock menu_subitem %}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                {% endblock menu_item %}
+            {% endfor %}
+        {% endblock main_menu %}
+    </ul>
+
+    {% block main_menu_after %}{% endblock %}
+</nav>
+
+{% macro render_html_attributes(item) %}
+    {% for attribute_name, attribute_value in item.htmlAttributes %}
+        {{ attribute_name }}="{{ attribute_value|e('html') }}"
+    {% endfor %}
+{% endmacro %}
+
+{% macro render_menu_item(item) %}
+    {% if item.isMenuSection %}
+        <span class="menu-header-contents" {{ _self.render_html_attributes(item) }}>
+            {% if item.icon is not empty %}<twig:ea:Icon name="{{ item.icon }}" class="menu-icon me-2" />{% endif %}
+            <span class="menu-item-label position-relative {{ item.cssClass }}">
+                {{ item.label|trans|raw }}
+            </span>
+            {% if item.badge %}
+                <span class="menu-item-badge rounded-pill badge {{ item.badge.cssClass }}" {{ _self.render_html_attributes(item.badge) }} style="{{ item.badge.htmlStyle }}">{{ item.badge.content }}</span>
+            {% endif %}
+        </span>
+    {% else %}
+        <a href="{{ item.linkUrl }}" class="menu-item-contents sidebar-link d-flex align-items-center {{ item.hasSubItems ? 'submenu-toggle' }} {{ item.cssClass }}" target="{{ item.linkTarget }}" rel="{{ item.linkRel }}" referrerpolicy="origin-when-cross-origin" {{ _self.render_html_attributes(item) }}>
+            {% if item.icon is not empty %}<twig:ea:Icon name="{{ item.icon }}" class="menu-icon me-2" />{% endif %}
+            <span class="menu-item-label position-relative">
+                {{ item.label|trans|raw }}
+            </span>
+            {% if item.hasSubItems %}<twig:ea:Icon name="internal:chevron-right" class="submenu-toggle-icon ms-auto" />{% endif %}
+            {% if item.hasVisibleBadge %}
+                <span class="menu-item-badge rounded-pill badge {{ item.badge.cssClass }}" {{ _self.render_html_attributes(item.badge) }} style="{{ item.badge.htmlStyle }}">{{ item.badge.content }}</span>
+            {% endif %}
+        </a>
+    {% endif %}
+{% endmacro %}

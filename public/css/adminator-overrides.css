@@ -1,0 +1,96 @@
+/* Minimal Adminator-inspired overrides to restyle EasyAdmin without a build step */
+
+/* Base */
+body.ea.adminator {
+  background-color: var(--c-bkg-body);
+  color: var(--c-text-base);
+}
+
+/* Header / Navbar */
+.ea.adminator .navbar {
+  background-color: var(--c-primary);
+  color: #fff;
+  border-bottom: 1px solid var(--c-border);
+}
+.ea.adminator .navbar .logo,
+.ea.adminator .navbar .logo-custom {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* Sidebar */
+.ea.adminator .sidebar {
+  background-color: var(--c-bkg-sidebar);
+  border-right: 1px solid var(--c-border);
+}
+.ea.adminator .adminator-sidebar .menu {
+  margin: 0;
+  padding: .75rem .5rem;
+}
+.ea.adminator .adminator-sidebar .menu-item-contents,
+.ea.adminator #main-menu .menu-item-contents {
+  display: flex;
+  align-items: center;
+  padding: .5rem .75rem;
+  border-radius: .375rem;
+  color: var(--c-text-base);
+}
+.ea.adminator #main-menu .menu-item.active > .menu-item-contents,
+.ea.adminator #main-menu .menu-item .menu-item-contents:hover {
+  background-color: rgba(75, 124, 243, 0.12); /* c-primary @ 12% */
+  color: var(--c-primary);
+}
+.ea.adminator #main-menu .menu-icon {
+  color: var(--c-primary);
+  margin-right: .5rem;
+  font-size: 1rem;
+}
+.ea.adminator #main-menu .submenu {
+  margin-left: .75rem;
+  padding-left: .5rem;
+  border-left: 2px solid rgba(75, 124, 243, 0.2);
+}
+
+/* Content */
+.ea.adminator .content-wrapper {
+  background: transparent;
+}
+.ea.adminator article.content {
+  background-color: var(--c-bkg-card);
+  border: 1px solid var(--c-border);
+  border-radius: .5rem;
+  padding: 1rem;
+}
+.ea.adminator .content-header .title {
+  color: var(--c-text-base);
+}
+
+/* Buttons */
+.ea.adminator .btn-primary {
+  background-color: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.ea.adminator .btn-outline-primary {
+  color: var(--c-primary);
+  border-color: var(--c-primary);
+}
+
+/* Search */
+.ea.adminator .content-search .form-control {
+  border-color: var(--c-border);
+}
+.ea.adminator .content-search-icon {
+  color: var(--c-text-muted);
+}
+
+/* Flash messages */
+.ea.adminator .flash-message {
+  border-radius: .375rem;
+}
+
+/* Dark scheme (honor data-ea-color-scheme attributes) */
+@media (prefers-color-scheme: dark) {
+  .ea.adminator[data-ea-default-color-scheme="auto"] .navbar {
+    background-color: var(--c-primary);
+  }
+}
