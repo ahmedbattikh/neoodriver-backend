@@ -120,3 +120,22 @@ jobs:
             MYSQL_ROOT_PASS=$(grep -E '^MYSQL_ROOT_PASSWORD=' .env | sed -E 's/^MYSQL_ROOT_PASSWORD=//')
             # Create admin user if missing and grant privileges
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASS" -e "CREATE USER IF NOT EXISTS 'neooadmin'@'%' IDENTIFIED BY 'NeooDriver@9090'; GRANT ALL PRIVILEGES ON *.* TO 'neooadmin'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+
+      - name: Ensure application DB user/password match .env on VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: true
+          script: |
+            set -eu
+            cd ~/apps/neoodriver-backend
+            MYSQL_ROOT_PASS=$(grep -E '^MYSQL_ROOT_PASSWORD=' .env | sed -E 's/^MYSQL_ROOT_PASSWORD=//')
+            APP_DB_USER=$(grep -E '^MYSQL_USER=' .env | sed -E 's/^MYSQL_USER=//')
+            APP_DB_PASS=$(grep -E '^MYSQL_PASSWORD=' .env | sed -E 's/^MYSQL_PASSWORD=//')
+            APP_DB_NAME=$(grep -E '^MYSQL_DATABASE=' .env | sed -E 's/^MYSQL_DATABASE=//')
+            # Ensure app user exists and has the configured password and privileges
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASS" -e "CREATE USER IF NOT EXISTS '${APP_DB_USER}'@'%' IDENTIFIED BY '${APP_DB_PASS}'; ALTER USER '${APP_DB_USER}'@'%' IDENTIFIED BY '${APP_DB_PASS}'; GRANT ALL PRIVILEGES ON \`${APP_DB_NAME}\`.* TO '${APP_DB_USER}'@'%'; FLUSH PRIVILEGES;"
