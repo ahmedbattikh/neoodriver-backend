@@ -58,6 +58,12 @@ jobs:
           script: |
             set -eu
             ENV_PATH=~/apps/neoodriver-backend/.env
+            # Ensure Mercure JWT is set; use placeholder if secret missing to avoid Caddy startup failure
+            MERCURE_SECRET="${{ secrets.CADDY_MERCURE_JWT_SECRET }}"
+            if [ -z "$MERCURE_SECRET" ]; then
+              MERCURE_SECRET="!ChangeThisMercureHubJWTSecretKey!"
+              echo "[WARN] CADDY_MERCURE_JWT_SECRET is empty; using a placeholder. Set the GitHub secret for production."
+            fi
             {
               echo "APP_ENV=prod"
               echo "APP_DEBUG=0"
@@ -65,7 +71,9 @@ jobs:
               echo "SERVER_NAME=${{ secrets.SERVER_NAME }}"
               echo "DEFAULT_URI=https://${{ secrets.SERVER_NAME }}"
               echo "COMPOSE_PROJECT_NAME=neoodriver-backend"
-              echo "CADDY_MERCURE_JWT_SECRET=${{ secrets.CADDY_MERCURE_JWT_SECRET }}"
+              echo "CADDY_MERCURE_JWT_SECRET=${MERCURE_SECRET}"
+              echo "MERCURE_PUBLISHER_JWT_ALG=HS256"
+              echo "MERCURE_SUBSCRIBER_JWT_ALG=HS256"
               echo ""
               echo "# MySQL"
               echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}"
