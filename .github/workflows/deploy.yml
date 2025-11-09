@@ -78,7 +78,7 @@ jobs:
               MYSQL_ROOT_PASS="${{ secrets.MYSQL_ROOT_PASSWORD }}"
               if [ -z "$MYSQL_ROOT_PASS" ]; then
                 MYSQL_ROOT_PASS="!ChangeMeRoot!"
-                echo "[WARN] MYSQL_ROOT_PASSWORD is empty; using default placeholder. Set the GitHub secret for production."
+                echo "[WARN] MYSQL_ROOT_PASSWORD is empty; using default placeholder. Set the GitHub secret for production." >&2
               fi
               echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASS"
               echo "DATABASE_URL=mysql://${{ secrets.MYSQL_USER }}:${{ secrets.MYSQL_PASSWORD }}@mysql:3306/${{ secrets.MYSQL_DATABASE }}?serverVersion=8.0&charset=utf8mb4"
