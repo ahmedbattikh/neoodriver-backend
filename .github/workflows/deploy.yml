@@ -71,6 +71,7 @@ jobs:
               echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}"
               echo "MYSQL_VERSION=8.0"
               echo "MYSQL_CHARSET=utf8mb4"
+              echo "DATABASE_URL=mysql://${{ secrets.MYSQL_USER }}:${{ secrets.MYSQL_PASSWORD }}@mysql:3306/${{ secrets.MYSQL_DATABASE }}?serverVersion=8.0&charset=utf8mb4"
             } > "$ENV_PATH"
 
       - name: Build and run services on VPS
