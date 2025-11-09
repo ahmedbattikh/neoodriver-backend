@@ -63,6 +63,7 @@ jobs:
               echo "APP_DEBUG=0"
               echo "APP_SECRET=${{ secrets.APP_SECRET }}"
               echo "SERVER_NAME=${{ secrets.SERVER_NAME }}"
+              echo "DEFAULT_URI=https://${{ secrets.SERVER_NAME }}"
               echo "CADDY_MERCURE_JWT_SECRET=${{ secrets.CADDY_MERCURE_JWT_SECRET }}"
               echo ""
               echo "# MySQL"
