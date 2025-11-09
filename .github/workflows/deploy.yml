@@ -1,59 +1,25 @@
-name: Deploy on Tag
+name: Deploy to VPS (symfony-docker)
 
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      image_tag:
-        description: 'Docker image tag to build/deploy (e.g., v1.0.3 or latest)'
-        required: false
-        default: 'latest'
+  workflow_dispatch: ~
 
 permissions:
   contents: read
-  packages: write
-
-env:
-  IMAGE_NAME: ghcr.io/ahmedbattikh/neoodriver-backend
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Set DEPLOY_TAG
-        run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "DEPLOY_TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_ENV
-          else
-            echo "DEPLOY_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
-          fi
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./.docker/Dockerfile
-          push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ env.DEPLOY_TAG }}
-
-      # ✅ FIX PERMISSIONS PERMANENTLY BEFORE UPLOAD
-      - name: Prepare VPS directory & fix ownership
+      - name: Prepare VPS directory
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -62,20 +28,13 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            # Create deploy directory
+            set -eu
             mkdir -p ~/apps/neoodriver-backend
-
-            # Fix ownership to current SSH user
             sudo chown -R $USER:$USER ~/apps/neoodriver-backend || true
-
-            # Remove immutable flags if any
             sudo chattr -R -i ~/apps/neoodriver-backend 2>/dev/null || true
-
-            # Ensure correct permissions
             chmod -R 755 ~/apps/neoodriver-backend
 
-      # ✅ Upload files properly after permission fix
-      - name: Upload compose files to VPS
+      - name: Upload project to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -83,12 +42,37 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT }}
-          source: "docker-compose.prod.yml,.env.prod.example"
+          source: "./"
           target: "~/apps/neoodriver-backend"
           overwrite: true
+          rm: true
 
-      # ✅ Deploy & Restart Services
-      - name: Deploy via SSH
+      - name: Write production .env on VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -eu
+            cat > ~/apps/neoodriver-backend/.env <<'EOF'
+APP_ENV=prod
+APP_DEBUG=0
+APP_SECRET=${{ secrets.APP_SECRET }}
+SERVER_NAME=${{ secrets.SERVER_NAME }}
+CADDY_MERCURE_JWT_SECRET=${{ secrets.CADDY_MERCURE_JWT_SECRET }}
+
+# MySQL
+MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+MYSQL_USER=${{ secrets.MYSQL_USER }}
+MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+MYSQL_VERSION=8.0
+MYSQL_CHARSET=utf8mb4
+EOF
+
+      - name: Build and run services on VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -99,27 +83,7 @@ jobs:
           script_stop: true
           command_timeout: 30m
           script: |
-            export DEPLOY_TAG=${{ env.DEPLOY_TAG }}
             set -eu
-
             cd ~/apps/neoodriver-backend
-
-            # Optional login to GHCR
-            if [ -n "${{ secrets.GHCR_READ_USER }}" ] && [ -n "${{ secrets.GHCR_READ_TOKEN }}" ]; then
-              docker login ghcr.io -u "${{ secrets.GHCR_READ_USER }}" -p "${{ secrets.GHCR_READ_TOKEN }}"
-            else
-              echo "Skipping GHCR login - ensure image is public or provide credentials"
-            fi
-
-            export IMAGE_NAME="ghcr.io/ahmedbattikh/neoodriver-backend"
-            export TAG="$DEPLOY_TAG"
-
-            # Pull latest image
-            docker pull "$IMAGE_NAME:$TAG"
-
-            # Restart services
-            docker compose -f docker-compose.prod.yml down
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-
-            # Cleanup old docker images
-            docker image prune -f
+            docker compose -f compose.yaml -f compose.prod.yaml down
+            docker compose -f compose.yaml -f compose.prod.yaml up -d --build --pull --remove-orphans
