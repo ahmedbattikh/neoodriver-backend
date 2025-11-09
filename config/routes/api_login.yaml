@@ -1,0 +1,4 @@
+api_login:
+  path: /api/login
+  methods: [POST]
+  controller: App\Controller\SecurityController::login

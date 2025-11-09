@@ -1,0 +1,8 @@
+gesdinet_jwt_refresh_token:
+  ttl: '%env(int:JWT_REFRESH_TTL)%'
+  firewall: main
+  user_identity_field: email
+  # When true, refresh token TTL is updated on each refresh
+  ttl_update: true
+  # Name of the JSON field carrying the refresh token in requests
+  token_parameter_name: refreshToken

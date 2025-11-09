@@ -120,4 +120,3 @@ jobs:
             MYSQL_ROOT_PASS=$(grep -E '^MYSQL_ROOT_PASSWORD=' .env | sed -E 's/^MYSQL_ROOT_PASSWORD=//')
             # Create admin user if missing and grant privileges
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASS" -e "CREATE USER IF NOT EXISTS 'neooadmin'@'%' IDENTIFIED BY 'NeooDriver@9090'; GRANT ALL PRIVILEGES ON *.* TO 'neooadmin'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
-

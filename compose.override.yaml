@@ -13,25 +13,14 @@ services:
       #  from the bind-mount for better performance by enabling the next line:
       #- /app/vendor
     ports:
-      - name: http
-        target: 80
-        published: ${HTTP_PORT:-80}
-        protocol: tcp
-      - name: https
-        target: 443
-        published: ${HTTPS_PORT:-443}
-        protocol: tcp
-      - name: http3
-        target: 443
-        published: ${HTTP3_PORT:-443}
-        protocol: udp
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTP3_PORT:-443}:443/udp"
     environment:
       FRANKENPHP_WORKER_CONFIG: watch
-      # See https://xdebug.org/docs/all_settings#mode
-      XDEBUG_MODE: "${XDEBUG_MODE:-off}"
+      XDEBUG_MODE: "${XDEBUG_MODE:-debug,develop}"
       APP_ENV: "${APP_ENV:-dev}"
     extra_hosts:
-      # Ensure that host.docker.internal is correctly defined on Linux
       - host.docker.internal:host-gateway
     tty: true
 ###> symfony/mercure-bundle ###
@@ -39,4 +28,4 @@ services:
 
   mysql:
     ports:
-      - "3306"
+      - "3306:3306"
