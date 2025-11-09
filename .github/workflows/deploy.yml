@@ -86,5 +86,6 @@ jobs:
           script: |
             set -eu
             cd ~/apps/neoodriver-backend
-            docker compose -f compose.yaml -f compose.prod.yaml down
-            docker compose -f compose.yaml -f compose.prod.yaml up -d --build --pull --remove-orphans
+            docker compose -f compose.yaml -f compose.prod.yaml down --remove-orphans
+            docker compose -f compose.yaml -f compose.prod.yaml pull --ignore-pull-failures
+            docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans
