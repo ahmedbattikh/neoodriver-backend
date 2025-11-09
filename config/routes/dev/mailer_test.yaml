@@ -1,0 +1,4 @@
+dev_mail_test:
+    path: /_dev/mail-test
+    controller: App\Controller\Dev\MailTestController::send
+    methods: [GET]

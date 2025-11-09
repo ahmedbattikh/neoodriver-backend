@@ -18,8 +18,9 @@ services:
       - "${HTTP3_PORT:-443}:443/udp"
     environment:
       FRANKENPHP_WORKER_CONFIG: watch
-      XDEBUG_MODE: "${XDEBUG_MODE:-debug,develop}"
+      XDEBUG_MODE: "${XDEBUG_MODE:-off}"
       APP_ENV: "${APP_ENV:-dev}"
+      MAILER_DSN: "smtp://mailhog:1025?encryption=null"
     extra_hosts:
       - host.docker.internal:host-gateway
     tty: true
@@ -29,3 +30,34 @@ services:
   mysql:
     ports:
       - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+###> symfony/mailer ###
+  mailer:
+    image: axllent/mailpit
+    ports:
+      - "1025"
+      - "8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+###< symfony/mailer ###

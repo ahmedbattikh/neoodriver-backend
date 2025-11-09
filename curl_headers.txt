@@ -1,12 +1,10 @@
-HTTP/1.1 500 Internal Server Error
+HTTP/1.1 202 Accepted
 Alt-Svc: h3=":443"; ma=2592000
 Cache-Control: no-cache, private
-Content-Type: text/html; charset=UTF-8
-Date: Sun, 09 Nov 2025 20:45:55 GMT
+Content-Type: application/json
+Date: Sun, 09 Nov 2025 22:52:04 GMT
 Permissions-Policy: browsing-topics=()
 Server: Caddy
-X-Debug-Exception: The%20routing%20file%20%22%2Fapp%2Fconfig%2Froutes%2Fgesdinet_jwt_refresh_token.yaml%22%20must%20not%20specify%20both%20the%20%22resource%22%20key%20and%20the%20%22path%22%20key%20for%20%22gesdinet_jwt_refresh_token%22.%20Choose%20between%20an%20import%20and%20a%20route%20definition%20in%20%2Fapp%2Fconfig%2Froutes%2Fgesdinet_jwt_refresh_token.yaml%20%28which%20is%20being%20imported%20from%20%22%2Fapp%2Fsrc%2FKernel.php%22%29.
-X-Debug-Exception-File: %2Fapp%2Fvendor%2Fsymfony%2Fconfig%2FLoader%2FFileLoader.php:177
 X-Robots-Tag: noindex
-Transfer-Encoding: chunked
+Content-Length: 39
 
