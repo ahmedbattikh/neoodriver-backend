@@ -9,8 +9,16 @@ services:
       APP_SECRET: ${APP_SECRET}
       SERVER_NAME: ${SERVER_NAME}, :80
       DEFAULT_URI: ${DEFAULT_URI}
+      # JWT & Mailer (required in production)
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE}
+      JWT_TTL: ${JWT_TTL}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
+      MAILER_DSN: ${MAILER_DSN}
       # Disable automatic HTTPS in Caddy; TLS is terminated by Nginx on host
       CADDY_GLOBAL_OPTIONS: auto_https off
+    # Persist JWT keys across deployments
+    volumes:
+      - ./config/jwt:/app/config/jwt
     # Bind HTTP only to localhost:8080 to avoid conflicts with host Nginx/Caddy
     ports:
       - "127.0.0.1:8080:80"

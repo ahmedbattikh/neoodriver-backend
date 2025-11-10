@@ -86,6 +86,34 @@ jobs:
               echo "# phpMyAdmin"
               echo "PMA_USER=neooadmin"
               echo "PMA_PASSWORD=NeooDriver@9090"
+              echo ""
+              echo "# Mailer"
+              MAILER_DSN_VAL="${{ secrets.MAILER_DSN }}"
+              if [ -z "$MAILER_DSN_VAL" ]; then
+                MAILER_DSN_VAL="null://null"
+                echo "[WARN] MAILER_DSN is empty; using null://null for now." >&2
+              fi
+              echo "MAILER_DSN=$MAILER_DSN_VAL"
+              echo ""
+              echo "# JWT"
+              JWT_PASSPHRASE_VAL="${{ secrets.JWT_PASSPHRASE }}"
+              if [ -z "$JWT_PASSPHRASE_VAL" ]; then
+                JWT_PASSPHRASE_VAL="ChangeMeStrongPassphrase"
+                echo "[WARN] JWT_PASSPHRASE is empty; using placeholder. Set the GitHub secret for production." >&2
+              fi
+              echo "JWT_PASSPHRASE=$JWT_PASSPHRASE_VAL"
+              JWT_TTL_VAL="${{ secrets.JWT_TTL }}"
+              if [ -z "$JWT_TTL_VAL" ]; then
+                JWT_TTL_VAL="3600"
+                echo "[WARN] JWT_TTL is empty; defaulting to 3600." >&2
+              fi
+              echo "JWT_TTL=$JWT_TTL_VAL"
+              JWT_REFRESH_TTL_VAL="${{ secrets.JWT_REFRESH_TTL }}"
+              if [ -z "$JWT_REFRESH_TTL_VAL" ]; then
+                JWT_REFRESH_TTL_VAL="2592000"
+                echo "[WARN] JWT_REFRESH_TTL is empty; defaulting to 30 days (2592000)." >&2
+              fi
+              echo "JWT_REFRESH_TTL=$JWT_REFRESH_TTL_VAL"
             } > "$ENV_PATH"
 
       - name: Build and run services on VPS
@@ -104,6 +132,43 @@ jobs:
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml down --remove-orphans
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml pull --ignore-pull-failures
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans
+
+      - name: Ensure JWT key directory and generate keys on VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: true
+          script: |
+            set -eu
+            cd ~/apps/neoodriver-backend
+            # Ensure host directory exists (bind-mounted in compose.prod.yaml)
+            mkdir -p config/jwt
+            # Generate keys only if missing
+            if [ ! -f config/jwt/private.pem ] || [ ! -f config/jwt/public.pem ]; then
+              echo "[INFO] Generating JWT keypair inside php container..."
+              docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T php bin/console lexik:jwt:generate-keypair --no-interaction
+            else
+              echo "[INFO] JWT keys already exist; skipping generation."
+            fi
+
+      - name: Run Doctrine migrations and clear cache on VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: true
+          script: |
+            set -eu
+            cd ~/apps/neoodriver-backend
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T php bin/console doctrine:migrations:migrate --no-interaction
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T php bin/console cache:clear --no-interaction
 
       - name: Create MySQL user for phpMyAdmin on VPS
         uses: appleboy/ssh-action@v1.0.0
