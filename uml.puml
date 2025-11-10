@@ -1,0 +1,406 @@
+@startuml User Class Diagram
+
+enum UserRole {
+    ADMIN
+    SUPER_ADMIN
+    DRIVER
+}
+
+enum AttachmentType {
+    DOCUMENT
+    IMAGE
+    VIDEO
+    AUDIO
+    PDF
+    SPREADSHEET
+    PRESENTATION
+    ARCHIVE
+    OTHER
+}
+
+enum EnergyType {
+    GASOLINE
+    DIESEL
+    HYBRID
+    ELECTRIC
+    LPG
+    CNG
+    HYDROGEN
+    OTHER
+}
+
+class User {
+    - firstName: String
+    - lastName: String
+    - birthDate: Date
+    - countryOfBirth: String
+    - cityOfBirth: String
+    - birthDepartment: String
+    - address: String
+    - city: String
+    - email: String
+    - mobileNumber: String
+    - role: UserRole
+    
+    + User()
+    + User(firstName: String, lastName: String, birthDate: Date)
+    + User(firstName: String, lastName: String, birthDate: Date, role: UserRole)
+    + User(firstName: String, lastName: String, email: String, mobileNumber: String, role: UserRole)
+    
+    + getFirstName(): String
+    + setFirstName(firstName: String): void
+    + getLastName(): String
+    + setLastName(lastName: String): void
+    + getBirthDate(): Date
+    + setBirthDate(birthDate: Date): void
+    + getCountryOfBirth(): String
+    + setCountryOfBirth(countryOfBirth: String): void
+    + getCityOfBirth(): String
+    + setCityOfBirth(cityOfBirth: String): void
+    + getBirthDepartment(): String
+    + setBirthDepartment(birthDepartment: String): void
+    + getAddress(): String
+    + setAddress(address: String): void
+    + getCity(): String
+    + setCity(city: String): void
+    + getEmail(): String
+    + setEmail(email: String): void
+    + getMobileNumber(): String
+    + setMobileNumber(mobileNumber: String): void
+    + getRole(): UserRole
+    + setRole(role: UserRole): void
+    
+    + getFullName(): String
+    + getFullAddress(): String
+    + getContactInfo(): String
+    + calculateAge(): int
+    + isValidEmail(): boolean
+    + isValidMobileNumber(): boolean
+    + isAdmin(): boolean
+    + isSuperAdmin(): boolean
+    + isDriver(): boolean
+    + hasAdminPrivileges(): boolean
+    + canManageUsers(): boolean
+    + canManageDrivers(): boolean
+    + toString(): String
+}
+
+class Attachment {
+    - id: Long
+    - fileName: String
+    - originalFileName: String
+    - filePath: String
+    - fileSize: Long
+    - mimeType: String
+    - type: AttachmentType
+    - isPrivate: boolean
+    - isActive: boolean
+    - description: String
+    - uploadedAt: DateTime
+    - updatedAt: DateTime
+    - checksum: String
+    - userId: Long
+    
+    + Attachment()
+    + Attachment(fileName: String, filePath: String, type: AttachmentType)
+    + Attachment(fileName: String, filePath: String, type: AttachmentType, isPrivate: boolean)
+    
+    + getId(): Long
+    + setId(id: Long): void
+    + getFileName(): String
+    + setFileName(fileName: String): void
+    + getOriginalFileName(): String
+    + setOriginalFileName(originalFileName: String): void
+    + getFilePath(): String
+    + setFilePath(filePath: String): void
+    + getFileSize(): Long
+    + setFileSize(fileSize: Long): void
+    + getMimeType(): String
+    + setMimeType(mimeType: String): void
+    + getType(): AttachmentType
+    + setType(type: AttachmentType): void
+    + getIsPrivate(): boolean
+    + setIsPrivate(isPrivate: boolean): void
+    + getIsActive(): boolean
+    + setIsActive(isActive: boolean): void
+    + getDescription(): String
+    + setDescription(description: String): void
+    + getUploadedAt(): DateTime
+    + setUploadedAt(uploadedAt: DateTime): void
+    + getUpdatedAt(): DateTime
+    + setUpdatedAt(updatedAt: DateTime): void
+    + getChecksum(): String
+    + setChecksum(checksum: String): void
+    + getUserId(): Long
+    + setUserId(userId: Long): void
+    
+    + getFileExtension(): String
+    + getFormattedFileSize(): String
+    + isImage(): boolean
+    + isDocument(): boolean
+    + isVideo(): boolean
+    + isAudio(): boolean
+    + validateFile(): boolean
+    + generateChecksum(): String
+    + softDelete(): void
+    + restore(): void
+    + canBeAccessedBy(user: User): boolean
+    + toString(): String
+}
+
+class Driver {
+    - id: Long
+    - userId: Long
+    - active: boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    
+    + Driver()
+    + getId(): Long
+    + setId(id: Long): void
+    + getUserId(): Long
+    + setUserId(userId: Long): void
+    + isActive(): boolean
+    + setActive(active: boolean): void
+    + getCreatedAt(): DateTime
+    + setCreatedAt(createdAt: DateTime): void
+    + getUpdatedAt(): DateTime
+    + setUpdatedAt(updatedAt: DateTime): void
+}
+
+class DriverDocuments {
+    - id: Long
+    - driverId: Long
+    - identityPhoto: Attachment
+    - vtcCardFront: Attachment
+    - vtcCardBack: Attachment
+    - vtcCardValid: boolean
+    - vtcCardExpirationDate: Date
+    - drivingLicenseFront: Attachment
+    - drivingLicenseBack: Attachment
+    - drivingLicenseValid: boolean
+    - drivingLicenseExpirationDate: Date
+    - identityCardFront: Attachment
+    - identityCardBack: Attachment
+    - identityCardValid: boolean
+    - identityCardExpirationDate: Date
+    - healthCard: Attachment
+    - healthCardValid: boolean
+    - socialSecurityNumber: String
+    - bankStatement: Attachment
+    - bankStatementValid: boolean
+    - iban: String
+    - isHosted: boolean
+    - proofOfResidence: Attachment
+    - proofOfResidenceValid: boolean
+    - secureDrivingRightCertificate: Attachment
+    - secureDrivingRightCertificateValid: boolean
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    
+    + DriverDocuments()
+    + isComplete(): boolean
+    + isValid(): boolean
+    + nextExpiration(): Date
+    + expiredDocuments(): String[]
+    + missingDocuments(): String[]
+    + toString(): String
+}
+
+class CompanyDocuments {
+    - id: Long
+    - driverId: Long
+    - employmentContract: Attachment
+    - employerCertificate: Attachment
+    - preEmploymentDeclaration: Attachment
+    - mutualInsuranceCertificate: Attachment
+    - urssafComplianceCertificate: Attachment
+    - kbisExtract: Attachment
+    - revtcRegistrationCertificate: Attachment
+    - createdAt: DateTime
+    - updatedAt: DateTime
+
+    + CompanyDocuments()
+    + isComplete(): boolean
+    + toString(): String
+}
+
+class Vehicle {
+    - id: Long
+    - driverId: Long
+    - registrationNumber: String
+    - make: String
+    - model: String
+    - firstRegistrationYear: Integer
+    - registrationDate: Date
+    - seatCount: Integer
+    - energyType: EnergyType
+    - registrationCertificate: Attachment
+    - paidTransportInsuranceCertificate: Attachment
+    - insuranceExpirationDate: Date
+    - technicalInspection: Attachment
+    - vehicleFrontPhoto: Attachment
+    - insuranceNote: Attachment
+    - createdAt: DateTime
+    - updatedAt: DateTime
+
+    + Vehicle()
+    + isComplete(): boolean
+    + toString(): String
+}
+
+User ||--o{ Attachment : uploads
+User ||--|| UserRole : has
+Attachment ||--|| AttachmentType : has
+User ||--|| Driver : driverProfile
+Driver ||--|| DriverDocuments : documents
+Driver ||--|| CompanyDocuments : companyDocuments
+Driver ||--o{ Vehicle : vehicles
+DriverDocuments o-- Attachment : identityPhoto
+DriverDocuments o-- Attachment : vtcCardFront
+DriverDocuments o-- Attachment : vtcCardBack
+DriverDocuments o-- Attachment : drivingLicenseFront
+DriverDocuments o-- Attachment : drivingLicenseBack
+DriverDocuments o-- Attachment : identityCardFront
+DriverDocuments o-- Attachment : identityCardBack
+DriverDocuments o-- Attachment : healthCard
+DriverDocuments o-- Attachment : bankStatement
+DriverDocuments o-- Attachment : proofOfResidence
+DriverDocuments o-- Attachment : secureDrivingRightCertificate
+CompanyDocuments o-- Attachment : employmentContract
+CompanyDocuments o-- Attachment : employerCertificate
+CompanyDocuments o-- Attachment : preEmploymentDeclaration
+CompanyDocuments o-- Attachment : mutualInsuranceCertificate
+CompanyDocuments o-- Attachment : urssafComplianceCertificate
+CompanyDocuments o-- Attachment : kbisExtract
+CompanyDocuments o-- Attachment : revtcRegistrationCertificate
+Vehicle o-- Attachment : registrationCertificate
+Vehicle o-- Attachment : paidTransportInsuranceCertificate
+Vehicle o-- Attachment : technicalInspection
+Vehicle o-- Attachment : vehicleFrontPhoto
+Vehicle o-- Attachment : insuranceNote
+
+note right of User
+    Class representing user personal information with role management
+    
+    Available roles:
+    - ADMIN: Administrator with limited privileges
+    - SUPER_ADMIN: Super administrator with full privileges
+    - DRIVER: Driver with basic privileges
+    
+    Example:
+    - First name: John
+    - Last name: Doe
+    - Birth date: 1986-11-03
+    - Country: France
+    - City: Sucy-en-Brie
+    - Email: john.doe@example.com
+    - Mobile: +33 6 12 34 56 78
+    - Role: ADMIN
+end note
+
+note right of AttachmentType
+    Supported file types:
+    
+    DOCUMENT: Text documents (.txt, .doc, .docx)
+    IMAGE: Images (.jpg, .png, .gif, .svg)
+    VIDEO: Videos (.mp4, .avi, .mov)
+    AUDIO: Audio (.mp3, .wav, .ogg)
+    PDF: PDF documents
+    SPREADSHEET: Spreadsheets (.xls, .xlsx, .csv)
+    PRESENTATION: Presentations (.ppt, .pptx)
+    ARCHIVE: Archives (.zip, .rar, .tar)
+    OTHER: Other file types
+end note
+
+note right of Attachment
+    Entity for managing attached files
+    
+    Key features:
+    - Privacy management (isPrivate)
+    - Soft delete with isActive
+    - Integrity control via checksum
+    - Rich metadata (size, MIME type)
+    - Operation timestamps
+    
+    Security:
+    - File type validation
+    - Role-based access control
+    - File integrity verification
+    
+    Example:
+    - Name: "important_document.pdf"
+    - Type: PDF
+    - Private: true
+    - Size: 2.5 MB
+    - Owner: John Doe
+end note
+
+note right of Driver
+    Driver profile linked to a User (role DRIVER).
+    Each driver has a mandatory set of documents
+    managed via the DriverDocuments entity.
+end note
+
+note right of DriverDocuments
+    Required documents for each driver:
+    - Identity photo
+    - VTC card (front/back, validity, expiration)
+    - Driving license (front/back, validity, expiration)
+    - Identity card (front/back, validity, expiration)
+    - Health card (file + validity)
+    - Social security number
+    - Bank statement (file + validity) and IBAN
+    - Proof of residence (file + validity)
+    - Secure driving right certificate (file + validity)
+    
+    Useful methods:
+    - isComplete(): checks presence of all documents
+    - isValid(): checks validity flags and dates
+    - nextExpiration(): returns the next expiration date
+end note
+
+note right of CompanyDocuments
+    Company documents linked to the driver:
+    - Employment contract
+    - Employer certificate
+    - Pre-employment declaration (DPAE)
+    - Mutual insurance certificate
+    - URSSAF compliance certificate
+    - KBIS extract
+    - REVTC registration certificate
+    
+    Methods:
+    - isComplete(): verifies that all files are provided
+end note
+
+note right of Vehicle
+    Vehicle attached to a Driver
+    
+    Key fields:
+    - Registration number, make, model
+    - Year of first registration
+    - Registration date
+    - Seat count
+    - Energy type (EnergyType)
+    
+    Attachments:
+    - Registration certificate
+    - Paid transport insurance certificate (+ expiration date)
+    - Technical inspection
+    - Vehicle front photo
+    - Insurance note
+    
+    Methods:
+    - isComplete(): checks presence of required documents
+end note
+
+note right of UserRole
+    Enumeration of user roles:
+    
+    ADMIN: Can manage drivers
+    SUPER_ADMIN: Can manage all (users + drivers)
+    DRIVER: Basic privileges only
+end note
+
+@enduml
