@@ -131,7 +131,7 @@ jobs:
             cd ~/apps/neoodriver-backend
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml down --remove-orphans
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml pull --ignore-pull-failures
-            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans --wait
 
       - name: Ensure JWT key directory and generate keys on VPS
         uses: appleboy/ssh-action@v1.0.0
@@ -167,7 +167,7 @@ jobs:
           script: |
             set -eu
             cd ~/apps/neoodriver-backend
-            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T php bin/console doctrine:migrations:migrate --no-interaction
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
             docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T php bin/console cache:clear --no-interaction
 
       - name: Create MySQL user for phpMyAdmin on VPS
