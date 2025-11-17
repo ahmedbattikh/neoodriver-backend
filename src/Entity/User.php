@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use JMS\Serializer\Annotation as JMS;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -14,15 +15,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[JMS\Groups(['me:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[JMS\Groups(['me:read'])]
     private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[JMS\Groups(['me:read'])]
     private array $roles = [];
 
     /**

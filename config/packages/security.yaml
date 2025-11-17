@@ -68,6 +68,8 @@ security:
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/token/refresh, roles: PUBLIC_ACCESS }
         - { path: ^/health, roles: PUBLIC_ACCESS }
+        # Public API endpoints under /api/open
+        - { path: ^/api/open, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

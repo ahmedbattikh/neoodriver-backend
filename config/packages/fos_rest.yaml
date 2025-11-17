@@ -1,0 +1,13 @@
+fos_rest:
+  routing_loader: false
+  format_listener:
+    rules:
+      - { path: '^/api', priorities: ['json'], fallback_format: 'json', prefer_extension: false }
+  view:
+    formats:
+      json: true
+    view_response_listener: 'force'
+  serializer:
+    serialize_null: true
+  body_converter:
+    enabled: false
