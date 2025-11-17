@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\User;
+use App\Service\Storage\R2Client;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,6 +20,7 @@ final class CreateUserCommand extends Command
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly R2Client $r2,
     ) {
         parent::__construct();
     }
@@ -51,6 +53,15 @@ final class CreateUserCommand extends Command
 
         $this->em->persist($user);
         $this->em->flush();
+
+        $reference = $user->getReference();
+        if ($reference) {
+            try {
+                $this->r2->ensureUserFolders($reference);
+            } catch (\Throwable $e) {
+                // ignore R2 failures to not block user creation
+            }
+        }
 
         $io->success(sprintf('User "%s" created.', $email));
         return Command::SUCCESS;

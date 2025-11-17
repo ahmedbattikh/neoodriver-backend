@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service\Storage;
@@ -16,11 +17,11 @@ final class R2Client
         private readonly ?LoggerInterface $logger = null,
     ) {}
 
-    public function putObject(string $key, string $body = '', string $contentType = 'application/octet-stream', array $extraHeaders = []): void
+    public function putObject(string $key, string $body = '', string $contentType = 'application/octet-stream', array $extraHeaders = [], bool $unsignedPayload = true): void
     {
         $url = rtrim($this->endpoint, '/') . '/' . rawurlencode($this->bucket) . '/' . str_replace('%2F', '/', rawurlencode($key));
-        $payloadHash = hash('sha256', $body);
-        $dateTime = gmdate('Ymd\THis\Z');
+        $payloadHash = $unsignedPayload ? 'UNSIGNED-PAYLOAD' : hash('sha256', $body);
+        $dateTime = gmdate('Ymd\\THis\\Z');
         $date = gmdate('Ymd');
         $host = parse_url($this->endpoint, PHP_URL_HOST) ?: $this->endpoint;
 
@@ -61,12 +62,14 @@ final class R2Client
             $signature
         );
 
+        $contentLength = strlen($body);
         $headerLines = [
             'Authorization: ' . $auth,
             'x-amz-content-sha256: ' . $payloadHash,
             'x-amz-date: ' . $dateTime,
             'Content-Type: ' . $contentType,
             'Host: ' . $host,
+            'Content-Length: ' . $contentLength,
         ];
         foreach ($extraHeaders as $k => $v) {
             $headerLines[] = $k . ': ' . $v;
@@ -77,6 +80,7 @@ final class R2Client
                 'method' => 'PUT',
                 'header' => implode("\r\n", $headerLines),
                 'content' => $body,
+                'protocol_version' => 1.1,
                 'ignore_errors' => true,
                 'timeout' => 20,
             ],
@@ -88,7 +92,7 @@ final class R2Client
             if ($this->logger) {
                 $this->logger->error('R2 PUT failed', ['status' => $statusLine, 'key' => $key, 'body' => $res]);
             }
-            throw new \RuntimeException('R2 upload failed: ' . $statusLine);
+            throw new \RuntimeException('R2 upload failed: ' . $statusLine . ' ' . $auth);
         }
     }
 
