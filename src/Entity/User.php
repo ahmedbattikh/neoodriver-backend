@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -22,6 +23,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180)]
     #[JMS\Groups(['me:read'])]
     private ?string $email = null;
+
+    #[ORM\Column(length: 32, unique: true, nullable: true)]
+    #[JMS\Groups(['me:read'])]
+    private ?string $reference = null;
 
     #[ORM\Column(length: 64, nullable: true)]
     #[JMS\Groups(['me:read'])]
@@ -90,6 +95,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->email = $email;
 
+        return $this;
+    }
+
+    public function getReference(): ?string
+    {
+        return $this->reference;
+    }
+
+    public function setReference(?string $reference): static
+    {
+        $this->reference = $reference;
         return $this;
     }
 
@@ -265,5 +281,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // @deprecated, to be removed when upgrading to Symfony 8
+    }
+
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        if ($this->reference === null) {
+            $this->reference = $this->generateReference();
+        }
+    }
+
+    private function generateReference(): string
+    {
+        return 'AU-' . strtoupper(bin2hex(random_bytes(4)));
     }
 }
