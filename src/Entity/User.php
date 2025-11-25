@@ -67,7 +67,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $mobileNumber = null;
 
     #[ORM\Column(enumType: UserRole::class, nullable: true)]
-    #[JMS\Groups(['me:read'])]
     private ?UserRole $role = null;
 
     #[ORM\ManyToOne(targetEntity: Attachment::class)]
@@ -288,6 +287,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->roles = $roles;
 
         return $this;
+    }
+
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('role')]
+    #[JMS\Groups(['me:read'])]
+    public function getRoleValue(): ?string
+    {
+        return $this->role?->value;
     }
 
     /** @return Collection<int, Attachment> */

@@ -1,33 +1,295 @@
-{% extends '@EasyAdmin/page/content.html.twig' %}
+{% extends 'admin/layout.html.twig' %}
 
 {% block content_title %}{{ title }}{% endblock %}
 
 {% block content %}
-  <div class="container py-4">
-    <div class="mb-4">
-      <div class="progress" style="height: 8px;">
-        {% set pct = (step / 5.0) * 100 %}
-        <div class="progress-bar" role="progressbar" style="width: {{ pct }}%;" aria-valuenow="{{ pct|round }}" aria-valuemin="0" aria-valuemax="100"></div>
-      </div>
-      <div class="mt-2 text-muted">
-        Step {{ step }} of 5
-      </div>
+  <div class="mb-3">
+    <div class="progress" style="height: 8px;">
+      {% set pct = (step / 5.0) * 100 %}
+      <div class="progress-bar" role="progressbar" style="width: {{ pct }}%;" aria-valuenow="{{ pct|round }}" aria-valuemin="0" aria-valuemax="100"></div>
     </div>
-
-    {{ form_start(form) }}
-      {{ form_widget(form) }}
-      <div class="mt-3 d-flex gap-2">
-        {% if step > 1 %}
-          <a class="btn btn-outline-secondary" href="{{ path('admin_user_wizard', { step: step - 1 }) }}">Back</a>
-        {% endif %}
-        <button type="submit" class="btn btn-primary">Next</button>
-      </div>
-    {{ form_end(form) }}
+    <div class="mt-2 text-muted">Step {{ step }} of 5</div>
   </div>
+
+  {{ form_start(form) }}
+    {% if step == 1 %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+            {{ form_widget(form.email, {'attr': {'class': 'form-control', 'placeholder': 'you@example.com'}}) }}
+          </div>
+          {{ form_errors(form.email) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Mobile Number</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+            {{ form_widget(form.mobileNumber, {'attr': {'class': 'form-control', 'placeholder': '+33 6 12 34 56 78'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">First Name</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-user"></i></span>
+            {{ form_widget(form.firstName, {'attr': {'class': 'form-control', 'placeholder': 'First name'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Last Name</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-user"></i></span>
+            {{ form_widget(form.lastName, {'attr': {'class': 'form-control', 'placeholder': 'Last name'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Birth Date</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+            {{ form_widget(form.birthDate, {'attr': {'class': 'form-control'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+            {{ form_widget(form.plainPassword, {'attr': {'class': 'form-control', 'placeholder': 'Secure password'}}) }}
+          </div>
+        </div>
+      </div>
+    {% elseif step == 2 %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Identity Photo</label>
+          {{ form_widget(form.identityPhoto) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">VTC Card Front</label>
+          {{ form_widget(form.vtcCardFront) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">VTC Card Back</label>
+          {{ form_widget(form.vtcCardBack) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">VTC Card Expiration</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+            {{ form_widget(form.vtcCardExpirationDate, {'attr': {'class': 'form-control'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.vtcCardValid, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.vtcCardValid, 'VTC Card Valid', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Driving License Front</label>
+          {{ form_widget(form.drivingLicenseFront) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Driving License Back</label>
+          {{ form_widget(form.drivingLicenseBack) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Driving License Expiration</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+            {{ form_widget(form.drivingLicenseExpirationDate, {'attr': {'class': 'form-control'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.drivingLicenseValid, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.drivingLicenseValid, 'Driving License Valid', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Identity Card Front</label>
+          {{ form_widget(form.identityCardFront) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Identity Card Back</label>
+          {{ form_widget(form.identityCardBack) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Identity Card Expiration</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+            {{ form_widget(form.identityCardExpirationDate, {'attr': {'class': 'form-control'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.identityCardValid, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.identityCardValid, 'Identity Card Valid', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Health Card</label>
+          {{ form_widget(form.healthCard) }}
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.healthCardValid, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.healthCardValid, 'Health Card Valid', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Bank Statement</label>
+          {{ form_widget(form.bankStatement) }}
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.bankStatementValid, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.bankStatementValid, 'Bank Statement Valid', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Social Security Number</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+            {{ form_widget(form.socialSecurityNumber, {'attr': {'class': 'form-control'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">IBAN</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-credit-card"></i></span>
+            {{ form_widget(form.iban, {'attr': {'class': 'form-control'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.isHosted, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.isHosted, 'Hosted', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Proof of Residence</label>
+          {{ form_widget(form.proofOfResidence) }}
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.proofOfResidenceValid, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.proofOfResidenceValid, 'Proof of Residence Valid', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Secure Driving Right Certificate</label>
+          {{ form_widget(form.secureDrivingRightCertificate) }}
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.secureDrivingRightCertificateValid, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.secureDrivingRightCertificateValid, 'Certificate Valid', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+      </div>
+    {% elseif step == 3 %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Employment Contract</label>
+          {{ form_widget(form.employmentContract) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Employer Certificate</label>
+          {{ form_widget(form.employerCertificate) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Pre-employment Declaration</label>
+          {{ form_widget(form.preEmploymentDeclaration) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Mutual Insurance Certificate</label>
+          {{ form_widget(form.mutualInsuranceCertificate) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">URSSAF Compliance Certificate</label>
+          {{ form_widget(form.urssafComplianceCertificate) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">KBIS Extract</label>
+          {{ form_widget(form.kbisExtract) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">REVTC Registration Certificate</label>
+          {{ form_widget(form.revtcRegistrationCertificate) }}
+        </div>
+      </div>
+    {% elseif step == 4 %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Registration Number</label>
+          {{ form_widget(form.registrationNumber, {'attr': {'class': 'form-control'}}) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Make</label>
+          {{ form_widget(form.make, {'attr': {'class': 'form-select'}}) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Model</label>
+          {{ form_widget(form.model, {'attr': {'class': 'form-select'}}) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">First Registration Year</label>
+          {{ form_widget(form.firstRegistrationYear, {'attr': {'class': 'form-control'}}) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Registration Date</label>
+          {{ form_widget(form.registrationDate, {'attr': {'class': 'form-control'}}) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Seat Count</label>
+          {{ form_widget(form.seatCount, {'attr': {'class': 'form-control'}}) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Energy Type</label>
+          {{ form_widget(form.energyType, {'attr': {'class': 'form-select'}}) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Registration Certificate</label>
+          {{ form_widget(form.registrationCertificate) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Insurance Certificate</label>
+          {{ form_widget(form.paidTransportInsuranceCertificate) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Technical Inspection</label>
+          {{ form_widget(form.technicalInspection) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Vehicle Front Photo</label>
+          {{ form_widget(form.vehicleFrontPhoto) }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Insurance Note</label>
+          {{ form_widget(form.insuranceNote) }}
+        </div>
+      </div>
+    {% elseif step == 5 %}
+      <div class="row g-3">
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch">
+            {{ form_widget(form.active, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(form.active, 'Activate account', {'label_attr': {'class': 'form-check-label ms-2'}}) }}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <div class="mt-3 d-flex gap-2">
+      {% if step > 1 %}
+        <a class="btn btn-outline-secondary" href="{{ path('admin_user_wizard', { step: step - 1 }) }}"><i class="fas fa-arrow-left"></i> Back</a>
+      {% endif %}
+      <button type="submit" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Next</button>
+    </div>
+  {{ form_end(form) }}
 {% endblock %}
 
 {% block body_javascript %}
-  {{ parent() }}
   {% if step == 4 %}
     <script>
       (function(){

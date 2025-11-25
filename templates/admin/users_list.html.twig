@@ -1,10 +1,17 @@
-{% extends '@EasyAdmin/page/content.html.twig' %}
+{% extends 'admin/layout.html.twig' %}
 
 {% block content_title %}Users{% endblock %}
 
 {% block content %}
-  <div class="container py-4">
-    <table class="table table-striped">
+  <div class="row mb-3">
+    <div class="col-12 col-md-6">
+      <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input id="users-search" type="text" class="form-control" placeholder="Search users">
+      </div>
+    </div>
+  </div>
+  <table id="users-table" class="table table-striped">
       <thead>
         <tr>
           <th>ID</th>
@@ -57,6 +64,25 @@
           </tr>
         {% endfor %}
       </tbody>
-    </table>
-  </div>
+  </table>
+{% endblock %}
+
+{% block body_javascript %}
+  <script>
+    (function(){
+      var input = document.getElementById('users-search');
+      var table = document.getElementById('users-table');
+      if (!input || !table) return;
+      var tbody = table.querySelector('tbody');
+      function filter(){
+        var term = (input.value || '').trim().toLowerCase();
+        var rows = tbody ? Array.prototype.slice.call(tbody.rows) : [];
+        rows.forEach(function(tr){
+          var text = tr.textContent.toLowerCase();
+          tr.style.display = term === '' || text.indexOf(term) !== -1 ? '' : 'none';
+        });
+      }
+      input.addEventListener('input', filter);
+    })();
+  </script>
 {% endblock %}

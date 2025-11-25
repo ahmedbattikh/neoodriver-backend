@@ -34,10 +34,11 @@ final class DashboardController extends AbstractDashboardController
 
     public function configureAssets(): Assets
     {
-        // Layout override loads Bootstrap, Adminator CSS, and icon fonts.
-        // Only include our local tweaks via assets to allow cache-busting if needed.
         return Assets::new()
-            ->addCssFile('/css/adminator-overrides.css');
+            ->addJsFile('/vendor/bootstrap/js/bootstrap.bundle.min.js')
+            ->addCssFile('/vendor/adminlte/dist/css/adminlte.min.css')
+            ->addCssFile('/vendor/fontawesome/css/all.min.css')
+            ->addJsFile('/vendor/adminlte/dist/js/adminlte.min.js');
     }
 
     // Optional: show icons in the main menu using Font Awesome (loaded by layout override)
@@ -45,9 +46,9 @@ final class DashboardController extends AbstractDashboardController
     // use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
     public function configureMenuItems(): iterable
     {
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Add User (Wizard)', 'fa fa-user-plus', 'admin_user_wizard', ['step' => 1]);
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Users', 'fa fa-users', 'admin_users_list');
+        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToDashboard('Dashboard', 'fas fa-home');
+        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Add User (Wizard)', 'fas fa-user-plus', 'admin_user_wizard', ['step' => 1]);
+        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Users', 'fas fa-users', 'admin_users_list');
     }
 
     #[Route('/admin/users', name: 'admin_users_list')]
@@ -59,7 +60,7 @@ final class DashboardController extends AbstractDashboardController
         ]);
     }
 
-    #[Route('/admin/users/{id}', name: 'admin_user_show', methods: ['GET'])]
+    #[Route('/admin/users/{id}', name: 'admin_user_show', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function userShow(int $id): Response
     {
         $user = $this->em->getRepository(User::class)->find($id);
@@ -71,7 +72,7 @@ final class DashboardController extends AbstractDashboardController
         ]);
     }
 
-    #[Route('/admin/users/{id}/edit', name: 'admin_user_edit', methods: ['GET', 'POST'])]
+    #[Route('/admin/users/{id}/edit', name: 'admin_user_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
     public function userEdit(Request $request, int $id): Response
     {
         $user = $this->em->getRepository(User::class)->find($id);

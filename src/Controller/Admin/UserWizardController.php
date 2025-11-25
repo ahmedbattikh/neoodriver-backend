@@ -82,6 +82,21 @@ final class UserWizardController extends AbstractDashboardController
         if (!$user instanceof User) {
             return $this->redirectToRoute('admin_user_wizard', ['step' => 1]);
         }
+        $driver = null;
+        $driverId = (int)($this->requestStack->getSession()?->get('wizard_driver_id', 0) ?? 0);
+        if ($driverId > 0) {
+            $driver = $this->em->getRepository(Driver::class)->find($driverId);
+        }
+        if (!$driver instanceof Driver) {
+            $driver = $user->getDriverProfile();
+            if (!$driver instanceof Driver) {
+                $driver = new Driver();
+                $driver->setUser($user);
+                $this->em->persist($driver);
+                $this->em->flush();
+            }
+            $this->requestStack->getSession()?->set('wizard_driver_id', $driver->getId());
+        }
 
         if ($step === 2) {
             $driverDocs = $driver->getDocuments() ?? new DriverDocuments();
@@ -125,56 +140,8 @@ final class UserWizardController extends AbstractDashboardController
             ]);
         }
 
-        $driverId = (int)($this->requestStack->getSession()?->get('wizard_driver_id', 0) ?? 0);
-        if ($driverId <= 0) {
-            return $this->redirectToRoute('admin_user_wizard', ['step' => 2]);
-        }
-        $driver = $this->em->getRepository(Driver::class)->find($driverId);
-        if (!$driver instanceof Driver) {
-            return $this->redirectToRoute('admin_user_wizard', ['step' => 2]);
-        }
+        
 
-        if ($step === 3) {
-            $driverDocs = $driver->getDocuments() ?? new DriverDocuments();
-            $driverDocs->setDriver($driver);
-            $form = $this->createForm(DriverDocumentsStepType::class, $driverDocs, ['user' => $user]);
-            $form->handleRequest($request);
-            if ($form->isSubmitted() && $form->isValid()) {
-                $map = [
-                    'identityPhoto' => AttachmentField::DRIVER_IDENTITY_PHOTO,
-                    'vtcCardFront' => AttachmentField::DRIVER_VTC_CARD_FRONT,
-                    'vtcCardBack' => AttachmentField::DRIVER_VTC_CARD_BACK,
-                    'drivingLicenseFront' => AttachmentField::DRIVER_DRIVING_LICENSE_FRONT,
-                    'drivingLicenseBack' => AttachmentField::DRIVER_DRIVING_LICENSE_BACK,
-                    'identityCardFront' => AttachmentField::DRIVER_IDENTITY_CARD_FRONT,
-                    'identityCardBack' => AttachmentField::DRIVER_IDENTITY_CARD_BACK,
-                    'healthCard' => AttachmentField::DRIVER_HEALTH_CARD,
-                    'bankStatement' => AttachmentField::DRIVER_BANK_STATEMENT,
-                    'proofOfResidence' => AttachmentField::DRIVER_PROOF_OF_RESIDENCE,
-                    'secureDrivingRightCertificate' => AttachmentField::DRIVER_SECURE_DRIVING_RIGHT_CERTIFICATE,
-                ];
-                foreach ($map as $field => $af) {
-                    $uploaded = $form->get($field)->getData();
-                    if ($uploaded instanceof UploadedFile) {
-                        $att = $this->uploadAttachment($uploaded, $af, $user, $driver->getId());
-                        $setter = 'set' . ucfirst($field);
-                        $driverDocs->$setter($att);
-                    }
-                }
-                if ($driverDocs->getId() === null) {
-                    $this->em->persist($driverDocs);
-                }
-                $driver->setDocuments($driverDocs);
-                $this->em->flush();
-                $this->requestStack->getSession()?->set('wizard_driver_docs_id', $driverDocs->getId());
-                return $this->redirectToRoute('admin_user_wizard', ['step' => 4]);
-            }
-            return $this->render('admin/user_wizard.html.twig', [
-                'step' => 3,
-                'form' => $form->createView(),
-                'title' => 'Step 3 — Driver Documents',
-            ]);
-        }
 
         $companyDocs = $driver->getCompanyDocuments() ?? new CompanyDocuments();
         $companyDocs->setDriver($driver);
@@ -203,7 +170,7 @@ final class UserWizardController extends AbstractDashboardController
             }
             $driver->setCompanyDocuments($companyDocs);
             $this->em->flush();
-            return $this->redirectToRoute('admin_user_wizard', ['step' => 5]);
+            return $this->redirectToRoute('admin_user_wizard', ['step' => 4]);
         }
         if ($step === 3) {
             return $this->render('admin/user_wizard.html.twig', [
@@ -263,7 +230,7 @@ final class UserWizardController extends AbstractDashboardController
         ]);
     }
 
-    #[Route('/admin/users/{id}/resume/{step}', name: 'admin_user_wizard_resume', methods: ['GET'])]
+    #[Route('/admin/users/{id}/resume/{step}', name: 'admin_user_wizard_resume', methods: ['GET'], requirements: ['id' => '\\d+', 'step' => '\\d+'])]
     public function resume(int $id, int $step): Response
     {
         if ($step < 1) { $step = 1; }
