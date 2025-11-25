@@ -7,7 +7,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 final class HealthController
 {
-    #[Route('/health', name: 'app_health', methods: ['GET'])]
+    #[Route('/health', name: 'app_health', methods: ['GET'], defaults: ['_format' => 'json'])]
     public function __invoke(): JsonResponse
     {
         $tag = $_SERVER['DEPLOY_TAG'] ?? $_ENV['DEPLOY_TAG'] ?? null;

@@ -98,7 +98,7 @@ final class R2Client
 
     public function ensureUserFolders(string $reference): void
     {
-        foreach (['company', 'driver', 'vehicle'] as $folder) {
+        foreach (['company', 'driver', 'vehicle', 'user'] as $folder) {
             $this->putObject($reference . '/' . $folder . '/.keep');
         }
     }

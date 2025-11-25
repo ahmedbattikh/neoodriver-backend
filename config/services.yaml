@@ -31,6 +31,10 @@ services:
             $bucket: '%r2.bucket%'
             $endpoint: '%r2.endpoint%'
 
+    App\Form\UserWizard\VehicleStepType:
+        arguments:
+            $vehicleModelsPath: '%kernel.project_dir%/public/data/all-vehicles-model.json'
+
     App\EventSubscriber\UserSubscriber:
         tags:
             - { name: 'doctrine.event_subscriber' }

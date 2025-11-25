@@ -21,25 +21,25 @@ class Vehicle
     private Driver $driver;
 
     #[ORM\Column(length: 32)]
-    private string $registrationNumber;
+    private string $registrationNumber = '';
 
     #[ORM\Column(length: 64)]
-    private string $make;
+    private string $make = '';
 
     #[ORM\Column(length: 64)]
-    private string $model;
+    private string $model = '';
 
     #[ORM\Column]
-    private int $firstRegistrationYear;
+    private int $firstRegistrationYear = 0;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     private ?\DateTimeImmutable $registrationDate = null;
 
     #[ORM\Column]
-    private int $seatCount;
+    private int $seatCount = 0;
 
     #[ORM\Column(enumType: EnergyType::class)]
-    private EnergyType $energyType;
+    private EnergyType $energyType = EnergyType::OTHER;
 
     // Attachments
     #[ORM\ManyToOne(targetEntity: Attachment::class)]

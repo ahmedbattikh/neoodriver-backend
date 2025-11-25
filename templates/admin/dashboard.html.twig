@@ -1,10 +1,14 @@
-{% extends 'base.html.twig' %}
+{% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block content_title %}Admin Dashboard{% endblock %}
 
-{% block body %}
-  <div style="max-width:960px;margin:2rem auto;padding:1rem">
-    <h1>Admin Dashboard</h1>
+{% block content %}
+  <div class="container py-4">
     <p>Welcome, super admin. Use the sidebar to manage resources.</p>
+    <div class="mt-4">
+      <a href="{{ path('admin_user_wizard', { step: 1 }) }}" class="btn btn-primary">
+        Start User Creation Wizard
+      </a>
+    </div>
   </div>
 {% endblock %}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\User;
+use App\Enum\AttachmentField;
 use App\Service\Storage\R2Client;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -51,6 +52,8 @@ final class R2DebugCommand extends Command
         try {
             $this->r2->ensureUserFolders($reference);
             $this->r2->putObject($reference . '/__debug__.txt', 'r2-ok', 'text/plain', [], true);
+            $debugKey = AttachmentField::DRIVER_IDENTITY_PHOTO->key($reference, (int) $user->getId());
+            $this->r2->putObject($debugKey . '.txt', 'field-ok', 'text/plain', [], true);
             $io->success(sprintf('R2 folders ensured and debug object uploaded for %s.', $reference));
             return Command::SUCCESS;
         } catch (\Throwable $e) {

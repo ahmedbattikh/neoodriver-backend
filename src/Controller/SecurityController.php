@@ -32,7 +32,7 @@ final class SecurityController extends AbstractController
     /**
      * Admin login form (GET). The POST is handled by the form_login authenticator.
      */
-    #[Route('/admin/login', name: 'admin_login', methods: ['GET'])]
+    #[Route('/admin/login', name: 'admin_login', methods: ['GET', 'POST'])]
     public function adminLogin(AuthenticationUtils $authUtils): Response
     {
         if ($this->getUser()) {

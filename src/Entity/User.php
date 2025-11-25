@@ -6,6 +6,8 @@ use App\Repository\UserRepository;
 use App\Enum\UserRole;
 use JMS\Serializer\Annotation as JMS;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -67,6 +69,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(enumType: UserRole::class, nullable: true)]
     #[JMS\Groups(['me:read'])]
     private ?UserRole $role = null;
+
+    #[ORM\ManyToOne(targetEntity: Attachment::class)]
+    #[ORM\JoinColumn(onDelete: 'SET NULL', nullable: true)]
+    #[JMS\Groups(['me:read'])]
+    private ?Attachment $picProfile = null;
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?Driver $driverProfile = null;
+
+    /** @var Collection<int, Attachment> */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Attachment::class, cascade: ['persist', 'remove'])]
+    private Collection $attachments;
 
     /**
      * @var list<string> The user roles
@@ -219,6 +233,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getPicProfile(): ?Attachment
+    {
+        return $this->picProfile;
+    }
+
+    public function setPicProfile(?Attachment $attachment): static
+    {
+        $this->picProfile = $attachment;
+        return $this;
+    }
+
+    public function getDriverProfile(): ?Driver
+    {
+        return $this->driverProfile;
+    }
+
+    public function setDriverProfile(?Driver $driver): static
+    {
+        $this->driverProfile = $driver;
+        if ($driver && $driver->getUser() !== $this) {
+            $driver->setUser($this);
+        }
+        return $this;
+    }
+
     /**
      * A visual identifier that represents this user.
      *
@@ -248,6 +287,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->roles = $roles;
 
+        return $this;
+    }
+
+    /** @return Collection<int, Attachment> */
+    public function getAttachments(): Collection
+    {
+        return $this->attachments;
+    }
+
+    public function addAttachment(Attachment $attachment): static
+    {
+        if (!isset($this->attachments) || !$this->attachments->contains($attachment)) {
+            $this->attachments->add($attachment);
+            $attachment->setUser($this);
+        }
+        return $this;
+    }
+
+    public function removeAttachment(Attachment $attachment): static
+    {
+        if (isset($this->attachments) && $this->attachments->removeElement($attachment)) {
+            if ($attachment->getUser() === $this) {
+                $attachment->setUser(null);
+            }
+        }
         return $this;
     }
 
@@ -286,6 +350,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
+        if (!isset($this->attachments)) {
+            $this->attachments = new ArrayCollection();
+        }
         if ($this->reference === null) {
             $this->reference = $this->generateReference();
         }

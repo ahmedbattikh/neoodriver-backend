@@ -2,10 +2,14 @@ fos_rest:
   routing_loader: false
   format_listener:
     rules:
+      - { path: '^/admin', priorities: ['html'], fallback_format: 'html', prefer_extension: true }
+      - { path: '^/health', priorities: ['json'], fallback_format: 'json', prefer_extension: false }
       - { path: '^/api', priorities: ['json'], fallback_format: 'json', prefer_extension: false }
+      - { path: '^/', priorities: ['json', 'html'], fallback_format: 'json', prefer_extension: false }
   view:
     formats:
       json: true
+      html: true
     view_response_listener: 'force'
   serializer:
     serialize_null: true
