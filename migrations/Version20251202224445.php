@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20251117182139 extends AbstractMigration
+final class Version20251202224445 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -26,7 +26,7 @@ final class Version20251117182139 extends AbstractMigration
         $this->addSql('CREATE TABLE driver_documents (id INT AUTO_INCREMENT NOT NULL, driver_id INT NOT NULL, identity_photo_id INT DEFAULT NULL, vtc_card_front_id INT DEFAULT NULL, vtc_card_back_id INT DEFAULT NULL, driving_license_front_id INT DEFAULT NULL, driving_license_back_id INT DEFAULT NULL, identity_card_front_id INT DEFAULT NULL, identity_card_back_id INT DEFAULT NULL, health_card_id INT DEFAULT NULL, bank_statement_id INT DEFAULT NULL, proof_of_residence_id INT DEFAULT NULL, secure_driving_right_certificate_id INT DEFAULT NULL, vtc_card_valid TINYINT(1) NOT NULL, vtc_card_expiration_date DATE DEFAULT NULL COMMENT \'(DC2Type:date_immutable)\', driving_license_valid TINYINT(1) NOT NULL, driving_license_expiration_date DATE DEFAULT NULL COMMENT \'(DC2Type:date_immutable)\', identity_card_valid TINYINT(1) NOT NULL, identity_card_expiration_date DATE DEFAULT NULL COMMENT \'(DC2Type:date_immutable)\', health_card_valid TINYINT(1) NOT NULL, social_security_number VARCHAR(32) DEFAULT NULL, bank_statement_valid TINYINT(1) NOT NULL, iban VARCHAR(34) DEFAULT NULL, is_hosted TINYINT(1) NOT NULL, proof_of_residence_valid TINYINT(1) NOT NULL, secure_driving_right_certificate_valid TINYINT(1) NOT NULL, created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', updated_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', UNIQUE INDEX UNIQ_8D927991C3423909 (driver_id), INDEX IDX_8D9279913D751045 (identity_photo_id), INDEX IDX_8D9279913F0D47B5 (vtc_card_front_id), INDEX IDX_8D927991F7BD1538 (vtc_card_back_id), INDEX IDX_8D927991D332322E (driving_license_front_id), INDEX IDX_8D927991AB3AA8F9 (driving_license_back_id), INDEX IDX_8D9279918A03FA9 (identity_card_front_id), INDEX IDX_8D92799182FEF9D3 (identity_card_back_id), INDEX IDX_8D927991D7650767 (health_card_id), INDEX IDX_8D92799144045140 (bank_statement_id), INDEX IDX_8D9279917BA4841F (proof_of_residence_id), INDEX IDX_8D92799180D14BE1 (secure_driving_right_certificate_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE login_otps (id INT AUTO_INCREMENT NOT NULL, email VARCHAR(180) NOT NULL, code_hash VARCHAR(255) NOT NULL, expires_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', consumed_at DATETIME DEFAULT NULL, attempts INT NOT NULL, ip_address VARCHAR(64) DEFAULT NULL, created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE refresh_tokens (id INT AUTO_INCREMENT NOT NULL, refresh_token VARCHAR(128) NOT NULL, username VARCHAR(255) NOT NULL, valid DATETIME NOT NULL, UNIQUE INDEX UNIQ_9BACE7E1C74F2195 (refresh_token), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('CREATE TABLE user (id INT AUTO_INCREMENT NOT NULL, email VARCHAR(180) NOT NULL, first_name VARCHAR(64) DEFAULT NULL, last_name VARCHAR(64) DEFAULT NULL, birth_date DATE DEFAULT NULL COMMENT \'(DC2Type:date_immutable)\', country_of_birth VARCHAR(128) DEFAULT NULL, city_of_birth VARCHAR(128) DEFAULT NULL, birth_department VARCHAR(64) DEFAULT NULL, address VARCHAR(255) DEFAULT NULL, city VARCHAR(128) DEFAULT NULL, mobile_number VARCHAR(32) DEFAULT NULL, role VARCHAR(255) DEFAULT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, UNIQUE INDEX UNIQ_IDENTIFIER_EMAIL (email), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE user (id INT AUTO_INCREMENT NOT NULL, pic_profile_id INT DEFAULT NULL, email VARCHAR(180) NOT NULL, reference VARCHAR(32) DEFAULT NULL, first_name VARCHAR(64) DEFAULT NULL, last_name VARCHAR(64) DEFAULT NULL, birth_date DATE DEFAULT NULL COMMENT \'(DC2Type:date_immutable)\', country_of_birth VARCHAR(128) DEFAULT NULL, city_of_birth VARCHAR(128) DEFAULT NULL, birth_department VARCHAR(64) DEFAULT NULL, address VARCHAR(255) DEFAULT NULL, city VARCHAR(128) DEFAULT NULL, mobile_number VARCHAR(32) DEFAULT NULL, role VARCHAR(255) DEFAULT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, UNIQUE INDEX UNIQ_8D93D649AEA34913 (reference), INDEX IDX_8D93D6492948F7E0 (pic_profile_id), UNIQUE INDEX UNIQ_IDENTIFIER_EMAIL (email), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE vehicle (id INT AUTO_INCREMENT NOT NULL, driver_id INT NOT NULL, registration_certificate_id INT DEFAULT NULL, paid_transport_insurance_certificate_id INT DEFAULT NULL, technical_inspection_id INT DEFAULT NULL, vehicle_front_photo_id INT DEFAULT NULL, insurance_note_id INT DEFAULT NULL, registration_number VARCHAR(32) NOT NULL, make VARCHAR(64) NOT NULL, model VARCHAR(64) NOT NULL, first_registration_year INT NOT NULL, registration_date DATE DEFAULT NULL COMMENT \'(DC2Type:date_immutable)\', seat_count INT NOT NULL, energy_type VARCHAR(255) NOT NULL, insurance_expiration_date DATE DEFAULT NULL COMMENT \'(DC2Type:date_immutable)\', created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', updated_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', INDEX IDX_1B80E486C3423909 (driver_id), INDEX IDX_1B80E486BEBCD1AF (registration_certificate_id), INDEX IDX_1B80E486E9C9A2FC (paid_transport_insurance_certificate_id), INDEX IDX_1B80E4869712828 (technical_inspection_id), INDEX IDX_1B80E486157BF883 (vehicle_front_photo_id), INDEX IDX_1B80E486CBCC2DF0 (insurance_note_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE attachment ADD CONSTRAINT FK_795FD9BBA76ED395 FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE company_documents ADD CONSTRAINT FK_91ABF878C3423909 FOREIGN KEY (driver_id) REFERENCES driver (id)');
@@ -50,6 +50,7 @@ final class Version20251117182139 extends AbstractMigration
         $this->addSql('ALTER TABLE driver_documents ADD CONSTRAINT FK_8D92799144045140 FOREIGN KEY (bank_statement_id) REFERENCES attachment (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE driver_documents ADD CONSTRAINT FK_8D9279917BA4841F FOREIGN KEY (proof_of_residence_id) REFERENCES attachment (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE driver_documents ADD CONSTRAINT FK_8D92799180D14BE1 FOREIGN KEY (secure_driving_right_certificate_id) REFERENCES attachment (id) ON DELETE SET NULL');
+        $this->addSql('ALTER TABLE user ADD CONSTRAINT FK_8D93D6492948F7E0 FOREIGN KEY (pic_profile_id) REFERENCES attachment (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE vehicle ADD CONSTRAINT FK_1B80E486C3423909 FOREIGN KEY (driver_id) REFERENCES driver (id)');
         $this->addSql('ALTER TABLE vehicle ADD CONSTRAINT FK_1B80E486BEBCD1AF FOREIGN KEY (registration_certificate_id) REFERENCES attachment (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE vehicle ADD CONSTRAINT FK_1B80E486E9C9A2FC FOREIGN KEY (paid_transport_insurance_certificate_id) REFERENCES attachment (id) ON DELETE SET NULL');
@@ -83,6 +84,7 @@ final class Version20251117182139 extends AbstractMigration
         $this->addSql('ALTER TABLE driver_documents DROP FOREIGN KEY FK_8D92799144045140');
         $this->addSql('ALTER TABLE driver_documents DROP FOREIGN KEY FK_8D9279917BA4841F');
         $this->addSql('ALTER TABLE driver_documents DROP FOREIGN KEY FK_8D92799180D14BE1');
+        $this->addSql('ALTER TABLE user DROP FOREIGN KEY FK_8D93D6492948F7E0');
         $this->addSql('ALTER TABLE vehicle DROP FOREIGN KEY FK_1B80E486C3423909');
         $this->addSql('ALTER TABLE vehicle DROP FOREIGN KEY FK_1B80E486BEBCD1AF');
         $this->addSql('ALTER TABLE vehicle DROP FOREIGN KEY FK_1B80E486E9C9A2FC');
@@ -97,5 +99,10 @@ final class Version20251117182139 extends AbstractMigration
         $this->addSql('DROP TABLE refresh_tokens');
         $this->addSql('DROP TABLE user');
         $this->addSql('DROP TABLE vehicle');
+    }
+
+    public function isTransactional(): bool
+    {
+        return false;
     }
 }

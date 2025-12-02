@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -6,6 +7,7 @@ namespace App\Entity;
 use App\Enum\AttachmentType;
 use App\Repository\AttachmentRepository;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as JMS;
 
 #[ORM\Entity(repositoryClass: AttachmentRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -14,6 +16,7 @@ class Attachment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[JMS\Groups(['me:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -23,6 +26,7 @@ class Attachment
     private ?string $originalFileName = null;
 
     #[ORM\Column(length: 255)]
+    #[JMS\Groups(['me:read'])]
     private string $filePath;
 
     #[ORM\Column]

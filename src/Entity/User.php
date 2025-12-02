@@ -66,6 +66,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[JMS\Groups(['me:read'])]
     private ?string $mobileNumber = null;
 
+    #[ORM\Column(options: ['default' => false])]
+    #[JMS\Groups(['me:read'])]
+    private bool $driverStepCompleted = false;
+
+    #[ORM\Column(options: ['default' => false])]
+    #[JMS\Groups(['me:read'])]
+    private bool $vehicleStepCompleted = false;
+
     #[ORM\Column(enumType: UserRole::class, nullable: true)]
     private ?UserRole $role = null;
 
@@ -75,6 +83,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Attachment $picProfile = null;
 
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[JMS\Groups(['me:read'])]
     private ?Driver $driverProfile = null;
 
     /** @var Collection<int, Attachment> */
@@ -221,6 +230,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function isDriverStepCompleted(): bool
+    {
+        return $this->driverStepCompleted;
+    }
+
+    public function setDriverStepCompleted(bool $completed): static
+    {
+        $this->driverStepCompleted = $completed;
+        return $this;
+    }
+
+    public function isVehicleStepCompleted(): bool
+    {
+        return $this->vehicleStepCompleted;
+    }
+
+    public function setVehicleStepCompleted(bool $completed): static
+    {
+        $this->vehicleStepCompleted = $completed;
+        return $this;
+    }
+
     public function getRole(): ?UserRole
     {
         return $this->role;
@@ -343,7 +374,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __serialize(): array
     {
         $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
 
         return $data;
     }

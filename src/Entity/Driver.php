@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -7,6 +8,9 @@ use App\Repository\DriverRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as JMS;
+
+
 
 #[ORM\Entity(repositoryClass: DriverRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -15,6 +19,7 @@ class Driver
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[JMS\Groups(['me:read'])]
     private ?int $id = null;
 
     #[ORM\OneToOne(inversedBy: 'driverProfile')]
@@ -22,22 +27,28 @@ class Driver
     private User $user;
 
     #[ORM\Column]
+    #[JMS\Groups(['me:read'])]
     private bool $active = true;
 
     #[ORM\Column(type: 'datetime_immutable')]
+    #[JMS\Groups(['me:read'])]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable')]
+    #[JMS\Groups(['me:read'])]
     private \DateTimeImmutable $updatedAt;
 
     #[ORM\OneToOne(mappedBy: 'driver', cascade: ['persist', 'remove'])]
+    #[JMS\Groups(['me:read'])]
     private ?DriverDocuments $documents = null;
 
     #[ORM\OneToOne(mappedBy: 'driver', cascade: ['persist', 'remove'])]
+    #[JMS\Groups(['me:read'])]
     private ?CompanyDocuments $companyDocuments = null;
 
     /** @var Collection<int, Vehicle> */
     #[ORM\OneToMany(mappedBy: 'driver', targetEntity: Vehicle::class, cascade: ['persist', 'remove'])]
+    #[JMS\Groups(['me:read'])]
     private Collection $vehicles;
 
     public function __construct()
