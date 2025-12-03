@@ -58,6 +58,7 @@ jobs:
           script: |
             set -eu
             ENV_PATH=~/apps/neoodriver-backend/.env
+            ENV_PROD_PATH=~/apps/neoodriver-backend/.env.prod
             {
               echo "APP_ENV=prod"
               echo "APP_DEBUG=0"
@@ -114,7 +115,15 @@ jobs:
                 echo "[WARN] JWT_REFRESH_TTL is empty; defaulting to 30 days (2592000)." >&2
               fi
               echo "JWT_REFRESH_TTL=$JWT_REFRESH_TTL_VAL"
+              echo ""
+              echo "# Cloudflare R2"
+              echo "R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}"
+              echo "R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}"
+              echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}"
+              echo "R2_BUCKET=${{ secrets.R2_BUCKET }}"
+              echo "R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}"
             } > "$ENV_PATH"
+            cp "$ENV_PATH" "$ENV_PROD_PATH"
 
       - name: Build and run services on VPS
         uses: appleboy/ssh-action@v1.0.0

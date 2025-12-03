@@ -4,11 +4,17 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    r2.account_id: '%env(R2_ACCOUNT_ID)%'
-    r2.access_key_id: '%env(R2_ACCESS_KEY_ID)%'
-    r2.secret_access_key: '%env(R2_SECRET_ACCESS_KEY)%'
-    r2.bucket: '%env(R2_BUCKET)%'
-    r2.endpoint: '%env(R2_ENDPOINT)%'
+    r2.default_account_id: ''
+    r2.default_access_key_id: ''
+    r2.default_secret_access_key: ''
+    r2.default_bucket: ''
+    r2.default_endpoint: ''
+
+    r2.account_id: '%env(default:r2.default_account_id:R2_ACCOUNT_ID)%'
+    r2.access_key_id: '%env(default:r2.default_access_key_id:R2_ACCESS_KEY_ID)%'
+    r2.secret_access_key: '%env(default:r2.default_secret_access_key:R2_SECRET_ACCESS_KEY)%'
+    r2.bucket: '%env(default:r2.default_bucket:R2_BUCKET)%'
+    r2.endpoint: '%env(default:r2.default_endpoint:R2_ENDPOINT)%'
 
 services:
     _defaults:
