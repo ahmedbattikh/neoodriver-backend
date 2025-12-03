@@ -30,23 +30,6 @@ services:
     # Bind HTTP only to localhost:8080 to avoid conflicts with host Nginx/Caddy
     ports:
       - "127.0.0.1:8080:80"
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - >-
-          php -r '
-            $s = @stream_socket_client("tcp://127.0.0.1:80", $e, $em, 5);
-            if(!$s){ exit(1); }
-            fwrite($s, "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
-            $o = stream_get_contents($s);
-            fclose($s);
-            $ok = (strpos($o, " 200 ") !== false) || (strpos($o, '"status":"ok"') !== false);
-            exit($ok ? 0 : 1);
-          '
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
 
   phpmyadmin:
     image: phpmyadmin:latest
