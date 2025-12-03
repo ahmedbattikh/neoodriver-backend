@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.default_secret: '5E7nGHjU#QWE%3qnG@nm6jxeHqFR7jgV*J*'
+    mailer.default_dsn: 'null://null'
     r2.default_account_id: ''
     r2.default_access_key_id: ''
     r2.default_secret_access_key: ''
