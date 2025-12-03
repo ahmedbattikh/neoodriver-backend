@@ -6,6 +6,7 @@
 parameters:
     app.default_secret: '5E7nGHjU#QWE%3qnG@nm6jxeHqFR7jgV*J*'
     mailer.default_dsn: 'null://null'
+    otp.default_fixed_code: '123456'
     r2.default_account_id: ''
     r2.default_access_key_id: ''
     r2.default_secret_access_key: ''
@@ -17,6 +18,7 @@ parameters:
     r2.secret_access_key: '%env(default:r2.default_secret_access_key:R2_SECRET_ACCESS_KEY)%'
     r2.bucket: '%env(default:r2.default_bucket:R2_BUCKET)%'
     r2.endpoint: '%env(default:r2.default_endpoint:R2_ENDPOINT)%'
+    otp.fixed_code: '%env(default:otp.default_fixed_code:OTP_FIXED_CODE)%'
 
 services:
     _defaults:

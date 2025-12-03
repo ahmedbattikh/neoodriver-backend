@@ -19,6 +19,7 @@ class OtpLoginService
     private int $resendCooldownSeconds;
     private int $maxAttempts;
     private string $fromEmail;
+    private string $fixedCode;
 
     public function __construct(
         LoginOtpRepository $repository,
@@ -32,6 +33,7 @@ class OtpLoginService
         $this->resendCooldownSeconds = 60; // 1 minute cooldown
         $this->maxAttempts = 5;
         $this->fromEmail = 'no-reply@neoodriver.test';
+        $this->fixedCode = (string) $params->get('otp.fixed_code');
     }
 
     /**
@@ -41,14 +43,14 @@ class OtpLoginService
     public function requestCode(string $email, ?string $ipAddress = null): array
     {
         $existing = $this->repository->findLatestActiveByEmail($email);
-        if ($existing !== null) {
+        if ($existing !== null && $this->fixedCode === '') {
             $cooldownUntil = $existing->getCreatedAt()->modify('+' . $this->resendCooldownSeconds . ' seconds');
             if ($cooldownUntil > new \DateTimeImmutable('now')) {
                 return ['otp' => $existing, 'code' => null, 'cooldown' => $this->resendCooldownSeconds];
             }
         }
 
-        $code = (string) random_int(100000, 999999);
+        $code = $this->fixedCode !== '' ? str_pad($this->fixedCode, 6, '0', STR_PAD_LEFT) : (string) random_int(100000, 999999);
         $hash = hash_hmac('sha256', $code, $this->secret);
         $expiresAt = new \DateTimeImmutable('+' . $this->otpTtlSeconds . ' seconds');
         $otp = new LoginOtp($email, $hash, $expiresAt, $ipAddress);
