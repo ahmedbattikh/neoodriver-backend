@@ -139,9 +139,6 @@ final class OtpLoginController extends AbstractController
             $this->em->flush();
         }
 
-        $user->setDriverStepCompleted(false);
-        $user->setVehicleStepCompleted(false);
-        $this->em->flush();
 
         // Issue JWT access token
         $token = $this->jwtManager->create($user);
