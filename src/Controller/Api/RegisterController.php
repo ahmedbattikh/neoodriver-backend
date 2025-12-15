@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller\Api;
@@ -22,6 +23,8 @@ use Symfony\Component\Validator\Constraints\Email as EmailConstraint;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mailer\MailerInterface;
 
 #[Route('/api/register', name: 'api_register', methods: ['POST'])]
 final class RegisterController extends AbstractController
@@ -33,6 +36,7 @@ final class RegisterController extends AbstractController
         private readonly ValidatorInterface $validator,
         private readonly OtpLoginService $otpService,
         private readonly R2Client $r2,
+        private readonly MailerInterface $mailer,
     ) {}
 
     private function getField(Request $request, string $key): string
@@ -43,7 +47,8 @@ final class RegisterController extends AbstractController
             try {
                 $data = $request->toArray();
                 $value = (string) ($data[$key] ?? '');
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
         if ($value === '') {
             $value = (string) $request->request->get($key, '');
@@ -70,6 +75,7 @@ final class RegisterController extends AbstractController
         }
 
         $user = $this->users->findOneBy(['email' => $email]);
+        $isNew = false;
         if (!$user instanceof User) {
             $user = new User();
             $user->setEmail($email);
@@ -83,6 +89,7 @@ final class RegisterController extends AbstractController
             if ($user->getReference()) {
                 $this->r2->ensureUserFolders($user->getReference());
             }
+            $isNew = true;
         } else {
             $user->setFirstName($this->getField($request, 'firstName') ?: $user->getFirstName());
             $user->setLastName($this->getField($request, 'lastName') ?: $user->getLastName());
@@ -99,6 +106,17 @@ final class RegisterController extends AbstractController
         }
 
         $result = $this->otpService->requestCode($email, $request->getClientIp());
+
+        if ($isNew) {
+            $welcome = (new TemplatedEmail())
+                ->from('no-reply@neoodriver.test')
+                ->to($email)
+                ->subject('Bienvenue sur NeoDriver')
+                ->htmlTemplate('email/welcome.html.twig')
+                ->textTemplate('email/welcome.txt.twig')
+                ->context(['user' => $user]);
+            $this->mailer->send($welcome);
+        }
 
         $payload = [
             'status' => 'ok',

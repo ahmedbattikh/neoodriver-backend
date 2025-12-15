@@ -1,0 +1,231 @@
+{
+    "info": {
+        "name": "NeoDriver API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_postman_id": "b7f4f1a3-4c52-4f1e-9c01-000000000001"
+    },
+    "variable": [
+        { "key": "baseUrl", "value": "http://localhost" },
+        { "key": "accessToken", "value": "" },
+        { "key": "otpCode", "value": "" },
+        { "key": "vehicleId", "value": "1" }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            { "key": "token", "value": "{{accessToken}}", "type": "string" }
+        ]
+    },
+    "item": [
+        {
+            "name": "Register",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"user@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"mobileNumber\": \"+33123456789\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/register",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "register"]
+                }
+            }
+        },
+        {
+            "name": "Request OTP Code",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"user@example.com\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/login/email",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "login", "email"]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "const json = pm.response.json();",
+                            "if (json.debugCode) { pm.collectionVariables.set('otpCode', json.debugCode); }"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Login with OTP",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/login/otp",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "login", "otp"]
+                }
+            },
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "const json = pm.response.json();",
+                            "if (json.token) { pm.collectionVariables.set('accessToken', json.token); }"
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Secure",
+            "item": [
+                {
+                    "name": "Me",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/me",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "me"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Driver",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"active\": true,\n  \"vtcCardExpirationDate\": \"2026-12-31\",\n  \"drivingLicenseExpirationDate\": \"2027-01-01\",\n  \"identityCardExpirationDate\": \"2028-06-30\",\n  \"socialSecurityNumber\": \"1234567890123\",\n  \"iban\": \"FR7612345987650123456789014\",\n  \"isHosted\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/driver",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "driver"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Vehicle",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"registrationNumber\": \"AB-123-CD\",\n  \"make\": \"TOYOTA\",\n  \"model\": \"Corolla\",\n  \"firstRegistrationYear\": 2022,\n  \"registrationDate\": \"2022-05-01\",\n  \"seatCount\": 5,\n  \"energyType\": \"HYBRID\",\n  \"insuranceExpirationDate\": \"2026-01-01\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/vehicle",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "vehicle"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"mobileNumber\": \"+33000000000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/user",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "user"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Driver Documents",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"vtcCardValid\": \"DOCUMENT_VALID\",\n  \"drivingLicenseValid\": \"DOCUMENT_INVALIDE\",\n  \"identityCardValid\": \"VALIDATION_INPROGRESS\",\n  \"vtcCardExpirationDate\": \"2026-12-31\",\n  \"drivingLicenseExpirationDate\": \"2027-01-01\",\n  \"identityCardExpirationDate\": \"2028-06-30\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/driver-documents",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "driver-documents"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Vehicle",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"registrationNumber\": \"AB-321-CD\",\n  \"model\": \"Corolla Touring Sports\",\n  \"seatCount\": 5\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/vehicle/{{vehicleId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": [
+                                "api",
+                                "secure",
+                                "vehicle",
+                                "{{vehicleId}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

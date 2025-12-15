@@ -13,6 +13,7 @@ use App\Enum\AttachmentField;
 use App\Enum\AttachmentType;
 use App\Entity\Attachment;
 use App\Service\Storage\R2Client;
+use App\Enum\ValidationStatus;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,11 +21,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mailer\MailerInterface;
 
 #[Route('/api/secure', name: 'api_secure_', methods: ['POST'])]
 final class SecureProfileController extends AbstractController
 {
-    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2) {}
+    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2, private readonly MailerInterface $mailer) {}
 
     private function data(Request $request): array
     {
@@ -63,25 +66,25 @@ final class SecureProfileController extends AbstractController
             $docs->setDriver($driver);
             $this->em->persist($docs);
         }
-        $docs->setVtcCardValid(false);
+        $docs->setVtcCardValid(ValidationStatus::VALIDATION_INPROGRESS);
         if (!empty($data['vtcCardExpirationDate'])) {
             try { $docs->setVtcCardExpirationDate(new \DateTimeImmutable((string) $data['vtcCardExpirationDate'])); } catch (\Throwable) {}
         }
-        $docs->setDrivingLicenseValid(false);
+        $docs->setDrivingLicenseValid(ValidationStatus::VALIDATION_INPROGRESS);
         if (!empty($data['drivingLicenseExpirationDate'])) {
             try { $docs->setDrivingLicenseExpirationDate(new \DateTimeImmutable((string) $data['drivingLicenseExpirationDate'])); } catch (\Throwable) {}
         }
-        $docs->setIdentityCardValid(false);
+        $docs->setIdentityCardValid(ValidationStatus::VALIDATION_INPROGRESS);
         if (!empty($data['identityCardExpirationDate'])) {
             try { $docs->setIdentityCardExpirationDate(new \DateTimeImmutable((string) $data['identityCardExpirationDate'])); } catch (\Throwable) {}
         }
-        $docs->setHealthCardValid(false);
+        $docs->setHealthCardValid(ValidationStatus::VALIDATION_INPROGRESS);
         if (array_key_exists('socialSecurityNumber', $data)) { $docs->setSocialSecurityNumber($data['socialSecurityNumber'] !== '' ? (string) $data['socialSecurityNumber'] : null); }
-        $docs->setBankStatementValid(false);
+        $docs->setBankStatementValid(ValidationStatus::VALIDATION_INPROGRESS);
         if (array_key_exists('iban', $data)) { $docs->setIban($data['iban'] !== '' ? (string) $data['iban'] : null); }
         if (array_key_exists('isHosted', $data)) { $docs->setIsHosted(filter_var($data['isHosted'], FILTER_VALIDATE_BOOL)); }
-        $docs->setProofOfResidenceValid(false);
-        $docs->setSecureDrivingRightCertificateValid(false);
+        $docs->setProofOfResidenceValid(ValidationStatus::VALIDATION_INPROGRESS);
+        $docs->setSecureDrivingRightCertificateValid(ValidationStatus::VALIDATION_INPROGRESS);
 
         // Optional file attachments (ignored for validation, flags remain false)
         $fileMap = [
@@ -184,6 +187,15 @@ final class SecureProfileController extends AbstractController
 
         $user->setVehicleStepCompleted(true);
         $this->em->flush();
+
+        $email = (new TemplatedEmail())
+            ->from('no-reply@neoodriver.test')
+            ->to((string) $user->getEmail())
+            ->subject('Merci — validation de compte')
+            ->htmlTemplate('email/vehicle_submitted.html.twig')
+            ->textTemplate('email/vehicle_submitted.txt.twig')
+            ->context(['user' => $user, 'vehicle' => $vehicle]);
+        $this->mailer->send($email);
 
         return $this->json([
             'status' => 'ok',

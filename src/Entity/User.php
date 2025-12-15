@@ -74,6 +74,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[JMS\Groups(['me:read'])]
     private bool $vehicleStepCompleted = false;
 
+    #[ORM\Column(options: ['default' => false])]
+    #[JMS\Groups(['me:read'])]
+    private bool $verified = false;
+
     #[ORM\Column(enumType: UserRole::class, nullable: true)]
     private ?UserRole $role = null;
 
@@ -249,6 +253,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setVehicleStepCompleted(bool $completed): static
     {
         $this->vehicleStepCompleted = $completed;
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->verified;
+    }
+
+    public function setVerified(bool $verified): static
+    {
+        $this->verified = $verified;
         return $this;
     }
 

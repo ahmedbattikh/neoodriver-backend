@@ -1,0 +1,8 @@
+Merci pour votre véhicule
+
+Bonjour {{ user.firstName ?? user.email }},
+
+Nous avons bien reçu les informations de votre véhicule{% if vehicle is defined and vehicle.registrationNumber %} ({{ vehicle.registrationNumber }}){% endif %}. Notre équipe vous contactera pour valider votre compte.
+
+Cordialement,
+L’équipe NeoDriver

@@ -1,0 +1,14 @@
+<div style="font-family: Arial, sans-serif; font-size: 14px; color: #222;">
+  <h2 style="margin: 0 0 12px;">Activation de compte NeoDriver</h2>
+  <p style="margin: 0 0 8px;">Bonjour {{ user.firstName ?? user.email }},</p>
+  <p style="margin: 0 0 8px;">Votre compte a été activé.</p>
+  {% if lines is defined and lines|length > 0 %}
+    <p style="margin: 12px 0 4px;">Statut de vos documents&nbsp;:</p>
+    <ul style="padding-left: 18px; margin: 6px 0;">
+      {% for l in lines %}
+        <li>{{ l }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <p style="margin: 12px 0 0;">Cordialement,<br/>L’équipe NeoDriver</p>
+</div>

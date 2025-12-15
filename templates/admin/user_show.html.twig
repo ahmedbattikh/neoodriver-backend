@@ -1,36 +1,615 @@
-{% extends 'admin/layout.html.twig' %}
+{% extends '@EasyAdmin/layout.html.twig' %}
 
-{% block content_title %}User Details{% endblock %}
+{% macro preview(att, url) %}
+	{% if url %}
+		{% set mime = att.mimeType|lower %}
+		{% if mime starts with 'image/' %}
+			<div class="mt-2">
+				<a href="{{ url }}" target="_blank">
+					<img src="{{ url }}" alt="{{ att.originalFileName ?? att.fileName }}" style="width:200px;height:200px;object-fit:cover;border:1px solid #ddd;border-radius:4px;"/>
+				</a>
+			</div>
+		{% elseif 'pdf' in mime %}
+			<div class="mt-2">
+				<a href="{{ url }}" target="_blank" class="btn btn-sm btn-outline-danger">PDF</a>
+			</div>
+		{% endif %}
+	{% endif %}
+{% endmacro %}
+
+{% import _self as ui %}
+
+{% block content_title %}User Details
+{% endblock %}
 
 {% block content %}
-  <div class="container py-4">
-    <div class="mb-3">
-      <div><strong>ID:</strong> {{ user.id }}</div>
-      <div><strong>Email:</strong> {{ user.email }}</div>
-      <div><strong>First Name:</strong> {{ user.firstName }}</div>
-      <div><strong>Last Name:</strong> {{ user.lastName }}</div>
-      <div><strong>Phone:</strong> {{ user.mobileNumber }}</div>
-      {% set driver = user.driverProfile %}
-      {% set status = driver and driver.active ? 'Active' : 'Disabled' %}
-      <div><strong>Status:</strong> {{ status }}</div>
-    </div>
+	<div class="container py-4">
+		{% set driver = user.driverProfile %}
+		{% set status = driver and driver.active ? 'Active' : 'Disabled' %}
 
-    {% if form is defined %}
-      {{ form_start(form) }}
-        {{ form_widget(form) }}
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{{ path('admin_users_list') }}" class="btn btn-outline-secondary">Back</a>
-      {{ form_end(form) }}
-    {% else %}
-      <div class="d-flex gap-2">
-        <a class="btn btn-outline-info" href="{{ path('admin_user_edit', { id: user.id }) }}">Edit</a>
-        {% if status == 'Active' %}
-          <a class="btn btn-warning" href="{{ path('admin_user_toggle', { id: user.id, active: 0 }) }}">Disable</a>
-        {% else %}
-          <a class="btn btn-success" href="{{ path('admin_user_toggle', { id: user.id, active: 1 }) }}">Enable</a>
-        {% endif %}
-        <a class="btn btn-outline-secondary" href="{{ path('admin_users_list') }}">Back</a>
-      </div>
-    {% endif %}
-  </div>
+		{% if form is defined %}
+			{{ form_start(form) }}
+			{{ form_widget(form) }}
+			<button type="submit" class="btn btn-primary">Save</button>
+			<a href="{{ path('admin_users_list') }}" class="btn btn-outline-secondary">Back</a>
+			{{ form_end(form) }}
+		{% else %}
+			<div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+				<div class="me-2">Verification:
+					{{ user.verified ? 'Verified' : 'Unverified' }}</div>
+				{% if user.verified %}
+					<form method="post" action="{{ path('admin_user_verify', { id: user.id }) }}" class="d-inline">
+						<input type="hidden" name="_token" value="{{ csrf_token('verify_user_' ~ user.id) }}"/>
+						<input type="hidden" name="val" value="0"/>
+						<button type="submit" class="btn btn-warning">Set Unverified</button>
+					</form>
+				{% else %}
+					<form method="post" action="{{ path('admin_user_verify', { id: user.id }) }}" class="d-inline">
+						<input type="hidden" name="_token" value="{{ csrf_token('verify_user_' ~ user.id) }}"/>
+						<input type="hidden" name="val" value="1"/>
+						<button type="submit" class="btn btn-success">Set Verified</button>
+					</form>
+				{% endif %}
+				<form method="post" action="{{ path('admin_user_activate_notify', { id: user.id }) }}" class="d-inline">
+					<input type="hidden" name="_token" value="{{ csrf_token('activate_notify_' ~ user.id) }}"/>
+					<button type="submit" class="btn btn-primary">Activate + Notify</button>
+				</form>
+				<form method="post" action="{{ path('admin_user_notify_docs', { id: user.id }) }}" class="d-inline">
+					<input type="hidden" name="_token" value="{{ csrf_token('notify_docs_' ~ user.id) }}"/>
+					<button type="submit" class="btn btn-outline-primary">Notify Document Status</button>
+				</form>
+				<form method="post" action="{{ path('admin_user_companydocs_start', { id: user.id }) }}" class="d-inline">
+					<input type="hidden" name="_token" value="{{ csrf_token('start_company_docs_' ~ user.id) }}"/>
+					<button type="submit" class="btn btn-outline-success">Add Company Documents</button>
+				</form>
+			</div>
+			<ul class="nav nav-tabs" role="tablist">
+				<li class="nav-item" role="presentation">
+					<button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab">Info</button>
+				</li>
+				{% if driver %}
+					<li class="nav-item" role="presentation">
+						<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-driver" type="button" role="tab">Driver Documents</button>
+					</li>
+					{% if driver.companyDocuments %}
+						<li class="nav-item" role="presentation">
+							<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-company" type="button" role="tab">Company Documents</button>
+						</li>
+					{% endif %}
+					<li class="nav-item" role="presentation">
+						<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vehicle" type="button" role="tab">Vehicle</button>
+					</li>
+				{% endif %}
+			</ul>
+
+			<div class="tab-content pt-3">
+				<div class="tab-pane fade show active" id="tab-info" role="tabpanel">
+					<div class="mb-3">
+						<div>
+							<strong>ID:</strong>
+							{{ user.id }}</div>
+						<div>
+							<strong>Email:</strong>
+							{{ user.email }}</div>
+						<div>
+							<strong>First Name:</strong>
+							{{ user.firstName }}</div>
+						<div>
+							<strong>Last Name:</strong>
+							{{ user.lastName }}</div>
+						<div>
+							<strong>Phone:</strong>
+							{{ user.mobileNumber }}</div>
+						<div>
+							<strong>Status:</strong>
+							{{ status }}</div>
+					</div>
+					<div class="d-flex gap-2">
+						<a class="btn btn-outline-info" href="{{ path('admin_user_edit', { id: user.id }) }}">Edit</a>
+						{% if status == 'Active' %}
+							<a class="btn btn-warning" href="{{ path('admin_user_toggle', { id: user.id, active: 0 }) }}">Disable</a>
+						{% else %}
+							<a class="btn btn-success" href="{{ path('admin_user_toggle', { id: user.id, active: 1 }) }}">Enable</a>
+						{% endif %}
+						<a class="btn btn-outline-secondary" href="{{ path('admin_users_list') }}">Back</a>
+					</div>
+				</div>
+
+				{% if driver and driver.documents %}
+					{% set docs = driver.documents %}
+					<div class="tab-pane fade" id="tab-driver" role="tabpanel">
+						<div class="row g-3">
+							<div class="col-md-6">
+								<div class="fw-bold">Identity Photo</div>
+								{% if docs.identityPhoto %}
+									<div>
+										{{ docs.identityPhoto.originalFileName ?? docs.identityPhoto.fileName }}
+										{% if attachmentUrls[docs.identityPhoto.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.identityPhoto.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(docs.identityPhoto, attachmentUrls[docs.identityPhoto.id] ?? null) }}
+									<div>{{ docs.identityPhoto.mimeType }}
+										·
+										{{ (docs.identityPhoto.fileSize / 1024)|round(1) }}
+										KB</div>
+									<div class="text-muted">{{ docs.identityPhoto.filePath }}</div>
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">VTC Card</div>
+								<div class="mb-1">Front:
+									{% if docs.vtcCardFront %}
+										{{ docs.vtcCardFront.originalFileName ?? docs.vtcCardFront.fileName }}
+										{% if attachmentUrls[docs.vtcCardFront.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.vtcCardFront.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+										{{ ui.preview(docs.vtcCardFront, attachmentUrls[docs.vtcCardFront.id] ?? null) }}
+										{% else %}Not uploaded
+									{% endif %}
+								</div>
+								<div class="mb-1">Back:
+									{% if docs.vtcCardBack %}
+										{{ docs.vtcCardBack.originalFileName ?? docs.vtcCardBack.fileName }}
+										{% if attachmentUrls[docs.vtcCardBack.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.vtcCardBack.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+										{{ ui.preview(docs.vtcCardBack, attachmentUrls[docs.vtcCardBack.id] ?? null) }}
+										{% else %}Not uploaded
+									{% endif %}
+								</div>
+								<div class="mb-1">Validity:
+									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_vtcCardValid') }}"/>
+										<input type="hidden" name="field" value="vtcCardValid"/>
+										<select name="value" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+											{% for opt in validationChoices %}
+												<option value="{{ opt }}" {% if docs.vtcCardValid.value == opt %} selected {% endif %}>{{ opt }}</option>
+											{% endfor %}
+										</select>
+									</form>
+								</div>
+								<div>Expiration:
+									{{ docs.vtcCardExpirationDate ? docs.vtcCardExpirationDate|date('Y-m-d') : 'N/A' }}</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Driving License</div>
+								<div class="mb-1">Front:
+									{% if docs.drivingLicenseFront %}
+										{{ docs.drivingLicenseFront.originalFileName ?? docs.drivingLicenseFront.fileName }}
+										{% if attachmentUrls[docs.drivingLicenseFront.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.drivingLicenseFront.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+										{% else %}Not uploaded
+									{% endif %}
+								</div>
+								{{ ui.preview(docs.drivingLicenseFront, attachmentUrls[docs.drivingLicenseFront.id] ?? null) }}
+								<div class="mb-1">Back:
+									{% if docs.drivingLicenseBack %}
+										{{ docs.drivingLicenseBack.originalFileName ?? docs.drivingLicenseBack.fileName }}
+										{% if attachmentUrls[docs.drivingLicenseBack.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.drivingLicenseBack.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+										{% else %}Not uploaded
+									{% endif %}
+								</div>
+								{{ ui.preview(docs.drivingLicenseBack, attachmentUrls[docs.drivingLicenseBack.id] ?? null) }}
+								<div class="mb-1">Validity:
+									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_drivingLicenseValid') }}"/>
+										<input type="hidden" name="field" value="drivingLicenseValid"/>
+										<select name="value" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+											{% for opt in validationChoices %}
+												<option value="{{ opt }}" {% if docs.drivingLicenseValid.value == opt %} selected {% endif %}>{{ opt }}</option>
+											{% endfor %}
+										</select>
+									</form>
+								</div>
+								<div>Expiration:
+									{{ docs.drivingLicenseExpirationDate ? docs.drivingLicenseExpirationDate|date('Y-m-d') : 'N/A' }}</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Identity Card</div>
+								<div class="mb-1">Front:
+									{% if docs.identityCardFront %}
+										{{ docs.identityCardFront.originalFileName ?? docs.identityCardFront.fileName }}
+										{% if attachmentUrls[docs.identityCardFront.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.identityCardFront.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+										{% else %}Not uploaded
+									{% endif %}
+								</div>
+								{{ ui.preview(docs.identityCardFront, attachmentUrls[docs.identityCardFront.id] ?? null) }}
+								<div class="mb-1">Back:
+									{% if docs.identityCardBack %}
+										{{ docs.identityCardBack.originalFileName ?? docs.identityCardBack.fileName }}
+										{% if attachmentUrls[docs.identityCardBack.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.identityCardBack.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+										{% else %}Not uploaded
+									{% endif %}
+								</div>
+								{{ ui.preview(docs.identityCardBack, attachmentUrls[docs.identityCardBack.id] ?? null) }}
+								<div class="mb-1">Validity:
+									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_identityCardValid') }}"/>
+										<input type="hidden" name="field" value="identityCardValid"/>
+										<select name="value" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+											{% for opt in validationChoices %}
+												<option value="{{ opt }}" {% if docs.identityCardValid.value == opt %} selected {% endif %}>{{ opt }}</option>
+											{% endfor %}
+										</select>
+									</form>
+								</div>
+								<div>Expiration:
+									{{ docs.identityCardExpirationDate ? docs.identityCardExpirationDate|date('Y-m-d') : 'N/A' }}</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Health Card</div>
+								{% if docs.healthCard %}
+									<div>
+										{{ docs.healthCard.originalFileName ?? docs.healthCard.fileName }}
+										{% if attachmentUrls[docs.healthCard.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.healthCard.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(docs.healthCard, attachmentUrls[docs.healthCard.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+								<div>Validity:
+									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_healthCardValid') }}"/>
+										<input type="hidden" name="field" value="healthCardValid"/>
+										<select name="value" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+											{% for opt in validationChoices %}
+												<option value="{{ opt }}" {% if docs.healthCardValid.value == opt %} selected {% endif %}>{{ opt }}</option>
+											{% endfor %}
+										</select>
+									</form>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Social Security</div>
+								<div>Number:
+									{{ docs.socialSecurityNumber ?? 'N/A' }}</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Bank Statement</div>
+								{% if docs.bankStatement %}
+									<div>
+										{{ docs.bankStatement.originalFileName ?? docs.bankStatement.fileName }}
+										{% if attachmentUrls[docs.bankStatement.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.bankStatement.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(docs.bankStatement, attachmentUrls[docs.bankStatement.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+								<div>Validity:
+									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_bankStatementValid') }}"/>
+										<input type="hidden" name="field" value="bankStatementValid"/>
+										<select name="value" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+											{% for opt in validationChoices %}
+												<option value="{{ opt }}" {% if docs.bankStatementValid.value == opt %} selected {% endif %}>{{ opt }}</option>
+											{% endfor %}
+										</select>
+									</form>
+								</div>
+								<div>IBAN:
+									{{ docs.iban ?? 'N/A' }}</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Hosting</div>
+								<div>{{ docs.isHosted ? 'Hosted' : 'Not hosted' }}</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Proof of Residence</div>
+								{% if docs.proofOfResidence %}
+									<div>
+										{{ docs.proofOfResidence.originalFileName ?? docs.proofOfResidence.fileName }}
+										{% if attachmentUrls[docs.proofOfResidence.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.proofOfResidence.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(docs.proofOfResidence, attachmentUrls[docs.proofOfResidence.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+								<div>Validity:
+									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_proofOfResidenceValid') }}"/>
+										<input type="hidden" name="field" value="proofOfResidenceValid"/>
+										<select name="value" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+											{% for opt in validationChoices %}
+												<option value="{{ opt }}" {% if docs.proofOfResidenceValid.value == opt %} selected {% endif %}>{{ opt }}</option>
+											{% endfor %}
+										</select>
+									</form>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Secure Driving Right Certificate</div>
+								{% if docs.secureDrivingRightCertificate %}
+									<div>
+										{{ docs.secureDrivingRightCertificate.originalFileName ?? docs.secureDrivingRightCertificate.fileName }}
+										{% if attachmentUrls[docs.secureDrivingRightCertificate.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[docs.secureDrivingRightCertificate.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(docs.secureDrivingRightCertificate, attachmentUrls[docs.secureDrivingRightCertificate.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+								<div>Validity:
+									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_secureDrivingRightCertificateValid') }}"/>
+										<input type="hidden" name="field" value="secureDrivingRightCertificateValid"/>
+										<select name="value" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+											{% for opt in validationChoices %}
+												<option value="{{ opt }}" {% if docs.secureDrivingRightCertificateValid.value == opt %} selected {% endif %}>{{ opt }}</option>
+											{% endfor %}
+										</select>
+									</form>
+								</div>
+							</div>
+						</div>
+						<div class="mt-3 text-muted">Updated:
+							{{ docs.updatedAt|date('Y-m-d H:i') }}</div>
+					</div>
+				{% endif %}
+
+				{% if driver and driver.companyDocuments %}
+					{% set cdocs = driver.companyDocuments %}
+					<div class="tab-pane fade" id="tab-company" role="tabpanel">
+						<div class="row g-3">
+							<div class="col-md-6">
+								<div class="fw-bold">Employment Contract</div>
+								{% if cdocs.employmentContract %}
+									<div>
+										{{ cdocs.employmentContract.originalFileName ?? cdocs.employmentContract.fileName }}
+										{% if attachmentUrls[cdocs.employmentContract.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[cdocs.employmentContract.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(cdocs.employmentContract, attachmentUrls[cdocs.employmentContract.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Employer Certificate</div>
+								{% if cdocs.employerCertificate %}
+									<div>
+										{{ cdocs.employerCertificate.originalFileName ?? cdocs.employerCertificate.fileName }}
+										{% if attachmentUrls[cdocs.employerCertificate.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[cdocs.employerCertificate.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(cdocs.employerCertificate, attachmentUrls[cdocs.employerCertificate.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Pre-employment Declaration</div>
+								{% if cdocs.preEmploymentDeclaration %}
+									<div>
+										{{ cdocs.preEmploymentDeclaration.originalFileName ?? cdocs.preEmploymentDeclaration.fileName }}
+										{% if attachmentUrls[cdocs.preEmploymentDeclaration.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[cdocs.preEmploymentDeclaration.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(cdocs.preEmploymentDeclaration, attachmentUrls[cdocs.preEmploymentDeclaration.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">Mutual Insurance Certificate</div>
+								{% if cdocs.mutualInsuranceCertificate %}
+									<div>
+										{{ cdocs.mutualInsuranceCertificate.originalFileName ?? cdocs.mutualInsuranceCertificate.fileName }}
+										{% if attachmentUrls[cdocs.mutualInsuranceCertificate.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[cdocs.mutualInsuranceCertificate.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(cdocs.mutualInsuranceCertificate, attachmentUrls[cdocs.mutualInsuranceCertificate.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">URSSAF Compliance Certificate</div>
+								{% if cdocs.urssafComplianceCertificate %}
+									<div>
+										{{ cdocs.urssafComplianceCertificate.originalFileName ?? cdocs.urssafComplianceCertificate.fileName }}
+										{% if attachmentUrls[cdocs.urssafComplianceCertificate.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[cdocs.urssafComplianceCertificate.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(cdocs.urssafComplianceCertificate, attachmentUrls[cdocs.urssafComplianceCertificate.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">KBIS Extract</div>
+								{% if cdocs.kbisExtract %}
+									<div>
+										{{ cdocs.kbisExtract.originalFileName ?? cdocs.kbisExtract.fileName }}
+										{% if attachmentUrls[cdocs.kbisExtract.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[cdocs.kbisExtract.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(cdocs.kbisExtract, attachmentUrls[cdocs.kbisExtract.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+							<div class="col-md-6">
+								<div class="fw-bold">REVTC Registration Certificate</div>
+								{% if cdocs.revtcRegistrationCertificate %}
+									<div>
+										{{ cdocs.revtcRegistrationCertificate.originalFileName ?? cdocs.revtcRegistrationCertificate.fileName }}
+										{% if attachmentUrls[cdocs.revtcRegistrationCertificate.id] is defined %}
+											—
+											<a href="{{ attachmentUrls[cdocs.revtcRegistrationCertificate.id] }}" target="_blank" class="link-primary">Open</a>
+										{% endif %}
+									</div>
+									{{ ui.preview(cdocs.revtcRegistrationCertificate, attachmentUrls[cdocs.revtcRegistrationCertificate.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+						</div>
+						<div class="mt-3 text-muted">Updated:
+							{{ cdocs.updatedAt|date('Y-m-d H:i') }}</div>
+					</div>
+				{% endif %}
+
+				{% if driver %}
+					<div class="tab-pane fade" id="tab-vehicle" role="tabpanel">
+						{% if driver.vehicles|length > 0 %}
+							<div class="row g-3">
+								{% for v in driver.vehicles %}
+									<div class="col-12">
+										<div class="card">
+											<div class="card-body">
+												<div class="row g-3">
+													<div class="col-md-6">
+														<div>
+															<strong>Registration Number:</strong>
+															{{ v.registrationNumber }}</div>
+														<div>
+															<strong>Make:</strong>
+															{{ v.make }}</div>
+														<div>
+															<strong>Model:</strong>
+															{{ v.model }}</div>
+														<div>
+															<strong>First Registration Year:</strong>
+															{{ v.firstRegistrationYear }}</div>
+														<div>
+															<strong>Registration Date:</strong>
+															{{ v.registrationDate ? v.registrationDate|date('Y-m-d') : 'N/A' }}</div>
+														<div>
+															<strong>Seat Count:</strong>
+															{{ v.seatCount }}</div>
+														<div>
+															<strong>Energy Type:</strong>
+															{{ v.energyTypeValue }}</div>
+														<div>
+															<strong>Insurance Expiration:</strong>
+															{{ v.insuranceExpirationDate ? v.insuranceExpirationDate|date('Y-m-d') : 'N/A' }}</div>
+													</div>
+													<div class="col-md-6">
+														<div class="fw-bold">Registration Certificate</div>
+														{% if v.registrationCertificate %}
+															<div>
+																{{ v.registrationCertificate.originalFileName ?? v.registrationCertificate.fileName }}
+																{% if attachmentUrls[v.registrationCertificate.id] is defined %}
+																	—
+																	<a href="{{ attachmentUrls[v.registrationCertificate.id] }}" target="_blank" class="link-primary">Open</a>
+																{% endif %}
+															</div>
+															{{ ui.preview(v.registrationCertificate, attachmentUrls[v.registrationCertificate.id] ?? null) }}
+															<div class="text-muted">{{ v.registrationCertificate.filePath }}</div>
+														{% else %}
+															<div class="text-muted">Not uploaded</div>
+														{% endif %}
+														<div class="fw-bold mt-3">Paid Transport Insurance Certificate</div>
+														{% if v.paidTransportInsuranceCertificate %}
+															<div>
+																{{ v.paidTransportInsuranceCertificate.originalFileName ?? v.paidTransportInsuranceCertificate.fileName }}
+																{% if attachmentUrls[v.paidTransportInsuranceCertificate.id] is defined %}
+																	—
+																	<a href="{{ attachmentUrls[v.paidTransportInsuranceCertificate.id] }}" target="_blank" class="link-primary">Open</a>
+																{% endif %}
+															</div>
+															{{ ui.preview(v.paidTransportInsuranceCertificate, attachmentUrls[v.paidTransportInsuranceCertificate.id] ?? null) }}
+															<div class="text-muted">{{ v.paidTransportInsuranceCertificate.filePath }}</div>
+														{% else %}
+															<div class="text-muted">Not uploaded</div>
+														{% endif %}
+														<div class="fw-bold mt-3">Technical Inspection</div>
+														{% if v.technicalInspection %}
+															<div>
+																{{ v.technicalInspection.originalFileName ?? v.technicalInspection.fileName }}
+																{% if attachmentUrls[v.technicalInspection.id] is defined %}
+																	—
+																	<a href="{{ attachmentUrls[v.technicalInspection.id] }}" target="_blank" class="link-primary">Open</a>
+																{% endif %}
+															</div>
+															{{ ui.preview(v.technicalInspection, attachmentUrls[v.technicalInspection.id] ?? null) }}
+															<div class="text-muted">{{ v.technicalInspection.filePath }}</div>
+														{% else %}
+															<div class="text-muted">Not uploaded</div>
+														{% endif %}
+														<div class="fw-bold mt-3">Vehicle Front Photo</div>
+														{% if v.vehicleFrontPhoto %}
+															<div>
+																{{ v.vehicleFrontPhoto.originalFileName ?? v.vehicleFrontPhoto.fileName }}
+																{% if attachmentUrls[v.vehicleFrontPhoto.id] is defined %}
+																	—
+																	<a href="{{ attachmentUrls[v.vehicleFrontPhoto.id] }}" target="_blank" class="link-primary">Open</a>
+																{% endif %}
+															</div>
+															{{ ui.preview(v.vehicleFrontPhoto, attachmentUrls[v.vehicleFrontPhoto.id] ?? null) }}
+															<div class="text-muted">{{ v.vehicleFrontPhoto.filePath }}</div>
+														{% else %}
+															<div class="text-muted">Not uploaded</div>
+														{% endif %}
+														<div class="fw-bold mt-3">Insurance Note</div>
+														{% if v.insuranceNote %}
+															<div>
+																{{ v.insuranceNote.originalFileName ?? v.insuranceNote.fileName }}
+																{% if attachmentUrls[v.insuranceNote.id] is defined %}
+																	—
+																	<a href="{{ attachmentUrls[v.insuranceNote.id] }}" target="_blank" class="link-primary">Open</a>
+																{% endif %}
+															</div>
+															{{ ui.preview(v.insuranceNote, attachmentUrls[v.insuranceNote.id] ?? null) }}
+															<div class="text-muted">{{ v.insuranceNote.filePath }}</div>
+														{% else %}
+															<div class="text-muted">Not uploaded</div>
+														{% endif %}
+													</div>
+												</div>
+												<div class="mt-3 text-muted">Updated:
+													{{ v.updatedAt|date('Y-m-d H:i') }}</div>
+											</div>
+										</div>
+									</div>
+								{% endfor %}
+							</div>
+						{% else %}
+							<div class="text-muted">No vehicles</div>
+						{% endif %}
+					</div>
+				{% endif %}
+			</div>
+		{% endif %}
+	</div>
 {% endblock %}

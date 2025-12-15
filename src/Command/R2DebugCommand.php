@@ -54,6 +54,8 @@ final class R2DebugCommand extends Command
             $this->r2->putObject($reference . '/__debug__.txt', 'r2-ok', 'text/plain', [], true);
             $debugKey = AttachmentField::DRIVER_IDENTITY_PHOTO->key($reference, (int) $user->getId());
             $this->r2->putObject($debugKey . '.txt', 'field-ok', 'text/plain', [], true);
+            $signed = $this->r2->getSignedUrl($debugKey . '.txt', 900);
+            $io->writeln($signed);
             $io->success(sprintf('R2 folders ensured and debug object uploaded for %s.', $reference));
             return Command::SUCCESS;
         } catch (\Throwable $e) {

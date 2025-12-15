@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\DriverDocumentsRepository;
+use App\Enum\ValidationStatus;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as JMS;
 
@@ -40,9 +41,9 @@ class DriverDocuments
     #[JMS\Groups(['me:read'])]
     private ?Attachment $vtcCardBack = null;
 
-    #[ORM\Column]
+    #[ORM\Column(enumType: ValidationStatus::class)]
     #[JMS\Groups(['me:read'])]
-    private bool $vtcCardValid = false;
+    private ValidationStatus $vtcCardValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[JMS\Groups(['me:read'])]
@@ -59,9 +60,9 @@ class DriverDocuments
     #[JMS\Groups(['me:read'])]
     private ?Attachment $drivingLicenseBack = null;
 
-    #[ORM\Column]
+    #[ORM\Column(enumType: ValidationStatus::class)]
     #[JMS\Groups(['me:read'])]
-    private bool $drivingLicenseValid = false;
+    private ValidationStatus $drivingLicenseValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[JMS\Groups(['me:read'])]
@@ -78,9 +79,9 @@ class DriverDocuments
     #[JMS\Groups(['me:read'])]
     private ?Attachment $identityCardBack = null;
 
-    #[ORM\Column]
+    #[ORM\Column(enumType: ValidationStatus::class)]
     #[JMS\Groups(['me:read'])]
-    private bool $identityCardValid = false;
+    private ValidationStatus $identityCardValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     #[JMS\Groups(['me:read'])]
@@ -92,9 +93,9 @@ class DriverDocuments
     #[JMS\Groups(['me:read'])]
     private ?Attachment $healthCard = null;
 
-    #[ORM\Column]
+    #[ORM\Column(enumType: ValidationStatus::class)]
     #[JMS\Groups(['me:read'])]
-    private bool $healthCardValid = false;
+    private ValidationStatus $healthCardValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     // Social security
     #[ORM\Column(length: 32, nullable: true)]
@@ -107,9 +108,9 @@ class DriverDocuments
     #[JMS\Groups(['me:read'])]
     private ?Attachment $bankStatement = null;
 
-    #[ORM\Column]
+    #[ORM\Column(enumType: ValidationStatus::class)]
     #[JMS\Groups(['me:read'])]
-    private bool $bankStatementValid = false;
+    private ValidationStatus $bankStatementValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(length: 34, nullable: true)]
     #[JMS\Groups(['me:read'])]
@@ -125,9 +126,9 @@ class DriverDocuments
     #[JMS\Groups(['me:read'])]
     private ?Attachment $proofOfResidence = null;
 
-    #[ORM\Column]
+    #[ORM\Column(enumType: ValidationStatus::class)]
     #[JMS\Groups(['me:read'])]
-    private bool $proofOfResidenceValid = false;
+    private ValidationStatus $proofOfResidenceValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     // Secure driving right certificate
     #[ORM\ManyToOne(targetEntity: Attachment::class)]
@@ -135,9 +136,9 @@ class DriverDocuments
     #[JMS\Groups(['me:read'])]
     private ?Attachment $secureDrivingRightCertificate = null;
 
-    #[ORM\Column]
+    #[ORM\Column(enumType: ValidationStatus::class)]
     #[JMS\Groups(['me:read'])]
-    private bool $secureDrivingRightCertificateValid = false;
+    private ValidationStatus $secureDrivingRightCertificateValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'datetime_immutable')]
     #[JMS\Groups(['me:read'])]
@@ -196,11 +197,11 @@ class DriverDocuments
         return $this;
     }
 
-    public function isVtcCardValid(): bool
+    public function getVtcCardValid(): ValidationStatus
     {
         return $this->vtcCardValid;
     }
-    public function setVtcCardValid(bool $valid): self
+    public function setVtcCardValid(ValidationStatus $valid): self
     {
         $this->vtcCardValid = $valid;
         return $this;
@@ -236,11 +237,11 @@ class DriverDocuments
         return $this;
     }
 
-    public function isDrivingLicenseValid(): bool
+    public function getDrivingLicenseValid(): ValidationStatus
     {
         return $this->drivingLicenseValid;
     }
-    public function setDrivingLicenseValid(bool $valid): self
+    public function setDrivingLicenseValid(ValidationStatus $valid): self
     {
         $this->drivingLicenseValid = $valid;
         return $this;
@@ -276,11 +277,11 @@ class DriverDocuments
         return $this;
     }
 
-    public function isIdentityCardValid(): bool
+    public function getIdentityCardValid(): ValidationStatus
     {
         return $this->identityCardValid;
     }
-    public function setIdentityCardValid(bool $valid): self
+    public function setIdentityCardValid(ValidationStatus $valid): self
     {
         $this->identityCardValid = $valid;
         return $this;
@@ -306,11 +307,11 @@ class DriverDocuments
         return $this;
     }
 
-    public function isHealthCardValid(): bool
+    public function getHealthCardValid(): ValidationStatus
     {
         return $this->healthCardValid;
     }
-    public function setHealthCardValid(bool $valid): self
+    public function setHealthCardValid(ValidationStatus $valid): self
     {
         $this->healthCardValid = $valid;
         return $this;
@@ -336,11 +337,11 @@ class DriverDocuments
         return $this;
     }
 
-    public function isBankStatementValid(): bool
+    public function getBankStatementValid(): ValidationStatus
     {
         return $this->bankStatementValid;
     }
-    public function setBankStatementValid(bool $valid): self
+    public function setBankStatementValid(ValidationStatus $valid): self
     {
         $this->bankStatementValid = $valid;
         return $this;
@@ -376,11 +377,11 @@ class DriverDocuments
         return $this;
     }
 
-    public function isProofOfResidenceValid(): bool
+    public function getProofOfResidenceValid(): ValidationStatus
     {
         return $this->proofOfResidenceValid;
     }
-    public function setProofOfResidenceValid(bool $valid): self
+    public function setProofOfResidenceValid(ValidationStatus $valid): self
     {
         $this->proofOfResidenceValid = $valid;
         return $this;
@@ -396,11 +397,11 @@ class DriverDocuments
         return $this;
     }
 
-    public function isSecureDrivingRightCertificateValid(): bool
+    public function getSecureDrivingRightCertificateValid(): ValidationStatus
     {
         return $this->secureDrivingRightCertificateValid;
     }
-    public function setSecureDrivingRightCertificateValid(bool $valid): self
+    public function setSecureDrivingRightCertificateValid(ValidationStatus $valid): self
     {
         $this->secureDrivingRightCertificateValid = $valid;
         return $this;

@@ -1,0 +1,6 @@
+<div style="font-family: Arial, sans-serif; font-size: 14px; color: #222;">
+  <h2 style="margin: 0 0 12px;">Merci pour votre véhicule</h2>
+  <p style="margin: 0 0 8px;">Bonjour {{ user.firstName ?? user.email }},</p>
+  <p style="margin: 0 0 8px;">Nous avons bien reçu les informations de votre véhicule{% if vehicle is defined and vehicle.registrationNumber %} ({{ vehicle.registrationNumber }}){% endif %}. Notre équipe vous contactera pour valider votre compte.</p>
+  <p style="margin: 12px 0 0;">Cordialement,<br/>L’équipe NeoDriver</p>
+</div>

@@ -1,88 +1,66 @@
-{% extends 'admin/layout.html.twig' %}
+{% extends '@EasyAdmin/layout.html.twig' %}
 
-{% block content_title %}Users{% endblock %}
+{% block content_title %}Users
+{% endblock %}
+
 
 {% block content %}
-  <div class="row mb-3">
-    <div class="col-12 col-md-6">
-      <div class="input-group">
-        <span class="input-group-text"><i class="fas fa-search"></i></span>
-        <input id="users-search" type="text" class="form-control" placeholder="Search users">
-      </div>
-    </div>
-  </div>
-  <table id="users-table" class="table table-striped">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Email</th>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Phone</th>
-          <th>Status</th>
-          <th>Wizard Step</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in users %}
-          {% set driver = u.driverProfile %}
-          {% set step = 1 %}
-          {% if driver %}
-            {% set step = 2 %}
-            {% if driver.documents %}
-              {% set step = 3 %}
-              {% if driver.companyDocuments %}
-                {% set step = 4 %}
-                {% if driver.vehicles|length > 0 %}
-                  {% set step = 5 %}
-                {% endif %}
-              {% endif %}
-            {% endif %}
-          {% endif %}
-          {% set status = driver and driver.active ? 'Active' : 'Disabled' %}
-          <tr>
-            <td>{{ u.id }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.firstName }}</td>
-            <td>{{ u.lastName }}</td>
-            <td>{{ u.mobileNumber }}</td>
-            <td>{{ status }}</td>
-            <td>{{ step }}</td>
-            <td>
-              {% if step < 5 %}
-              <a class="btn btn-sm btn-primary" href="{{ path('admin_user_wizard_resume', { id: u.id, step: step }) }}">Resume</a>
-              {% endif %}
-              <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_show', { id: u.id }) }}">Show</a>
-              <a class="btn btn-sm btn-outline-info" href="{{ path('admin_user_edit', { id: u.id }) }}">Edit</a>
-              {% if status == 'Active' %}
-                <a class="btn btn-sm btn-warning" href="{{ path('admin_user_toggle', { id: u.id, active: 0 }) }}">Disable</a>
-              {% else %}
-                <a class="btn btn-sm btn-success" href="{{ path('admin_user_toggle', { id: u.id, active: 1 }) }}">Enable</a>
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-  </table>
+	<table id="users-table" class="table table-striped">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Email</th>
+				<th>First Name</th>
+				<th>Last Name</th>
+				<th>Phone</th>
+				<th>Verification</th>
+				<th>Status</th>
+				<th>Wizard Step</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for u in users %}
+				{% set driver = u.driverProfile %}
+				{% set step = 1 %}
+				{% if driver %}
+					{% set step = 2 %}
+					{% if driver.documents %}
+						{% set step = 3 %}
+						{% if driver.companyDocuments %}
+							{% set step = 4 %}
+							{% if driver.vehicles|length > 0 %}
+								{% set step = 5 %}
+							{% endif %}
+						{% endif %}
+					{% endif %}
+				{% endif %}
+				{% set status = driver and driver.active ? 'Active' : 'Disabled' %}
+				<tr>
+					<td>{{ u.id }}</td>
+					<td>{{ u.email }}</td>
+					<td>{{ u.firstName }}</td>
+					<td>{{ u.lastName }}</td>
+					<td>{{ u.mobileNumber }}</td>
+					<td>{{ u.verified ? 'Verified' : 'Unverified' }}</td>
+					<td>{{ status }}</td>
+					<td>{{ step }}</td>
+					<td>
+						{% if step < 5 %}
+							<a class="btn btn-sm btn-primary" href="{{ path('admin_user_wizard_resume', { id: u.id, step: step }) }}">Resume</a>
+						{% endif %}
+						<a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_show', { id: u.id }) }}">Show</a>
+						<a class="btn btn-sm btn-outline-info" href="{{ path('admin_user_edit', { id: u.id }) }}">Edit</a>
+						{% if status == 'Active' %}
+							<a class="btn btn-sm btn-warning" href="{{ path('admin_user_toggle', { id: u.id, active: 0 }) }}">Disable</a>
+						{% else %}
+							<a class="btn btn-sm btn-success" href="{{ path('admin_user_toggle', { id: u.id, active: 1 }) }}">Enable</a>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
 {% endblock %}
 
-{% block body_javascript %}
-  <script>
-    (function(){
-      var input = document.getElementById('users-search');
-      var table = document.getElementById('users-table');
-      if (!input || !table) return;
-      var tbody = table.querySelector('tbody');
-      function filter(){
-        var term = (input.value || '').trim().toLowerCase();
-        var rows = tbody ? Array.prototype.slice.call(tbody.rows) : [];
-        rows.forEach(function(tr){
-          var text = tr.textContent.toLowerCase();
-          tr.style.display = term === '' || text.indexOf(term) !== -1 ? '' : 'none';
-        });
-      }
-      input.addEventListener('input', filter);
-    })();
-  </script>
-{% endblock %}
+{% block body_javascript %}{% endblock %}

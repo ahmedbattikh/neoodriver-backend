@@ -1,0 +1,15 @@
+Activation de compte NeoDriver
+
+Bonjour {{ user.firstName ?? user.email }},
+
+Votre compte a été activé.
+
+{% if lines is defined and lines|length > 0 %}
+Statut de vos documents:
+{% for l in lines %}
+- {{ l }}
+{% endfor %}
+{% endif %}
+
+Cordialement,
+L’équipe NeoDriver
