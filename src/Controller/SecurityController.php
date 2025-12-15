@@ -44,10 +44,4 @@ final class SecurityController extends AbstractController
             'error' => $authUtils->getLastAuthenticationError(),
         ]);
     }
-
-    #[Route('/admin/llogin', name: 'admin_llogin', methods: ['GET', 'POST'])]
-    public function adminLoginAlias(): Response
-    {
-        return $this->redirectToRoute('admin_login');
-    }
 }

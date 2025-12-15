@@ -65,6 +65,12 @@ jobs:
               echo "APP_SECRET=${{ secrets.APP_SECRET }}"
               echo "SERVER_NAME=${{ secrets.SERVER_NAME }}"
               echo "DEFAULT_URI=https://${{ secrets.SERVER_NAME }}"
+              TP="${{ secrets.TRUSTED_PROXIES }}"
+              if [ -z "$TP" ]; then
+                TP="127.0.0.1,172.18.0.0/16"
+                echo "[WARN] TRUSTED_PROXIES is empty; using default 127.0.0.1,172.18.0.0/16." >&2
+              fi
+              echo "TRUSTED_PROXIES=$TP"
               echo "COMPOSE_PROJECT_NAME=neoodriver-backend"
               # Prevent redirect loops: container serves plain HTTP; Nginx handles TLS
               echo "CADDY_GLOBAL_OPTIONS=\"auto_https off\""
