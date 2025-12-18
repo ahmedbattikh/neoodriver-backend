@@ -42,7 +42,7 @@ class DriverDocuments
     private ?Attachment $vtcCardBack = null;
 
     #[ORM\Column(enumType: ValidationStatus::class)]
-    #[JMS\Groups(['me:read'])]
+    #[JMS\Exclude]
     private ValidationStatus $vtcCardValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
@@ -61,7 +61,7 @@ class DriverDocuments
     private ?Attachment $drivingLicenseBack = null;
 
     #[ORM\Column(enumType: ValidationStatus::class)]
-    #[JMS\Groups(['me:read'])]
+    #[JMS\Exclude]
     private ValidationStatus $drivingLicenseValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
@@ -80,7 +80,7 @@ class DriverDocuments
     private ?Attachment $identityCardBack = null;
 
     #[ORM\Column(enumType: ValidationStatus::class)]
-    #[JMS\Groups(['me:read'])]
+    #[JMS\Exclude]
     private ValidationStatus $identityCardValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'date_immutable', nullable: true)]
@@ -94,7 +94,7 @@ class DriverDocuments
     private ?Attachment $healthCard = null;
 
     #[ORM\Column(enumType: ValidationStatus::class)]
-    #[JMS\Groups(['me:read'])]
+    #[JMS\Exclude]
     private ValidationStatus $healthCardValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     // Social security
@@ -109,7 +109,7 @@ class DriverDocuments
     private ?Attachment $bankStatement = null;
 
     #[ORM\Column(enumType: ValidationStatus::class)]
-    #[JMS\Groups(['me:read'])]
+    #[JMS\Exclude]
     private ValidationStatus $bankStatementValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(length: 34, nullable: true)]
@@ -127,7 +127,7 @@ class DriverDocuments
     private ?Attachment $proofOfResidence = null;
 
     #[ORM\Column(enumType: ValidationStatus::class)]
-    #[JMS\Groups(['me:read'])]
+    #[JMS\Exclude]
     private ValidationStatus $proofOfResidenceValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     // Secure driving right certificate
@@ -137,7 +137,7 @@ class DriverDocuments
     private ?Attachment $secureDrivingRightCertificate = null;
 
     #[ORM\Column(enumType: ValidationStatus::class)]
-    #[JMS\Groups(['me:read'])]
+    #[JMS\Exclude]
     private ValidationStatus $secureDrivingRightCertificateValid = ValidationStatus::VALIDATION_INPROGRESS;
 
     #[ORM\Column(type: 'datetime_immutable')]
@@ -206,6 +206,13 @@ class DriverDocuments
         $this->vtcCardValid = $valid;
         return $this;
     }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('vtcCardValid')]
+    #[JMS\Groups(['me:read'])]
+    public function getVtcCardValidValue(): string
+    {
+        return $this->vtcCardValid->value;
+    }
 
     public function getVtcCardExpirationDate(): ?\DateTimeImmutable
     {
@@ -245,6 +252,13 @@ class DriverDocuments
     {
         $this->drivingLicenseValid = $valid;
         return $this;
+    }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('drivingLicenseValid')]
+    #[JMS\Groups(['me:read'])]
+    public function getDrivingLicenseValidValue(): string
+    {
+        return $this->drivingLicenseValid->value;
     }
 
     public function getDrivingLicenseExpirationDate(): ?\DateTimeImmutable
@@ -286,6 +300,13 @@ class DriverDocuments
         $this->identityCardValid = $valid;
         return $this;
     }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('identityCardValid')]
+    #[JMS\Groups(['me:read'])]
+    public function getIdentityCardValidValue(): string
+    {
+        return $this->identityCardValid->value;
+    }
 
     public function getIdentityCardExpirationDate(): ?\DateTimeImmutable
     {
@@ -316,6 +337,13 @@ class DriverDocuments
         $this->healthCardValid = $valid;
         return $this;
     }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('healthCardValid')]
+    #[JMS\Groups(['me:read'])]
+    public function getHealthCardValidValue(): string
+    {
+        return $this->healthCardValid->value;
+    }
 
     public function getSocialSecurityNumber(): ?string
     {
@@ -345,6 +373,13 @@ class DriverDocuments
     {
         $this->bankStatementValid = $valid;
         return $this;
+    }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('bankStatementValid')]
+    #[JMS\Groups(['me:read'])]
+    public function getBankStatementValidValue(): string
+    {
+        return $this->bankStatementValid->value;
     }
 
     public function getIban(): ?string
@@ -386,6 +421,13 @@ class DriverDocuments
         $this->proofOfResidenceValid = $valid;
         return $this;
     }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('proofOfResidenceValid')]
+    #[JMS\Groups(['me:read'])]
+    public function getProofOfResidenceValidValue(): string
+    {
+        return $this->proofOfResidenceValid->value;
+    }
 
     public function getSecureDrivingRightCertificate(): ?Attachment
     {
@@ -405,6 +447,13 @@ class DriverDocuments
     {
         $this->secureDrivingRightCertificateValid = $valid;
         return $this;
+    }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('secureDrivingRightCertificateValid')]
+    #[JMS\Groups(['me:read'])]
+    public function getSecureDrivingRightCertificateValidValue(): string
+    {
+        return $this->secureDrivingRightCertificateValid->value;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

@@ -7,6 +7,7 @@ parameters:
     app.default_secret: '5E7nGHjU#QWE%3qnG@nm6jxeHqFR7jgV*J*'
     mailer.default_dsn: 'null://null'
     otp.default_fixed_code: '123456'
+    trusted_proxies.default: '127.0.0.1,172.18.0.0/16'
     r2.default_account_id: ''
     r2.default_access_key_id: ''
     r2.default_secret_access_key: ''

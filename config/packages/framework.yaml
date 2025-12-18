@@ -1,7 +1,7 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(default:app.default_secret:APP_SECRET)%'
-    trusted_proxies: '%env(string:TRUSTED_PROXIES)%'
+    trusted_proxies: '%env(string:default:trusted_proxies.default:TRUSTED_PROXIES)%'
     trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-host']
 
     # Note that the session will be started ONLY if you read or write from it.
