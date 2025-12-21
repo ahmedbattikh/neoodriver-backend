@@ -65,25 +65,31 @@
 			</div>
 			<ul class="nav nav-tabs" role="tablist">
 				<li class="nav-item" role="presentation">
-					<button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab">Info</button>
+					<button class="nav-link {{ activeTab == 'info' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab">Info</button>
 				</li>
 				{% if driver %}
 					<li class="nav-item" role="presentation">
-						<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-driver" type="button" role="tab">Driver Documents</button>
+						<button class="nav-link {{ activeTab == 'driver' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-driver" type="button" role="tab">Driver Documents</button>
 					</li>
 					{% if driver.companyDocuments %}
 						<li class="nav-item" role="presentation">
-							<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-company" type="button" role="tab">Company Documents</button>
+							<button class="nav-link {{ activeTab == 'company' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-company" type="button" role="tab">Company Documents</button>
 						</li>
 					{% endif %}
 					<li class="nav-item" role="presentation">
-						<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vehicle" type="button" role="tab">Vehicle</button>
+						<button class="nav-link {{ activeTab == 'vehicle' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-vehicle" type="button" role="tab">Vehicle</button>
 					</li>
 				{% endif %}
+				<li class="nav-item" role="presentation">
+					<button class="nav-link {{ activeTab == 'ops' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-ops" type="button" role="tab">Operations</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link {{ activeTab == 'batches' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-batches" type="button" role="tab">Payment Batches</button>
+				</li>
 			</ul>
 
 			<div class="tab-content pt-3">
-				<div class="tab-pane fade show active" id="tab-info" role="tabpanel">
+				<div class="tab-pane fade {{ activeTab == 'info' ? 'show active' : '' }}" id="tab-info" role="tabpanel">
 					<div class="mb-3">
 						<div>
 							<strong>ID:</strong>
@@ -104,6 +110,30 @@
 							<strong>Status:</strong>
 							{{ status }}</div>
 					</div>
+					{% if driver %}
+						<div class="row g-3">
+							<div class="col-md-6 col-lg-4">
+								<div class="card">
+									<div class="card-body">
+										<div class="fw-bold">Current Week Total</div>
+										<div class="text-muted small">{{ weekStart|date('Y-m-d') }}
+											→
+											{{ weekEnd|date_modify('-1 day')|date('Y-m-d') }}</div>
+										<div class="mt-2">In:
+											{{ weekIn|number_format(3, '.', ' ') }}
+											{{ weekCurrency ?? '' }}</div>
+										<div>Out:
+											{{ weekOut|number_format(3, '.', ' ') }}
+											{{ weekCurrency ?? '' }}</div>
+										<div class="mt-2">Net:
+											<span class="{{ weekNet >= 0 ? 'text-success' : 'text-danger' }}">{{ weekNet|number_format(3, '.', ' ') }}
+												{{ weekCurrency ?? '' }}</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					{% endif %}
 					<div class="d-flex gap-2">
 						<a class="btn btn-outline-info" href="{{ path('admin_user_edit', { id: user.id }) }}">Edit</a>
 						{% if status == 'Active' %}
@@ -117,7 +147,7 @@
 
 				{% if driver and driver.documents %}
 					{% set docs = driver.documents %}
-					<div class="tab-pane fade" id="tab-driver" role="tabpanel">
+					<div class="tab-pane fade {{ activeTab == 'driver' ? 'show active' : '' }}" id="tab-driver" role="tabpanel">
 						<div class="row g-3">
 							<div class="col-md-6">
 								<div class="fw-bold">Identity Photo</div>
@@ -376,7 +406,7 @@
 
 				{% if driver and driver.companyDocuments %}
 					{% set cdocs = driver.companyDocuments %}
-					<div class="tab-pane fade" id="tab-company" role="tabpanel">
+					<div class="tab-pane fade {{ activeTab == 'company' ? 'show active' : '' }}" id="tab-company" role="tabpanel">
 						<div class="row g-3">
 							<div class="col-md-6">
 								<div class="fw-bold">Employment Contract</div>
@@ -490,7 +520,7 @@
 				{% endif %}
 
 				{% if driver %}
-					<div class="tab-pane fade" id="tab-vehicle" role="tabpanel">
+					<div class="tab-pane fade {{ activeTab == 'vehicle' ? 'show active' : '' }}" id="tab-vehicle" role="tabpanel">
 						{% if driver.vehicles|length > 0 %}
 							<div class="row g-3">
 								{% for v in driver.vehicles %}
@@ -607,6 +637,104 @@
 						{% else %}
 							<div class="text-muted">No vehicles</div>
 						{% endif %}
+					</div>
+				{% endif %}
+				{% if driver %}
+					<div class="tab-pane fade {{ activeTab == 'ops' ? 'show active' : '' }}" id="tab-ops" role="tabpanel">
+						{% if operations|length > 0 %}
+							<div class="table-responsive">
+								<table class="table table-sm table-striped align-middle">
+									<thead>
+										<tr>
+											<th>Date</th>
+											<th>Integration</th>
+											<th>Type</th>
+											<th>Direction</th>
+											<th>Amount</th>
+											<th>Status</th>
+											<th>Reference</th>
+											<th>Description</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for op in operations %}
+											<tr>
+												<td>{{ op.occurredAt|date('Y-m-d H:i') }}</td>
+												<td>{{ op.integrationCode }}</td>
+												<td>{{ op.operationType }}</td>
+												<td>{{ op.direction }}</td>
+												<td>{{ op.amount|number_format(3, '.', ' ') ~ ' ' ~ op.currency }}</td>
+												<td>{{ op.status }}</td>
+												<td>{{ op.externalReference ?? '' }}</td>
+												<td>{{ op.description ?? '' }}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							</div>
+							{% if opsTotalPages > 1 %}
+								<div class="d-flex align-items-center justify-content-between mt-2">
+									<div>Page
+										{{ opsPage }}
+										of
+										{{ opsTotalPages }}</div>
+									<div class="btn-group">
+										<a class="btn btn-outline-secondary btn-sm {% if opsPage <= 1 %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage - 1, ops_size: opsSize, batches_page: batchesPage, batches_size: batchesSize, tab: 'ops' }) }}">Previous</a>
+										<a class="btn btn-outline-secondary btn-sm {% if opsPage >= opsTotalPages %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage + 1, ops_size: opsSize, batches_page: batchesPage, batches_size: batchesSize, tab: 'ops' }) }}">Next</a>
+									</div>
+								</div>
+							{% endif %}
+						{% else %}
+							<div class="text-muted">No operations</div>
+						{% endif %}
+					</div>
+
+					<div class="tab-pane fade {{ activeTab == 'batches' ? 'show active' : '' }}" id="tab-batches" role="tabpanel">
+						{% if batches|length > 0 %}
+							<div class="table-responsive">
+								<table class="table table-sm table-striped align-middle">
+									<thead>
+										<tr>
+											<th>Integration</th>
+											<th>Period</th>
+											<th>Total Amount</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for b in batches %}
+											<tr>
+												<td>{{ b.integration.code }}</td>
+												<td>{{ b.periodStart|date('Y-m-d') }}
+													→
+													{{ b.periodEnd|date('Y-m-d') }}</td>
+												<td>{{ b.totalAmount|number_format(3, '.', ' ') }}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							</div>
+							{% if batchesTotalPages > 1 %}
+								<div class="d-flex align-items-center justify-content-between mt-2">
+									<div>Page
+										{{ batchesPage }}
+										of
+										{{ batchesTotalPages }}</div>
+									<div class="btn-group">
+										<a class="btn btn-outline-secondary btn-sm {% if batchesPage <= 1 %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage, ops_size: opsSize, batches_page: batchesPage - 1, batches_size: batchesSize, tab: 'batches' }) }}">Previous</a>
+										<a class="btn btn-outline-secondary btn-sm {% if batchesPage >= batchesTotalPages %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage, ops_size: opsSize, batches_page: batchesPage + 1, batches_size: batchesSize, tab: 'batches' }) }}">Next</a>
+									</div>
+								</div>
+							{% endif %}
+						{% else %}
+							<div class="text-muted">No payment batches</div>
+						{% endif %}
+					</div>
+				{% else %}
+					<div class="tab-pane fade" id="tab-ops" role="tabpanel">
+						<div class="text-muted">No driver profile</div>
+					</div>
+					<div class="tab-pane fade" id="tab-batches" role="tabpanel">
+						<div class="text-muted">No driver profile</div>
 					</div>
 				{% endif %}
 			</div>

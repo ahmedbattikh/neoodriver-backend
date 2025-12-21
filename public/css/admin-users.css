@@ -1,0 +1,31 @@
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 400px);
+    justify-content: start;
+    justify-items: start;
+    align-items: start;
+    grid-auto-flow: row;
+    width: 100%;
+    gap: 1rem;
+}
+.user-card .card {
+    max-width: 400px;
+}
+.user-card {
+    display: block;
+}
+.user-card .card-body {
+    align-items: center;
+}
+.user-card img.rounded-circle.me-3 {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+.user-card .placeholder {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

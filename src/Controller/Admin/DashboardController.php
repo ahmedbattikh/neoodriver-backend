@@ -15,6 +15,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
 use App\Entity\Driver;
 use App\Entity\Attachment;
+use App\Entity\PaymentOperation;
+use App\Entity\PaymentBatch;
+use App\Controller\Admin\DriverIntegrationCrudController;
 use App\Service\Storage\R2Client;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -39,7 +42,8 @@ final class DashboardController extends AbstractDashboardController
 
     public function configureAssets(): Assets
     {
-        return Assets::new();
+        return Assets::new()
+            ->addCssFile('css/admin-users.css');
     }
 
     // Optional: show icons in the main menu using Font Awesome (loaded by layout override)
@@ -48,17 +52,29 @@ final class DashboardController extends AbstractDashboardController
     public function configureMenuItems(): iterable
     {
         yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToDashboard('Dashboard', 'fas fa-home');
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Add User (Wizard)', 'fas fa-user-plus', 'admin_user_wizard', ['step' => 1]);
         yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Users', 'fas fa-users', 'admin_users_list');
         yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Unverified Users', 'fas fa-user-times', 'admin_users_unverified');
+        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::subMenu('Configuration', 'fas fa-cog')->setSubItems([
+            \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToCrud('Integration', 'fas fa-plug', \App\Entity\DriverIntegration::class),
+        ]);
     }
+
+
 
     #[Route('/admin/users', name: 'admin_users_list')]
     public function users(): Response
     {
         $users = $this->em->getRepository(User::class)->findBy([], ['id' => 'DESC']);
+        $avatars = [];
+        foreach ($users as $u) {
+            $pic = $u->getPicProfile();
+            if ($pic instanceof Attachment && $pic->getId() !== null) {
+                $avatars[$u->getId()] = $this->r2->getSignedUrl($pic->getFilePath(), 900);
+            }
+        }
         return $this->render('admin/users_list.html.twig', [
             'users' => $users,
+            'avatars' => $avatars,
         ]);
     }
 
@@ -72,7 +88,7 @@ final class DashboardController extends AbstractDashboardController
     }
 
     #[Route('/admin/users/{id}', name: 'admin_user_show', methods: ['GET'], requirements: ['id' => '\\d+'])]
-    public function userShow(int $id): Response
+    public function userShow(Request $request, int $id): Response
     {
         $user = $this->em->getRepository(User::class)->find($id);
         if (!$user instanceof User) {
@@ -86,6 +102,21 @@ final class DashboardController extends AbstractDashboardController
         };
         $add($user->getPicProfile());
         $driver = $user->getDriverProfile();
+        $operations = [];
+        $batches = [];
+        $integrationCodes = [];
+        $opsPage = max(1, (int) $request->query->get('ops_page', 1));
+        $opsSize = max(1, min(100, (int) $request->query->get('ops_size', 20)));
+        $opsOffset = ($opsPage - 1) * $opsSize;
+        $batchesPage = max(1, (int) $request->query->get('batches_page', 1));
+        $batchesSize = max(1, min(100, (int) $request->query->get('batches_size', 20)));
+        $batchesOffset = ($batchesPage - 1) * $batchesSize;
+        $activeTab = (string) $request->query->get('tab', 'info');
+        $weekIn = 0.0;
+        $weekOut = 0.0;
+        $weekNet = 0.0;
+        $weekStart = new \DateTimeImmutable('monday this week 00:00:00');
+        $weekEnd = new \DateTimeImmutable('monday next week 00:00:00');
         if ($driver instanceof Driver) {
             $docs = $driver->getDocuments();
             if ($docs) {
@@ -118,6 +149,68 @@ final class DashboardController extends AbstractDashboardController
                 $add($v->getVehicleFrontPhoto());
                 $add($v->getInsuranceNote());
             }
+            $opRepo = $this->em->getRepository(PaymentOperation::class);
+            $opsCount = $opRepo->count(['driver' => $driver]);
+            $operations = $opRepo->findBy(['driver' => $driver], ['occurredAt' => 'DESC'], $opsSize, $opsOffset);
+            $codesRows = $this->em->createQueryBuilder()
+                ->select('DISTINCT o.integrationCode')
+                ->from(PaymentOperation::class, 'o')
+                ->where('o.driver = :driver')
+                ->setParameter('driver', $driver)
+                ->getQuery()
+                ->getArrayResult();
+            foreach ($codesRows as $row) {
+                $integrationCodes[$row['integrationCode']] = true;
+            }
+            $batchesAll = [];
+            foreach (array_keys($integrationCodes) as $code) {
+                $integration = $this->em->getRepository(\App\Entity\DriverIntegration::class)->findOneBy(['code' => $code]);
+                if ($integration instanceof \App\Entity\DriverIntegration) {
+                    $list = $this->em->getRepository(PaymentBatch::class)->findBy(['integration' => $integration], ['periodStart' => 'DESC']);
+                    foreach ($list as $b) {
+                        $batchesAll[] = $b;
+                    }
+                }
+            }
+            usort($batchesAll, function ($a, $b) {
+                return $a->getPeriodStart() < $b->getPeriodStart() ? 1 : -1;
+            });
+            $batchesCount = count($batchesAll);
+            $batches = array_slice($batchesAll, $batchesOffset, $batchesSize);
+            $opsTotalPages = max(1, (int) ceil($opsCount / $opsSize));
+            $batchesTotalPages = max(1, (int) ceil($batchesCount / $batchesSize));
+            $totalsRow = $this->em->createQueryBuilder()
+                ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
+                ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('out','debit') THEN o.amount ELSE 0 END) AS totalOut")
+                ->from(PaymentOperation::class, 'o')
+                ->where('o.driver = :driver')
+                ->andWhere('o.occurredAt >= :start')
+                ->andWhere('o.occurredAt < :end')
+                ->setParameter('driver', $driver)
+                ->setParameter('start', $weekStart)
+                ->setParameter('end', $weekEnd)
+                ->getQuery()
+                ->getOneOrNullResult();
+            $weekIn = (float) (($totalsRow['totalIn'] ?? 0) ?: 0);
+            $weekOut = (float) (($totalsRow['totalOut'] ?? 0) ?: 0);
+            $weekNet = $weekIn - $weekOut;
+            $weekCurrency = null;
+            $weekOp = $this->em->createQueryBuilder()
+                ->select('o')
+                ->from(PaymentOperation::class, 'o')
+                ->where('o.driver = :driver')
+                ->andWhere('o.occurredAt >= :start')
+                ->andWhere('o.occurredAt < :end')
+                ->orderBy('o.occurredAt', 'DESC')
+                ->setMaxResults(1)
+                ->setParameter('driver', $driver)
+                ->setParameter('start', $weekStart)
+                ->setParameter('end', $weekEnd)
+                ->getQuery()
+                ->getOneOrNullResult();
+            if ($weekOp instanceof PaymentOperation) {
+                $weekCurrency = $weekOp->getCurrency();
+            }
         }
         $validationChoices = [
             'VALIDATION_INPROGRESS',
@@ -129,6 +222,21 @@ final class DashboardController extends AbstractDashboardController
             'user' => $user,
             'attachmentUrls' => $attachmentUrls,
             'validationChoices' => $validationChoices,
+            'operations' => $operations,
+            'batches' => $batches,
+            'opsPage' => $opsPage,
+            'opsSize' => $opsSize,
+            'opsTotalPages' => $opsTotalPages ?? 1,
+            'batchesPage' => $batchesPage,
+            'batchesSize' => $batchesSize,
+            'batchesTotalPages' => $batchesTotalPages ?? 1,
+            'activeTab' => $activeTab,
+            'weekIn' => $weekIn,
+            'weekOut' => $weekOut,
+            'weekNet' => $weekNet,
+            'weekStart' => $weekStart,
+            'weekEnd' => $weekEnd,
+            'weekCurrency' => $weekCurrency,
         ]);
     }
 

@@ -10,7 +10,7 @@ fos_rest:
     formats:
       json: true
       html: true
-    view_response_listener: 'force'
+    view_response_listener: 'enabled'
   serializer:
     serialize_null: true
   body_converter:
