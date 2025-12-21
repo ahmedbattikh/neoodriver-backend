@@ -37,7 +37,8 @@ final class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Administration');
+            ->setTitle('Administration')
+            ->setFaviconPath('favicon.ico');
     }
 
     public function configureAssets(): Assets

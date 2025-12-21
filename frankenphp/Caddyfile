@@ -19,8 +19,11 @@
 {$SERVER_NAME:localhost} {
 	log {
 		{$CADDY_SERVER_LOG_OPTIONS}
+		output stderr
+		level INFO
 		# Redact the authorization query parameter that can be set by Mercure
 		format filter {
+			wrap console
 			request>uri query {
 				replace authorization REDACTED
 			}
