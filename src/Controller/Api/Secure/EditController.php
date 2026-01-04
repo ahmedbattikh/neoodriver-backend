@@ -9,6 +9,10 @@ use App\Entity\Driver;
 use App\Entity\DriverDocuments;
 use App\Entity\Vehicle;
 use App\Entity\Attachment;
+use App\Entity\ExpenseNote;
+use App\Entity\PaymentOperation;
+use App\Entity\PaymentBatch;
+use App\Entity\DriverIntegration;
 use App\Enum\AttachmentField;
 use App\Enum\AttachmentType;
 use App\Enum\ValidationStatus;
@@ -16,6 +20,7 @@ use App\Service\Storage\R2Client;
 use App\Form\UserWizard\UserStepType;
 use App\Form\UserWizard\DriverDocumentsStepType;
 use App\Form\Api\VehicleUpdateType;
+use App\Form\Api\ExpenseNoteCreateType;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Context\Context;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
@@ -71,6 +76,239 @@ final class EditController extends AbstractFOSRestController
         $context = new Context();
         $context->addGroup('me:read');
         $view = $this->view($user, Response::HTTP_OK);
+        $view->setContext($context);
+        return $this->handleView($view);
+    }
+
+    #[Route('/payment-operations', name: 'payment_operations_list', methods: ['GET'])]
+    public function listPaymentOperations(Request $request, #[CurrentUser] ?User $user): Response
+    {
+        if (!$user instanceof User) {
+            $view = $this->view(['error' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return $this->handleView($view);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $view = $this->view(['items' => [], 'page' => 1, 'size' => 0, 'total' => 0, 'totalPages' => 1], Response::HTTP_OK);
+            return $this->handleView($view);
+        }
+        $page = max(1, (int) $request->query->get('page', 1));
+        $size = max(1, min(100, (int) $request->query->get('size', 20)));
+        $offset = ($page - 1) * $size;
+        $sortBy = (string) $request->query->get('sort', 'occurredAt');
+        $sortDir = strtoupper((string) $request->query->get('dir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $allowedSort = ['occurredAt', 'amount', 'status', 'integrationCode', 'operationType', 'currency', 'direction'];
+        if (!in_array($sortBy, $allowedSort, true)) {
+            $sortBy = 'occurredAt';
+        }
+        $qb = $this->em->createQueryBuilder()
+            ->select('o')
+            ->from(PaymentOperation::class, 'o')
+            ->where('o.driver = :driver')
+            ->setParameter('driver', $driver);
+        $intCode = (string) $request->query->get('integrationCode', '');
+        if ($intCode !== '') {
+            $qb->andWhere('o.integrationCode = :integrationCode')->setParameter('integrationCode', $intCode);
+        }
+        $opType = (string) $request->query->get('operationType', '');
+        if ($opType !== '') {
+            $qb->andWhere('o.operationType = :operationType')->setParameter('operationType', $opType);
+        }
+        $direction = strtolower((string) $request->query->get('direction', ''));
+        if ($direction !== '') {
+            $qb->andWhere('LOWER(o.direction) = :direction')->setParameter('direction', $direction);
+        }
+        $status = (string) $request->query->get('status', '');
+        if ($status !== '') {
+            $qb->andWhere('o.status = :status')->setParameter('status', $status);
+        }
+        $currency = (string) $request->query->get('currency', '');
+        if ($currency !== '') {
+            $qb->andWhere('o.currency = :currency')->setParameter('currency', $currency);
+        }
+        $from = (string) $request->query->get('dateFrom', '');
+        if ($from !== '') {
+            try {
+                $df = new \DateTimeImmutable($from);
+                $qb->andWhere('o.occurredAt >= :dateFrom')->setParameter('dateFrom', $df);
+            } catch (\Throwable) {}
+        }
+        $to = (string) $request->query->get('dateTo', '');
+        if ($to !== '') {
+            try {
+                $dt = new \DateTimeImmutable($to);
+                $qb->andWhere('o.occurredAt <= :dateTo')->setParameter('dateTo', $dt);
+            } catch (\Throwable) {}
+        }
+        $qb->orderBy('o.' . $sortBy, $sortDir)->setFirstResult($offset)->setMaxResults($size);
+        $items = $qb->getQuery()->getResult();
+        $countQb = $this->em->createQueryBuilder()
+            ->select('COUNT(o.id)')
+            ->from(PaymentOperation::class, 'o')
+            ->where('o.driver = :driver')
+            ->setParameter('driver', $driver);
+        if ($intCode !== '') $countQb->andWhere('o.integrationCode = :integrationCode')->setParameter('integrationCode', $intCode);
+        if ($opType !== '') $countQb->andWhere('o.operationType = :operationType')->setParameter('operationType', $opType);
+        if ($direction !== '') $countQb->andWhere('LOWER(o.direction) = :direction')->setParameter('direction', $direction);
+        if ($status !== '') $countQb->andWhere('o.status = :status')->setParameter('status', $status);
+        if ($currency !== '') $countQb->andWhere('o.currency = :currency')->setParameter('currency', $currency);
+        if ($from !== '') { try { $df = new \DateTimeImmutable($from); $countQb->andWhere('o.occurredAt >= :dateFrom')->setParameter('dateFrom', $df); } catch (\Throwable) {} }
+        if ($to !== '') { try { $dt = new \DateTimeImmutable($to); $countQb->andWhere('o.occurredAt <= :dateTo')->setParameter('dateTo', $dt); } catch (\Throwable) {} }
+        $total = (int) $countQb->getQuery()->getSingleScalarResult();
+        $totalPages = max(1, (int) ceil($total / $size));
+        $view = $this->view(['items' => $items, 'page' => $page, 'size' => $size, 'total' => $total, 'totalPages' => $totalPages], Response::HTTP_OK);
+        return $this->handleView($view);
+    }
+
+    #[Route('/payment-batches', name: 'payment_batches_list', methods: ['GET'])]
+    public function listPaymentBatches(Request $request, #[CurrentUser] ?User $user): Response
+    {
+        if (!$user instanceof User) {
+            $view = $this->view(['error' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return $this->handleView($view);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $view = $this->view(['items' => [], 'page' => 1, 'size' => 0, 'total' => 0, 'totalPages' => 1], Response::HTTP_OK);
+            return $this->handleView($view);
+        }
+        $codesRows = $this->em->createQueryBuilder()
+            ->select('DISTINCT o.integrationCode')
+            ->from(PaymentOperation::class, 'o')
+            ->where('o.driver = :driver')
+            ->setParameter('driver', $driver)
+            ->getQuery()
+            ->getArrayResult();
+        $allowedCodes = array_values(array_unique(array_map(fn($r) => (string) ($r['integrationCode'] ?? ''), $codesRows)));
+        $intCode = (string) $request->query->get('integrationCode', '');
+        if ($intCode !== '' && !in_array($intCode, $allowedCodes, true)) {
+            $view = $this->view(['items' => [], 'page' => 1, 'size' => 0, 'total' => 0, 'totalPages' => 1], Response::HTTP_OK);
+            return $this->handleView($view);
+        }
+        $page = max(1, (int) $request->query->get('page', 1));
+        $size = max(1, min(100, (int) $request->query->get('size', 20)));
+        $offset = ($page - 1) * $size;
+        $sortBy = (string) $request->query->get('sort', 'periodStart');
+        $sortDir = strtoupper((string) $request->query->get('dir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $allowedSort = ['periodStart', 'periodEnd', 'totalAmount'];
+        if (!in_array($sortBy, $allowedSort, true)) {
+            $sortBy = 'periodStart';
+        }
+        $qb = $this->em->createQueryBuilder()
+            ->select('b')
+            ->from(PaymentBatch::class, 'b');
+        if ($intCode !== '') {
+            $integration = $this->em->getRepository(DriverIntegration::class)->findOneBy(['code' => $intCode]);
+            if ($integration instanceof DriverIntegration) {
+                $qb->andWhere('b.integration = :integration')->setParameter('integration', $integration);
+            } else {
+                $qb->andWhere('1 = 0');
+            }
+        } else {
+            if ($allowedCodes !== []) {
+                $integrations = [];
+                foreach ($allowedCodes as $code) {
+                    $i = $this->em->getRepository(DriverIntegration::class)->findOneBy(['code' => $code]);
+                    if ($i instanceof DriverIntegration) {
+                        $integrations[] = $i;
+                    }
+                }
+                if ($integrations !== []) {
+                    $qb->andWhere('b.integration IN (:integrations)')->setParameter('integrations', $integrations);
+                } else {
+                    $qb->andWhere('1 = 0');
+                }
+            } else {
+                $qb->andWhere('1 = 0');
+            }
+        }
+        $from = (string) $request->query->get('periodFrom', '');
+        if ($from !== '') {
+            try {
+                $df = new \DateTimeImmutable($from);
+                $qb->andWhere('b.periodStart >= :periodFrom')->setParameter('periodFrom', $df);
+            } catch (\Throwable) {}
+        }
+        $to = (string) $request->query->get('periodTo', '');
+        if ($to !== '') {
+            try {
+                $dt = new \DateTimeImmutable($to);
+                $qb->andWhere('b.periodEnd <= :periodTo')->setParameter('periodTo', $dt);
+            } catch (\Throwable) {}
+        }
+        $qb->orderBy('b.' . $sortBy, $sortDir)->setFirstResult($offset)->setMaxResults($size);
+        $items = $qb->getQuery()->getResult();
+        $countQb = $this->em->createQueryBuilder()
+            ->select('COUNT(b.id)')
+            ->from(PaymentBatch::class, 'b');
+        if ($intCode !== '') {
+            $integration = $this->em->getRepository(DriverIntegration::class)->findOneBy(['code' => $intCode]);
+            if ($integration instanceof DriverIntegration) {
+                $countQb->andWhere('b.integration = :integration')->setParameter('integration', $integration);
+            } else {
+                $countQb->andWhere('1 = 0');
+            }
+        } else {
+            if ($allowedCodes !== []) {
+                $integrations = [];
+                foreach ($allowedCodes as $code) {
+                    $i = $this->em->getRepository(DriverIntegration::class)->findOneBy(['code' => $code]);
+                    if ($i instanceof DriverIntegration) {
+                        $integrations[] = $i;
+                    }
+                }
+                if ($integrations !== []) {
+                    $countQb->andWhere('b.integration IN (:integrations)')->setParameter('integrations', $integrations);
+                } else {
+                    $countQb->andWhere('1 = 0');
+                }
+            } else {
+                $countQb->andWhere('1 = 0');
+            }
+        }
+        if ($from !== '') { try { $df = new \DateTimeImmutable($from); $countQb->andWhere('b.periodStart >= :periodFrom')->setParameter('periodFrom', $df); } catch (\Throwable) {} }
+        if ($to !== '') { try { $dt = new \DateTimeImmutable($to); $countQb->andWhere('b.periodEnd <= :periodTo')->setParameter('periodTo', $dt); } catch (\Throwable) {} }
+        $total = (int) $countQb->getQuery()->getSingleScalarResult();
+        $totalPages = max(1, (int) ceil($total / $size));
+        $view = $this->view(['items' => $items, 'page' => $page, 'size' => $size, 'total' => $total, 'totalPages' => $totalPages], Response::HTTP_OK);
+        return $this->handleView($view);
+    }
+
+    #[Route('/expense-notes', name: 'expense_note_create', methods: ['POST'])]
+    public function createExpenseNote(Request $request, #[CurrentUser] ?User $user): Response
+    {
+        if (!$user instanceof User) {
+            $view = $this->view(['error' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return $this->handleView($view);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $driver = new Driver();
+            $driver->setUser($user);
+            $this->em->persist($driver);
+            $this->em->flush();
+        }
+        $note = new ExpenseNote();
+        $note->setDriver($driver);
+        $form = $this->createForm(ExpenseNoteCreateType::class, $note);
+        $form->submit($this->filterNulls($this->data($request)), false);
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            $view = $this->view(['error' => 'invalid'], Response::HTTP_BAD_REQUEST);
+            return $this->handleView($view);
+        }
+        $this->em->persist($note);
+        $this->em->flush();
+        $uploaded = $request->files->get('invoice');
+        if (!$uploaded instanceof UploadedFile) {
+            $view = $this->view(['error' => 'invoice_required'], Response::HTTP_BAD_REQUEST);
+            return $this->handleView($view);
+        }
+        $att = $this->uploadAttachment($uploaded, AttachmentField::EXPENSE_INVOICE, $user, (int) $note->getId());
+        $note->setInvoice($att);
+        $this->em->flush();
+        $context = new Context();
+        $context->addGroup('me:read');
+        $view = $this->view($note, Response::HTTP_CREATED);
         $view->setContext($context);
         return $this->handleView($view);
     }

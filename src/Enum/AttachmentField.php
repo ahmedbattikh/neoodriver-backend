@@ -31,6 +31,7 @@ enum AttachmentField: string
     case VEHICLE_VEHICLE_FRONT_PHOTO = 'VEHICLE_VEHICLE_FRONT_PHOTO';
     case VEHICLE_INSURANCE_NOTE = 'VEHICLE_INSURANCE_NOTE';
     case USER_PIC_PROFILE = 'USER_PIC_PROFILE';
+    case EXPENSE_INVOICE = 'EXPENSE_INVOICE';
 
     public function folder(): string
     {
@@ -61,6 +62,7 @@ enum AttachmentField: string
             self::VEHICLE_VEHICLE_FRONT_PHOTO,
             self::VEHICLE_INSURANCE_NOTE => 'vehicle',
             self::USER_PIC_PROFILE => 'user',
+            self::EXPENSE_INVOICE => 'expense',
         };
     }
 
@@ -93,6 +95,7 @@ enum AttachmentField: string
             self::VEHICLE_VEHICLE_FRONT_PHOTO => 'vehicle_front_photo',
             self::VEHICLE_INSURANCE_NOTE => 'insurance_note',
             self::USER_PIC_PROFILE => 'pic_profile',
+            self::EXPENSE_INVOICE => 'expense_invoice',
         };
     }
 
