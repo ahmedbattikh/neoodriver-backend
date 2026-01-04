@@ -1,5 +1,9 @@
 {% extends '@EasyAdmin/layout.html.twig' %}
 
+{% block head_favicon %}
+  <link rel="icon" href="{{ asset('favicon.ico') }}">
+{% endblock %}
+
 {% macro preview(att, url) %}
 	{% if url %}
 		{% set mime = att.mimeType|lower %}
