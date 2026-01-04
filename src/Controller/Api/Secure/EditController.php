@@ -48,6 +48,107 @@ final class EditController extends AbstractFOSRestController
         return $request->request->all();
     }
 
+    #[Route('/payments-summary', name: 'payments_summary', methods: ['GET'])]
+    public function paymentsSummary(Request $request, #[CurrentUser] ?User $user): Response
+    {
+        if (!$user instanceof User) {
+            $view = $this->view(['error' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return $this->handleView($view);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $view = $this->view(['integrationsToday' => [], 'days' => []], Response::HTTP_OK);
+            return $this->handleView($view);
+        }
+        $todayStart = new \DateTimeImmutable('today 00:00:00');
+        $todayEnd = new \DateTimeImmutable('tomorrow 00:00:00');
+        $rows = $this->em->createQueryBuilder()
+            ->select("o.integrationCode AS code")
+            ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
+            ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('out','debit') THEN o.amount ELSE 0 END) AS totalOut")
+            ->from(PaymentOperation::class, 'o')
+            ->where('o.driver = :driver')
+            ->andWhere('o.occurredAt >= :start')
+            ->andWhere('o.occurredAt < :end')
+            ->groupBy('o.integrationCode')
+            ->setParameter('driver', $driver)
+            ->setParameter('start', $todayStart)
+            ->setParameter('end', $todayEnd)
+            ->getQuery()
+            ->getArrayResult();
+        $integrationsToday = [];
+        foreach ($rows as $r) {
+            $in = (float) (($r['totalIn'] ?? 0) ?: 0);
+            $out = (float) (($r['totalOut'] ?? 0) ?: 0);
+            $integrationsToday[] = [
+                'integrationCode' => (string) $r['code'],
+                'totalIn' => number_format($in, 3, '.', ''),
+                'net' => number_format($in - $out, 3, '.', ''),
+            ];
+        }
+        $beginRaw = (string) $request->query->get('dateBegin', '');
+        $endRaw = (string) $request->query->get('dateEnd', '');
+        if ($beginRaw === '' || $endRaw === '') {
+            $begin = new \DateTimeImmutable('monday this week 00:00:00');
+            $end = new \DateTimeImmutable('monday next week 00:00:00');
+        } else {
+            try {
+                $begin = (new \DateTimeImmutable($beginRaw))->setTime(0, 0, 0);
+                $end = (new \DateTimeImmutable($endRaw))->setTime(0, 0, 0)->modify('+1 day');
+            } catch (\Throwable) {
+                $begin = new \DateTimeImmutable('monday this week 00:00:00');
+                $end = new \DateTimeImmutable('monday next week 00:00:00');
+            }
+        }
+        $ops = $this->em->createQueryBuilder()
+            ->select('o')
+            ->from(PaymentOperation::class, 'o')
+            ->where('o.driver = :driver')
+            ->andWhere('o.occurredAt >= :begin')
+            ->andWhere('o.occurredAt < :end')
+            ->orderBy('o.occurredAt', 'ASC')
+            ->setParameter('driver', $driver)
+            ->setParameter('begin', $begin)
+            ->setParameter('end', $end)
+            ->getQuery()
+            ->getResult();
+        $daysMap = [];
+        $cursor = $begin;
+        while ($cursor < $end) {
+            $key = $cursor->format('Y-m-d');
+            $daysMap[$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+            $cursor = $cursor->modify('+1 day');
+        }
+        foreach ($ops as $o) {
+            if ($o instanceof PaymentOperation) {
+                $key = $o->getOccurredAt()->format('Y-m-d');
+                if (!isset($daysMap[$key])) {
+                    $daysMap[$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+                }
+                $amt = (float) $o->getAmount();
+                $dir = strtolower($o->getDirection());
+                if ($dir === 'in' || $dir === 'credit') {
+                    $daysMap[$key]['totalIn'] += $amt;
+                } elseif ($dir === 'out' || $dir === 'debit') {
+                    $daysMap[$key]['totalOut'] += $amt;
+                }
+            }
+        }
+        $days = [];
+        foreach ($daysMap as $d => $vals) {
+            $days[] = [
+                'date' => $d,
+                'totalIn' => number_format((float) $vals['totalIn'], 3, '.', ''),
+                'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 3, '.', ''),
+            ];
+        }
+        usort($days, function ($a, $b) {
+            return strcmp($a['date'], $b['date']);
+        });
+        $view = $this->view(['integrationsToday' => $integrationsToday, 'days' => $days], Response::HTTP_OK);
+        return $this->handleView($view);
+    }
+
     private function filterNulls(array $data): array
     {
         $out = [];
