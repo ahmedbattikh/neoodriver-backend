@@ -131,17 +131,37 @@ final class EditController extends AbstractFOSRestController
             try {
                 $df = new \DateTimeImmutable($from);
                 $qb->andWhere('o.occurredAt >= :dateFrom')->setParameter('dateFrom', $df);
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
         $to = (string) $request->query->get('dateTo', '');
         if ($to !== '') {
             try {
                 $dt = new \DateTimeImmutable($to);
                 $qb->andWhere('o.occurredAt <= :dateTo')->setParameter('dateTo', $dt);
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
         $qb->orderBy('o.' . $sortBy, $sortDir)->setFirstResult($offset)->setMaxResults($size);
         $items = $qb->getQuery()->getResult();
+        $rows = [];
+        foreach ($items as $o) {
+            if ($o instanceof PaymentOperation) {
+                $rows[] = [
+                    'id' => $o->getId(),
+                    'integrationCode' => $o->getIntegrationCode(),
+                    'operationType' => $o->getOperationType(),
+                    'direction' => $o->getDirection(),
+                    'amount' => $o->getAmount(),
+                    'currency' => $o->getCurrency(),
+                    'status' => $o->getStatus(),
+                    'externalReference' => $o->getExternalReference(),
+                    'description' => $o->getDescription(),
+                    'occurredAt' => $o->getOccurredAt()->format('c'),
+                    'createdAt' => $o->getCreatedAt()->format('c'),
+                ];
+            }
+        }
         $countQb = $this->em->createQueryBuilder()
             ->select('COUNT(o.id)')
             ->from(PaymentOperation::class, 'o')
@@ -152,11 +172,23 @@ final class EditController extends AbstractFOSRestController
         if ($direction !== '') $countQb->andWhere('LOWER(o.direction) = :direction')->setParameter('direction', $direction);
         if ($status !== '') $countQb->andWhere('o.status = :status')->setParameter('status', $status);
         if ($currency !== '') $countQb->andWhere('o.currency = :currency')->setParameter('currency', $currency);
-        if ($from !== '') { try { $df = new \DateTimeImmutable($from); $countQb->andWhere('o.occurredAt >= :dateFrom')->setParameter('dateFrom', $df); } catch (\Throwable) {} }
-        if ($to !== '') { try { $dt = new \DateTimeImmutable($to); $countQb->andWhere('o.occurredAt <= :dateTo')->setParameter('dateTo', $dt); } catch (\Throwable) {} }
+        if ($from !== '') {
+            try {
+                $df = new \DateTimeImmutable($from);
+                $countQb->andWhere('o.occurredAt >= :dateFrom')->setParameter('dateFrom', $df);
+            } catch (\Throwable) {
+            }
+        }
+        if ($to !== '') {
+            try {
+                $dt = new \DateTimeImmutable($to);
+                $countQb->andWhere('o.occurredAt <= :dateTo')->setParameter('dateTo', $dt);
+            } catch (\Throwable) {
+            }
+        }
         $total = (int) $countQb->getQuery()->getSingleScalarResult();
         $totalPages = max(1, (int) ceil($total / $size));
-        $view = $this->view(['items' => $items, 'page' => $page, 'size' => $size, 'total' => $total, 'totalPages' => $totalPages], Response::HTTP_OK);
+        $view = $this->view(['items' => $rows, 'page' => $page, 'size' => $size, 'total' => $total, 'totalPages' => $totalPages], Response::HTTP_OK);
         return $this->handleView($view);
     }
 
@@ -227,17 +259,31 @@ final class EditController extends AbstractFOSRestController
             try {
                 $df = new \DateTimeImmutable($from);
                 $qb->andWhere('b.periodStart >= :periodFrom')->setParameter('periodFrom', $df);
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
         $to = (string) $request->query->get('periodTo', '');
         if ($to !== '') {
             try {
                 $dt = new \DateTimeImmutable($to);
                 $qb->andWhere('b.periodEnd <= :periodTo')->setParameter('periodTo', $dt);
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
         $qb->orderBy('b.' . $sortBy, $sortDir)->setFirstResult($offset)->setMaxResults($size);
         $items = $qb->getQuery()->getResult();
+        $rows = [];
+        foreach ($items as $b) {
+            if ($b instanceof PaymentBatch) {
+                $rows[] = [
+                    'id' => $b->getId(),
+                    'integrationCode' => $b->getIntegration()->getCode(),
+                    'periodStart' => $b->getPeriodStart()->format('Y-m-d'),
+                    'periodEnd' => $b->getPeriodEnd()->format('Y-m-d'),
+                    'totalAmount' => $b->getTotalAmount(),
+                ];
+            }
+        }
         $countQb = $this->em->createQueryBuilder()
             ->select('COUNT(b.id)')
             ->from(PaymentBatch::class, 'b');
@@ -266,11 +312,23 @@ final class EditController extends AbstractFOSRestController
                 $countQb->andWhere('1 = 0');
             }
         }
-        if ($from !== '') { try { $df = new \DateTimeImmutable($from); $countQb->andWhere('b.periodStart >= :periodFrom')->setParameter('periodFrom', $df); } catch (\Throwable) {} }
-        if ($to !== '') { try { $dt = new \DateTimeImmutable($to); $countQb->andWhere('b.periodEnd <= :periodTo')->setParameter('periodTo', $dt); } catch (\Throwable) {} }
+        if ($from !== '') {
+            try {
+                $df = new \DateTimeImmutable($from);
+                $countQb->andWhere('b.periodStart >= :periodFrom')->setParameter('periodFrom', $df);
+            } catch (\Throwable) {
+            }
+        }
+        if ($to !== '') {
+            try {
+                $dt = new \DateTimeImmutable($to);
+                $countQb->andWhere('b.periodEnd <= :periodTo')->setParameter('periodTo', $dt);
+            } catch (\Throwable) {
+            }
+        }
         $total = (int) $countQb->getQuery()->getSingleScalarResult();
         $totalPages = max(1, (int) ceil($total / $size));
-        $view = $this->view(['items' => $items, 'page' => $page, 'size' => $size, 'total' => $total, 'totalPages' => $totalPages], Response::HTTP_OK);
+        $view = $this->view(['items' => $rows, 'page' => $page, 'size' => $size, 'total' => $total, 'totalPages' => $totalPages], Response::HTTP_OK);
         return $this->handleView($view);
     }
 
