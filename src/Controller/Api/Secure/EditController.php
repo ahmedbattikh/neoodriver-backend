@@ -69,7 +69,13 @@ final class EditController extends AbstractFOSRestController
         $form = $this->createForm(UserStepType::class, $user);
         $form->submit($this->filterNulls($this->data($request)), false);
         if (!$form->isSubmitted() || !$form->isValid()) {
-            $view = $this->view(['error' => 'invalid'], Response::HTTP_BAD_REQUEST);
+            $errs = [];
+            foreach ($form->getErrors(true) as $e) {
+                $origin = $e->getOrigin();
+                $path = $origin ? $origin->getName() : '';
+                $errs[] = ['field' => $path, 'message' => $e->getMessage()];
+            }
+            $view = $this->view(['error' => 'invalid', 'details' => $errs], Response::HTTP_BAD_REQUEST);
             return $this->handleView($view);
         }
         $this->em->flush();
@@ -351,8 +357,26 @@ final class EditController extends AbstractFOSRestController
         $form = $this->createForm(ExpenseNoteCreateType::class, $note);
         $form->submit($this->filterNulls($this->data($request)), false);
         if (!$form->isSubmitted() || !$form->isValid()) {
-            $view = $this->view(['error' => 'invalid'], Response::HTTP_BAD_REQUEST);
+            $errs = [];
+            foreach ($form->getErrors(true) as $e) {
+                $origin = $e->getOrigin();
+                $path = $origin ? $origin->getName() : '';
+                $errs[] = ['field' => $path, 'message' => $e->getMessage()];
+            }
+            $view = $this->view(['error' => 'invalid', 'details' => $errs], Response::HTTP_BAD_REQUEST);
             return $this->handleView($view);
+        }
+        $date = $form->get('noteDate')->getData();
+        if ($date instanceof \DateTimeImmutable) {
+            $note->setNoteDate($date);
+        } else {
+            $rawDate = (string) $request->request->get('noteDate', '');
+            try {
+                $note->setNoteDate(new \DateTimeImmutable($rawDate));
+            } catch (\Throwable) {
+                $view = $this->view(['error' => 'invalid', 'details' => [['field' => 'noteDate', 'message' => 'Invalid date']]], Response::HTTP_BAD_REQUEST);
+                return $this->handleView($view);
+            }
         }
         $this->em->persist($note);
         $this->em->flush();
@@ -396,7 +420,13 @@ final class EditController extends AbstractFOSRestController
         $form = $this->createForm(DriverDocumentsStepType::class, $docs);
         $form->submit($data, false);
         if (!$form->isSubmitted() || !$form->isValid()) {
-            $view = $this->view(['error' => 'invalid'], Response::HTTP_BAD_REQUEST);
+            $errs = [];
+            foreach ($form->getErrors(true) as $e) {
+                $origin = $e->getOrigin();
+                $path = $origin ? $origin->getName() : '';
+                $errs[] = ['field' => $path, 'message' => $e->getMessage()];
+            }
+            $view = $this->view(['error' => 'invalid', 'details' => $errs], Response::HTTP_BAD_REQUEST);
             return $this->handleView($view);
         }
         $this->em->flush(); // ensure driver/docs have IDs
@@ -471,7 +501,13 @@ final class EditController extends AbstractFOSRestController
         $form = $this->createForm(VehicleUpdateType::class, $vehicle);
         $form->submit($this->filterNulls($this->data($request)), false);
         if (!$form->isSubmitted() || !$form->isValid()) {
-            $view = $this->view(['error' => 'invalid'], Response::HTTP_BAD_REQUEST);
+            $errs = [];
+            foreach ($form->getErrors(true) as $e) {
+                $origin = $e->getOrigin();
+                $path = $origin ? $origin->getName() : '';
+                $errs[] = ['field' => $path, 'message' => $e->getMessage()];
+            }
+            $view = $this->view(['error' => 'invalid', 'details' => $errs], Response::HTTP_BAD_REQUEST);
             return $this->handleView($view);
         }
         $fileMap = [

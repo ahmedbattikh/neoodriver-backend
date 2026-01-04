@@ -33,7 +33,7 @@ final class DriverDocumentsStepType extends AbstractType
                 'choice_value' => fn (?ValidationStatus $s) => $s?->value,
                 'required' => true,
             ])
-            ->add('vtcCardExpirationDate', DateType::class, ['required' => false, 'widget' => 'single_text'])
+            ->add('vtcCardExpirationDate', DateType::class, ['required' => false, 'widget' => 'single_text', 'input' => 'datetime_immutable'])
             ->add('drivingLicenseFront', FileType::class, ['mapped' => false, 'required' => false])
             ->add('drivingLicenseBack', FileType::class, ['mapped' => false, 'required' => false])
             ->add('drivingLicenseValid', ChoiceType::class, [
@@ -47,7 +47,7 @@ final class DriverDocumentsStepType extends AbstractType
                 'choice_value' => fn (?ValidationStatus $s) => $s?->value,
                 'required' => true,
             ])
-            ->add('drivingLicenseExpirationDate', DateType::class, ['required' => false, 'widget' => 'single_text'])
+            ->add('drivingLicenseExpirationDate', DateType::class, ['required' => false, 'widget' => 'single_text', 'input' => 'datetime_immutable'])
             ->add('identityCardFront', FileType::class, ['mapped' => false, 'required' => false])
             ->add('identityCardBack', FileType::class, ['mapped' => false, 'required' => false])
             ->add('identityCardValid', ChoiceType::class, [
@@ -61,7 +61,7 @@ final class DriverDocumentsStepType extends AbstractType
                 'choice_value' => fn (?ValidationStatus $s) => $s?->value,
                 'required' => true,
             ])
-            ->add('identityCardExpirationDate', DateType::class, ['required' => false, 'widget' => 'single_text'])
+            ->add('identityCardExpirationDate', DateType::class, ['required' => false, 'widget' => 'single_text', 'input' => 'datetime_immutable'])
             ->add('healthCard', FileType::class, ['mapped' => false, 'required' => false])
             ->add('healthCardValid', ChoiceType::class, [
                 'choices' => [
@@ -117,6 +117,10 @@ final class DriverDocumentsStepType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => DriverDocuments::class, 'user' => null]);
+        $resolver->setDefaults([
+            'data_class' => DriverDocuments::class,
+            'user' => null,
+            'csrf_protection' => false,
+        ]);
     }
 }
