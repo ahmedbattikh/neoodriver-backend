@@ -48,6 +48,156 @@ final class EditController extends AbstractFOSRestController
         return $request->request->all();
     }
 
+    #[Route('/driver-integrations', name: 'driver_integrations_list', methods: ['GET'])]
+    public function listDriverIntegrations(Request $request, #[CurrentUser] ?User $user): Response
+    {
+        if (!$user instanceof User) {
+            $view = $this->view(['error' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return $this->handleView($view);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $view = $this->view(['items' => []], Response::HTTP_OK);
+            return $this->handleView($view);
+        }
+        $codesRows = $this->em->createQueryBuilder()
+            ->select('DISTINCT o.integrationCode')
+            ->from(PaymentOperation::class, 'o')
+            ->where('o.driver = :driver')
+            ->setParameter('driver', $driver)
+            ->getQuery()
+            ->getArrayResult();
+        $codes = array_values(array_unique(array_map(fn($r) => (string) ($r['integrationCode'] ?? ''), $codesRows)));
+        $items = [];
+        foreach ($codes as $code) {
+            if ($code === '') continue;
+            $integration = $this->em->getRepository(DriverIntegration::class)->findOneBy(['code' => $code]);
+            if ($integration instanceof DriverIntegration) {
+                $items[] = [
+                    'id' => $integration->getId(),
+                    'code' => $integration->getCode(),
+                    'name' => $integration->getName(),
+                    'description' => $integration->getDescription(),
+                    'logoPath' => $integration->getLogoPath(),
+                    'enabled' => $integration->isEnabled(),
+                    'createdAt' => $integration->getCreatedAt()->format('c'),
+                    'updatedAt' => $integration->getUpdatedAt()->format('c'),
+                ];
+            } else {
+                $items[] = [
+                    'id' => null,
+                    'code' => $code,
+                    'name' => $code,
+                    'description' => null,
+                    'logoPath' => null,
+                    'enabled' => true,
+                    'createdAt' => null,
+                    'updatedAt' => null,
+                ];
+            }
+        }
+        $view = $this->view(['items' => $items], Response::HTTP_OK);
+        return $this->handleView($view);
+    }
+
+    #[Route('/expense-notes', name: 'expense_notes_list', methods: ['GET'])]
+    public function listExpenseNotes(Request $request, #[CurrentUser] ?User $user): Response
+    {
+        if (!$user instanceof User) {
+            $view = $this->view(['error' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return $this->handleView($view);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $view = $this->view(['items' => [], 'page' => 1, 'size' => 0, 'total' => 0, 'totalPages' => 1], Response::HTTP_OK);
+            return $this->handleView($view);
+        }
+        $page = max(1, (int) $request->query->get('page', 1));
+        $size = max(1, min(100, (int) $request->query->get('size', 20)));
+        $offset = ($page - 1) * $size;
+        $sortBy = (string) $request->query->get('sort', 'noteDate');
+        $sortDir = strtoupper((string) $request->query->get('dir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $allowedSort = ['noteDate', 'amountTtc', 'type', 'createdAt', 'updatedAt'];
+        if (!in_array($sortBy, $allowedSort, true)) {
+            $sortBy = 'noteDate';
+        }
+        $qb = $this->em->createQueryBuilder()
+            ->select('n')
+            ->from(ExpenseNote::class, 'n')
+            ->where('n.driver = :driver')
+            ->setParameter('driver', $driver)
+            ->orderBy('n.' . $sortBy, $sortDir)
+            ->setFirstResult($offset)
+            ->setMaxResults($size);
+        $items = $qb->getQuery()->getResult();
+        $rows = [];
+        foreach ($items as $n) {
+            if ($n instanceof ExpenseNote) {
+                $inv = $n->getInvoice();
+                $url = null;
+                if ($inv instanceof Attachment && $inv->getId() !== null) {
+                    $url = $this->r2->getSignedUrl($inv->getFilePath(), 900);
+                }
+                $rows[] = [
+                    'id' => $n->getId(),
+                    'noteDate' => $n->getNoteDate()->format('Y-m-d'),
+                    'amountTtc' => $n->getAmountTtc(),
+                    'type' => $n->getType(),
+                    'invoiceId' => $inv?->getId(),
+                    'invoiceUrl' => $url,
+                    'createdAt' => $n->getCreatedAt()->format('c'),
+                    'updatedAt' => $n->getUpdatedAt()->format('c'),
+                ];
+            }
+        }
+        $count = (int) $this->em->createQueryBuilder()
+            ->select('COUNT(n.id)')
+            ->from(ExpenseNote::class, 'n')
+            ->where('n.driver = :driver')
+            ->setParameter('driver', $driver)
+            ->getQuery()
+            ->getSingleScalarResult();
+        $totalPages = max(1, (int) ceil($count / $size));
+        $view = $this->view(['items' => $rows, 'page' => $page, 'size' => $size, 'total' => $count, 'totalPages' => $totalPages], Response::HTTP_OK);
+        return $this->handleView($view);
+    }
+
+    #[Route('/expense-notes/{id}', name: 'expense_note_detail', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function getExpenseNote(Request $request, #[CurrentUser] ?User $user, int $id): Response
+    {
+        if (!$user instanceof User) {
+            $view = $this->view(['error' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return $this->handleView($view);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $view = $this->view(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
+            return $this->handleView($view);
+        }
+        $n = $this->em->getRepository(ExpenseNote::class)->find($id);
+        if (!$n instanceof ExpenseNote || $n->getDriver()->getId() !== $driver->getId()) {
+            $view = $this->view(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
+            return $this->handleView($view);
+        }
+        $inv = $n->getInvoice();
+        $url = null;
+        if ($inv instanceof Attachment && $inv->getId() !== null) {
+            $url = $this->r2->getSignedUrl($inv->getFilePath(), 900);
+        }
+        $row = [
+            'id' => $n->getId(),
+            'noteDate' => $n->getNoteDate()->format('Y-m-d'),
+            'amountTtc' => $n->getAmountTtc(),
+            'type' => $n->getType(),
+            'invoiceId' => $inv?->getId(),
+            'invoiceUrl' => $url,
+            'createdAt' => $n->getCreatedAt()->format('c'),
+            'updatedAt' => $n->getUpdatedAt()->format('c'),
+        ];
+        $view = $this->view($row, Response::HTTP_OK);
+        return $this->handleView($view);
+    }
+
     #[Route('/payments-summary', name: 'payments_summary', methods: ['GET'])]
     public function paymentsSummary(Request $request, #[CurrentUser] ?User $user): Response
     {
