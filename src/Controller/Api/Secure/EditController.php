@@ -119,6 +119,22 @@ final class EditController extends AbstractFOSRestController
             $daysMap[$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
             $cursor = $cursor->modify('+1 day');
         }
+        $codes = [];
+        foreach ($ops as $o) {
+            if ($o instanceof PaymentOperation) {
+                $codes[(string) $o->getIntegrationCode()] = true;
+            }
+        }
+        $daysMapByIntegration = [];
+        foreach (array_keys($codes) as $code) {
+            $daysMapByIntegration[$code] = [];
+            $cursor = $begin;
+            while ($cursor < $end) {
+                $key = $cursor->format('Y-m-d');
+                $daysMapByIntegration[$code][$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+                $cursor = $cursor->modify('+1 day');
+            }
+        }
         foreach ($ops as $o) {
             if ($o instanceof PaymentOperation) {
                 $key = $o->getOccurredAt()->format('Y-m-d');
@@ -131,6 +147,18 @@ final class EditController extends AbstractFOSRestController
                     $daysMap[$key]['totalIn'] += $amt;
                 } elseif ($dir === 'out' || $dir === 'debit') {
                     $daysMap[$key]['totalOut'] += $amt;
+                }
+                $code = (string) $o->getIntegrationCode();
+                if (!isset($daysMapByIntegration[$code])) {
+                    $daysMapByIntegration[$code] = [];
+                }
+                if (!isset($daysMapByIntegration[$code][$key])) {
+                    $daysMapByIntegration[$code][$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+                }
+                if ($dir === 'in' || $dir === 'credit') {
+                    $daysMapByIntegration[$code][$key]['totalIn'] += $amt;
+                } elseif ($dir === 'out' || $dir === 'debit') {
+                    $daysMapByIntegration[$code][$key]['totalOut'] += $amt;
                 }
             }
         }
@@ -145,7 +173,22 @@ final class EditController extends AbstractFOSRestController
         usort($days, function ($a, $b) {
             return strcmp($a['date'], $b['date']);
         });
-        $view = $this->view(['integrationsToday' => $integrationsToday, 'days' => $days], Response::HTTP_OK);
+        $daysByIntegration = [];
+        foreach ($daysMapByIntegration as $code => $map) {
+            $list = [];
+            foreach ($map as $d => $vals) {
+                $list[] = [
+                    'date' => $d,
+                    'totalIn' => number_format((float) $vals['totalIn'], 3, '.', ''),
+                    'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 3, '.', ''),
+                ];
+            }
+            usort($list, function ($a, $b) {
+                return strcmp($a['date'], $b['date']);
+            });
+            $daysByIntegration[$code] = $list;
+        }
+        $view = $this->view(['integrationsToday' => $integrationsToday, 'days' => $days, 'daysByIntegration' => $daysByIntegration], Response::HTTP_OK);
         return $this->handleView($view);
     }
 
