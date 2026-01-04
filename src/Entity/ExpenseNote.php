@@ -1,8 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\ExpenseNoteType;
 use App\Repository\ExpenseNoteRepository;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as JMS;
@@ -29,9 +31,9 @@ class ExpenseNote
     #[JMS\Groups(['me:read'])]
     private string $amountTtc;
 
-    #[ORM\Column(length: 64)]
-    #[JMS\Groups(['me:read'])]
-    private string $type;
+    #[ORM\Column(enumType: ExpenseNoteType::class)]
+    #[JMS\Exclude]
+    private ExpenseNoteType $type = ExpenseNoteType::OTHER;
 
     #[ORM\ManyToOne(targetEntity: Attachment::class)]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
@@ -83,12 +85,29 @@ class ExpenseNote
 
     public function getType(): string
     {
-        return $this->type;
+        return $this->type->value;
     }
     public function setType(string $t): self
     {
+        $val = strtoupper($t);
+        $this->type = ExpenseNoteType::tryFrom($val) ?? ExpenseNoteType::OTHER;
+        return $this;
+    }
+    public function getTypeEnum(): ExpenseNoteType
+    {
+        return $this->type;
+    }
+    public function setTypeEnum(ExpenseNoteType $t): self
+    {
         $this->type = $t;
         return $this;
+    }
+    #[JMS\VirtualProperty]
+    #[JMS\SerializedName('type')]
+    #[JMS\Groups(['me:read'])]
+    public function getTypeValue(): string
+    {
+        return $this->type->value;
     }
 
     public function getInvoice(): ?Attachment
@@ -124,4 +143,3 @@ class ExpenseNote
         $this->updatedAt = new \DateTimeImmutable('now');
     }
 }
-
