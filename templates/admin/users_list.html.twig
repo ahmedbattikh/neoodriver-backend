@@ -7,6 +7,14 @@
 {% block content_title %}Users
 {% endblock %}
 
+{% block flash_messages %}
+  {% for label, messages in app.flashes() %}
+    {% for message in messages %}
+      <div class="alert alert-{{ label }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endfor %}
+{% endblock %}
+
 {% block head_styles %}
 	<style>
 		.users-grid {

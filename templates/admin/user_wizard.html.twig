@@ -2,6 +2,14 @@
 
 {% block content_title %}{{ title }}{% endblock %}
 
+{% block flash_messages %}
+  {% for label, messages in app.flashes() %}
+    {% for message in messages %}
+      <div class="alert alert-{{ label }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endfor %}
+{% endblock %}
+
 {% block content %}
   <div class="mb-3">
     <div class="progress" style="height: 8px;">
