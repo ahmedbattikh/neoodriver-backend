@@ -16,6 +16,7 @@ use App\Entity\DriverIntegration;
 use App\Enum\AttachmentField;
 use App\Enum\AttachmentType;
 use App\Enum\ValidationStatus;
+use App\Enum\PaymentMethodType;
 use App\Service\Storage\R2Client;
 use App\Form\UserWizard\UserStepType;
 use App\Form\UserWizard\DriverDocumentsStepType;
@@ -216,6 +217,10 @@ final class EditController extends AbstractFOSRestController
             ->select("o.integrationCode AS code")
             ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
             ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('out','debit') THEN o.amount ELSE 0 END) AS totalOut")
+            ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') AND o.paymentMethod = :pm_cb THEN o.amount ELSE 0 END) AS totalCbIn")
+            ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') AND o.paymentMethod = :pm_cash THEN o.amount ELSE 0 END) AS totalCashIn")
+            ->addSelect("SUM(o.tips) AS totalTips")
+            ->addSelect("SUM(o.bonus) AS totalBonus")
             ->from(PaymentOperation::class, 'o')
             ->where('o.driver = :driver')
             ->andWhere('o.occurredAt >= :start')
@@ -224,16 +229,26 @@ final class EditController extends AbstractFOSRestController
             ->setParameter('driver', $driver)
             ->setParameter('start', $todayStart)
             ->setParameter('end', $todayEnd)
+            ->setParameter('pm_cb', PaymentMethodType::CB->value)
+            ->setParameter('pm_cash', PaymentMethodType::CASH->value)
             ->getQuery()
             ->getArrayResult();
         $integrationsToday = [];
         foreach ($rows as $r) {
             $in = (float) (($r['totalIn'] ?? 0) ?: 0);
             $out = (float) (($r['totalOut'] ?? 0) ?: 0);
+            $cb = (float) (($r['totalCbIn'] ?? 0) ?: 0);
+            $cash = (float) (($r['totalCashIn'] ?? 0) ?: 0);
+            $tips = (float) (($r['totalTips'] ?? 0) ?: 0);
+            $bonus = (float) (($r['totalBonus'] ?? 0) ?: 0);
             $integrationsToday[] = [
                 'integrationCode' => (string) $r['code'],
                 'totalIn' => number_format($in, 3, '.', ''),
                 'net' => number_format($in - $out, 3, '.', ''),
+                'totalCB' => number_format($cb, 3, '.', ''),
+                'totalCash' => number_format($cash, 3, '.', ''),
+                'totalTips' => number_format($tips, 3, '.', ''),
+                'totalBonus' => number_format($bonus, 3, '.', ''),
             ];
         }
         $beginRaw = (string) $request->query->get('dateBegin', '');
@@ -266,7 +281,7 @@ final class EditController extends AbstractFOSRestController
         $cursor = $begin;
         while ($cursor < $end) {
             $key = $cursor->format('Y-m-d');
-            $daysMap[$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+            $daysMap[$key] = ['totalIn' => 0.0, 'totalOut' => 0.0, 'totalCb' => 0.0, 'totalCash' => 0.0, 'totalTips' => 0.0, 'totalBonus' => 0.0];
             $cursor = $cursor->modify('+1 day');
         }
         $codes = [];
@@ -281,7 +296,7 @@ final class EditController extends AbstractFOSRestController
             $cursor = $begin;
             while ($cursor < $end) {
                 $key = $cursor->format('Y-m-d');
-                $daysMapByIntegration[$code][$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+                $daysMapByIntegration[$code][$key] = ['totalIn' => 0.0, 'totalOut' => 0.0, 'totalCb' => 0.0, 'totalCash' => 0.0, 'totalTips' => 0.0, 'totalBonus' => 0.0];
                 $cursor = $cursor->modify('+1 day');
             }
         }
@@ -289,7 +304,7 @@ final class EditController extends AbstractFOSRestController
             if ($o instanceof PaymentOperation) {
                 $key = $o->getOccurredAt()->format('Y-m-d');
                 if (!isset($daysMap[$key])) {
-                    $daysMap[$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+                    $daysMap[$key] = ['totalIn' => 0.0, 'totalOut' => 0.0, 'totalCb' => 0.0, 'totalCash' => 0.0, 'totalTips' => 0.0, 'totalBonus' => 0.0];
                 }
                 $amt = (float) $o->getAmount();
                 $dir = strtolower($o->getDirection());
@@ -298,18 +313,37 @@ final class EditController extends AbstractFOSRestController
                 } elseif ($dir === 'out' || $dir === 'debit') {
                     $daysMap[$key]['totalOut'] += $amt;
                 }
+                $method = strtoupper((string) $o->getPaymentMethod());
+                if ($dir === 'in' || $dir === 'credit') {
+                    if ($method === PaymentMethodType::CB->value) {
+                        $daysMap[$key]['totalCb'] += $amt;
+                    } elseif ($method === PaymentMethodType::CASH->value) {
+                        $daysMap[$key]['totalCash'] += $amt;
+                    }
+                }
+                $daysMap[$key]['totalTips'] += (float) $o->getTips();
+                $daysMap[$key]['totalBonus'] += (float) $o->getBonus();
                 $code = (string) $o->getIntegrationCode();
                 if (!isset($daysMapByIntegration[$code])) {
                     $daysMapByIntegration[$code] = [];
                 }
                 if (!isset($daysMapByIntegration[$code][$key])) {
-                    $daysMapByIntegration[$code][$key] = ['totalIn' => 0.0, 'totalOut' => 0.0];
+                    $daysMapByIntegration[$code][$key] = ['totalIn' => 0.0, 'totalOut' => 0.0, 'totalCb' => 0.0, 'totalCash' => 0.0, 'totalTips' => 0.0, 'totalBonus' => 0.0];
                 }
                 if ($dir === 'in' || $dir === 'credit') {
                     $daysMapByIntegration[$code][$key]['totalIn'] += $amt;
                 } elseif ($dir === 'out' || $dir === 'debit') {
                     $daysMapByIntegration[$code][$key]['totalOut'] += $amt;
                 }
+                if ($dir === 'in' || $dir === 'credit') {
+                    if ($method === PaymentMethodType::CB->value) {
+                        $daysMapByIntegration[$code][$key]['totalCb'] += $amt;
+                    } elseif ($method === PaymentMethodType::CASH->value) {
+                        $daysMapByIntegration[$code][$key]['totalCash'] += $amt;
+                    }
+                }
+                $daysMapByIntegration[$code][$key]['totalTips'] += (float) $o->getTips();
+                $daysMapByIntegration[$code][$key]['totalBonus'] += (float) $o->getBonus();
             }
         }
         $days = [];
@@ -318,6 +352,10 @@ final class EditController extends AbstractFOSRestController
                 'date' => $d,
                 'totalIn' => number_format((float) $vals['totalIn'], 3, '.', ''),
                 'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 3, '.', ''),
+                'totalCB' => number_format((float) $vals['totalCb'], 3, '.', ''),
+                'totalCash' => number_format((float) $vals['totalCash'], 3, '.', ''),
+                'totalTips' => number_format((float) $vals['totalTips'], 3, '.', ''),
+                'totalBonus' => number_format((float) $vals['totalBonus'], 3, '.', ''),
             ];
         }
         usort($days, function ($a, $b) {
@@ -331,6 +369,10 @@ final class EditController extends AbstractFOSRestController
                     'date' => $d,
                     'totalIn' => number_format((float) $vals['totalIn'], 3, '.', ''),
                     'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 3, '.', ''),
+                    'totalCB' => number_format((float) $vals['totalCb'], 3, '.', ''),
+                    'totalCash' => number_format((float) $vals['totalCash'], 3, '.', ''),
+                    'totalTips' => number_format((float) $vals['totalTips'], 3, '.', ''),
+                    'totalBonus' => number_format((float) $vals['totalBonus'], 3, '.', ''),
                 ];
             }
             usort($list, function ($a, $b) {
