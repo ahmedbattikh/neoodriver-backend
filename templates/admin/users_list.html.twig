@@ -1,18 +1,33 @@
 {% extends '@EasyAdmin/layout.html.twig' %}
 
 {% block head_favicon %}
-  <link rel="icon" href="{{ asset('favicon.ico') }}">
+	<link rel="icon" href="{{ asset('favicon.ico') }}">
+{% endblock %}
+
+{% block responsive_header_logo %}
+	<a class="responsive-logo" title="Administration" href="{{ path('admin') }}">
+		Administration
+	</a>
+{% endblock %}
+
+{% block header_logo %}
+	<a class="logo" title="Administration" href="{{ path('admin') }}">
+		<span class="logo-custom">Administration</span>
+		<span class="logo-compact">
+			<i class="fas fa-home"></i>
+		</span>
+	</a>
 {% endblock %}
 
 {% block content_title %}Users
 {% endblock %}
 
 {% block flash_messages %}
-  {% for label, messages in app.flashes() %}
-    {% for message in messages %}
-      <div class="alert alert-{{ label }} mb-2">{{ message }}</div>
-    {% endfor %}
-  {% endfor %}
+	{% for label, messages in app.flashes() %}
+		{% for message in messages %}
+			<div class="alert alert-{{ label }} mb-2">{{ message }}</div>
+		{% endfor %}
+	{% endfor %}
 {% endblock %}
 
 {% block head_styles %}

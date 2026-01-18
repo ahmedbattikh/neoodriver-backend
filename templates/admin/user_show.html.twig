@@ -4,6 +4,21 @@
 	<link rel="icon" href="{{ asset('favicon.ico') }}">
 {% endblock %}
 
+{% block responsive_header_logo %}
+	<a class="responsive-logo" title="Administration" href="{{ path('admin') }}">
+		Administration
+	</a>
+{% endblock %}
+
+{% block header_logo %}
+	<a class="logo" title="Administration" href="{{ path('admin') }}">
+		<span class="logo-custom">Administration</span>
+		<span class="logo-compact">
+			<i class="fas fa-home"></i>
+		</span>
+	</a>
+{% endblock %}
+
 {% macro preview(att, url) %}
 	{% if url %}
 		{% set mime = att.mimeType|lower %}
