@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\DriverClass;
 use App\Repository\DriverRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -30,6 +31,9 @@ class Driver
     #[JMS\Groups(['me:read'])]
     private bool $active = true;
 
+    #[ORM\Column(enumType: DriverClass::class)]
+    private DriverClass $classDriver = DriverClass::CLASS1;
+
     #[ORM\Column(type: 'datetime_immutable')]
     #[JMS\Groups(['me:read'])]
     private \DateTimeImmutable $createdAt;
@@ -51,9 +55,15 @@ class Driver
     #[JMS\Groups(['me:read'])]
     private Collection $vehicles;
 
+    /** @var Collection<int, DriverIntegrationAccount> */
+    #[ORM\OneToMany(mappedBy: 'driver', targetEntity: DriverIntegrationAccount::class, cascade: ['persist', 'remove'])]
+    #[JMS\Groups(['me:read'])]
+    private Collection $integrationAccounts;
+
     public function __construct()
     {
         $this->vehicles = new ArrayCollection();
+        $this->integrationAccounts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -80,6 +90,26 @@ class Driver
     public function setActive(bool $active): self
     {
         $this->active = $active;
+        return $this;
+    }
+
+    public function getClassDriver(): string
+    {
+        return $this->classDriver->value;
+    }
+    public function setClassDriver(string $class): self
+    {
+        $val = strtolower($class);
+        $this->classDriver = DriverClass::tryFrom($val) ?? DriverClass::CLASS1;
+        return $this;
+    }
+    public function getClassDriverEnum(): DriverClass
+    {
+        return $this->classDriver;
+    }
+    public function setClassDriverEnum(DriverClass $class): self
+    {
+        $this->classDriver = $class;
         return $this;
     }
 
@@ -143,6 +173,25 @@ class Driver
                 $vehicle->setDriver($this);
             }
         }
+        return $this;
+    }
+
+    /** @return Collection<int, DriverIntegrationAccount> */
+    public function getIntegrationAccounts(): Collection
+    {
+        return $this->integrationAccounts;
+    }
+    public function addIntegrationAccount(DriverIntegrationAccount $acc): self
+    {
+        if (!$this->integrationAccounts->contains($acc)) {
+            $this->integrationAccounts->add($acc);
+            $acc->setDriver($this);
+        }
+        return $this;
+    }
+    public function removeIntegrationAccount(DriverIntegrationAccount $acc): self
+    {
+        $this->integrationAccounts->removeElement($acc);
         return $this;
     }
 

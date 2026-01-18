@@ -1,7 +1,7 @@
 {% extends '@EasyAdmin/layout.html.twig' %}
 
 {% block head_favicon %}
-  <link rel="icon" href="{{ asset('favicon.ico') }}">
+	<link rel="icon" href="{{ asset('favicon.ico') }}">
 {% endblock %}
 
 {% macro preview(att, url) %}
@@ -28,6 +28,11 @@
 
 {% block content %}
 	<div class="container py-4">
+		{% for label, messages in app.flashes() %}
+			{% for message in messages %}
+				<div class="alert alert-{{ label }} mb-2">{{ message }}</div>
+			{% endfor %}
+		{% endfor %}
 		{% set driver = user.driverProfile %}
 		{% set status = driver and driver.active ? 'Active' : 'Disabled' %}
 
@@ -82,6 +87,9 @@
 					{% endif %}
 					<li class="nav-item" role="presentation">
 						<button class="nav-link {{ activeTab == 'vehicle' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-vehicle" type="button" role="tab">Vehicle</button>
+					</li>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link {{ activeTab == 'integrations' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-integrations" type="button" role="tab">Driver Integrations</button>
 					</li>
 				{% endif %}
 				<li class="nav-item" role="presentation">
@@ -655,9 +663,12 @@
 											<th>Type</th>
 											<th>Direction</th>
 											<th>Amount</th>
+											<th>Tips</th>
+											<th>Bonus</th>
 											<th>Status</th>
 											<th>Reference</th>
 											<th>Description</th>
+											<th>Original</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -668,9 +679,31 @@
 												<td>{{ op.operationType }}</td>
 												<td>{{ op.direction }}</td>
 												<td>{{ op.amount|number_format(3, '.', ' ') ~ ' ' ~ op.currency }}</td>
+												<td>{{ op.tips|number_format(3, '.', ' ') }}</td>
+												<td>{{ op.bonus|number_format(3, '.', ' ') }}</td>
 												<td>{{ op.status }}</td>
 												<td>{{ op.externalReference ?? '' }}</td>
 												<td>{{ op.description ?? '' }}</td>
+												<td>
+													{% if op.originalObject %}
+														<button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#opModal-{{ op.id }}">Show Original</button>
+														<div class="modal fade" id="opModal-{{ op.id }}" tabindex="-1" aria-hidden="true">
+															<div class="modal-dialog modal-lg modal-dialog-scrollable">
+																<div class="modal-content">
+																	<div class="modal-header">
+																		<h5 class="modal-title">Original Payload ({{ op.integrationCode }})</h5>
+																		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+																	</div>
+																	<div class="modal-body">
+																		<pre style="white-space:pre-wrap;word-break:break-word;">{{ op.originalObject|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+																	</div>
+																</div>
+															</div>
+														</div>
+													{% else %}
+														<span class="text-muted">N/A</span>
+													{% endif %}
+												</td>
 											</tr>
 										{% endfor %}
 									</tbody>
@@ -691,6 +724,84 @@
 						{% else %}
 							<div class="text-muted">No operations</div>
 						{% endif %}
+					</div>
+
+					<div class="tab-pane fade {{ activeTab == 'integrations' ? 'show active' : '' }}" id="tab-integrations" role="tabpanel">
+						<div class="row g-3">
+							<div class="col-12">
+								<div class="card">
+									<div class="card-body">
+										<div class="fw-bold mb-2">Existing Integration Accounts</div>
+										{% if integrationAccounts|length > 0 %}
+											<div class="table-responsive">
+												<table class="table table-sm table-striped align-middle">
+													<thead>
+														<tr>
+															<th>Integration</th>
+															<th>Code</th>
+															<th>Driver ID</th>
+															<th>Created At</th>
+															<th>Actions</th>
+														</tr>
+													</thead>
+													<tbody>
+														{% for acc in integrationAccounts %}
+															<tr>
+																<td>{{ acc.integration.name }}</td>
+																<td>{{ acc.integration.code }}</td>
+																<td>{{ acc.idDriver }}</td>
+																<td>{{ acc.createdAt|date('Y-m-d H:i') }}</td>
+																<td>
+																	<form method="post" action="{{ path('admin_user_integration_account_sync', { id: user.id, accId: acc.id }) }}" class="d-inline">
+																		<input type="hidden" name="_token" value="{{ csrf_token('sync_integration_account_' ~ user.id ~ '_' ~ acc.id) }}"/>
+																		<button type="submit" class="btn btn-sm btn-outline-primary">Sync</button>
+																	</form>
+																	<form method="post" action="{{ path('admin_user_integration_account_sync', { id: user.id, accId: acc.id }) }}" class="d-inline ms-1">
+																		<input type="hidden" name="_token" value="{{ csrf_token('sync_integration_account_' ~ user.id ~ '_' ~ acc.id) }}"/>
+																		<input type="hidden" name="debug" value="1"/>
+																		<button type="submit" class="btn btn-sm btn-outline-danger">Sync (Debug)</button>
+																	</form>
+																</td>
+															</tr>
+														{% endfor %}
+													</tbody>
+												</table>
+											</div>
+										{% else %}
+											<div class="text-muted">No integration accounts</div>
+										{% endif %}
+									</div>
+								</div>
+							</div>
+							<div class="col-12">
+								<div class="card">
+									<div class="card-body">
+										<div class="fw-bold mb-2">Add Integration Account</div>
+										<form method="post" action="{{ path('admin_user_integration_account_add', { id: user.id }) }}" class="row g-2">
+											<input type="hidden" name="_token" value="{{ csrf_token('add_integration_account_' ~ user.id) }}"/>
+											<div class="col-md-4">
+												<select name="integrationId" class="form-select" required>
+													<option value="" disabled selected>Select integration</option>
+													{% for intg in enabledIntegrations %}
+														<option value="{{ intg.id }}">{{ intg.name }}
+															({{ intg.code }})</option>
+													{% endfor %}
+												</select>
+											</div>
+											<div class="col-md-4">
+												<input type="text" name="idDriver" class="form-control" placeholder="External Driver ID" required/>
+											</div>
+											<div class="col-md-4">
+												<button type="submit" class="btn btn-primary w-100">Add</button>
+											</div>
+										</form>
+										{% if enabledIntegrations|length == 0 %}
+											<div class="mt-2 text-muted">No enabled integrations configured</div>
+										{% endif %}
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 
 					<div class="tab-pane fade {{ activeTab == 'batches' ? 'show active' : '' }}" id="tab-batches" role="tabpanel">

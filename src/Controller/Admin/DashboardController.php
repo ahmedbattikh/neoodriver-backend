@@ -18,16 +18,22 @@ use App\Entity\Attachment;
 use App\Entity\PaymentOperation;
 use App\Entity\PaymentBatch;
 use App\Controller\Admin\DriverIntegrationCrudController;
+use App\Entity\Goals;
 use App\Service\Storage\R2Client;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use App\Entity\DriverIntegrationAccount;
+use App\Entity\DriverIntegration;
+use App\Service\BoltService;
+use App\Enum\PaymentMethodType;
+use Psr\Log\LoggerInterface;
 
 #[IsGranted('ROLE_SUPER_ADMIN')]
 final class DashboardController extends AbstractDashboardController
 {
-    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2, private readonly MailerInterface $mailer) {}
+    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2, private readonly MailerInterface $mailer, private readonly BoltService $bolt, private readonly ?LoggerInterface $logger = null) {}
     #[Route('/admin', name: 'admin')]
     public function index(): Response
     {
@@ -57,6 +63,7 @@ final class DashboardController extends AbstractDashboardController
         yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Unverified Users', 'fas fa-user-times', 'admin_users_unverified');
         yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::subMenu('Configuration', 'fas fa-cog')->setSubItems([
             \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToCrud('Integration', 'fas fa-plug', \App\Entity\DriverIntegration::class),
+            \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToCrud('Goals', 'fas fa-bullseye', Goals::class),
         ]);
     }
 
@@ -118,6 +125,8 @@ final class DashboardController extends AbstractDashboardController
         $weekNet = 0.0;
         $weekStart = new \DateTimeImmutable('monday this week 00:00:00');
         $weekEnd = new \DateTimeImmutable('monday next week 00:00:00');
+        $integrationAccounts = [];
+        $enabledIntegrations = [];
         if ($driver instanceof Driver) {
             $docs = $driver->getDocuments();
             if ($docs) {
@@ -212,6 +221,8 @@ final class DashboardController extends AbstractDashboardController
             if ($weekOp instanceof PaymentOperation) {
                 $weekCurrency = $weekOp->getCurrency();
             }
+            $integrationAccounts = $driver->getIntegrationAccounts()->toArray();
+            $enabledIntegrations = $this->em->getRepository(DriverIntegration::class)->findBy(['enabled' => true], ['name' => 'ASC']);
         }
         $validationChoices = [
             'VALIDATION_INPROGRESS',
@@ -238,6 +249,8 @@ final class DashboardController extends AbstractDashboardController
             'weekStart' => $weekStart,
             'weekEnd' => $weekEnd,
             'weekCurrency' => $weekCurrency,
+            'integrationAccounts' => $integrationAccounts,
+            'enabledIntegrations' => $enabledIntegrations,
         ]);
     }
 
@@ -265,6 +278,176 @@ final class DashboardController extends AbstractDashboardController
         ]);
     }
 
+    #[Route('/admin/users/{id}/integration-accounts', name: 'admin_user_integration_account_add', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function addIntegrationAccount(Request $request, int $id): Response
+    {
+        $user = $this->em->getRepository(User::class)->find($id);
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('admin_users_list');
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            $driver = new Driver();
+            $driver->setUser($user);
+            $this->em->persist($driver);
+            $this->em->flush();
+        }
+        $token = (string) $request->request->get('_token', '');
+        if (!$this->isCsrfTokenValid('add_integration_account_' . $user->getId(), $token)) {
+            return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+        }
+        $integrationId = (int) $request->request->get('integrationId', 0);
+        $idDriver = trim((string) $request->request->get('idDriver', ''));
+        $integration = $this->em->getRepository(DriverIntegration::class)->find($integrationId);
+        if ($integration instanceof DriverIntegration && $idDriver !== '') {
+            $acc = new DriverIntegrationAccount();
+            $acc->setDriver($driver);
+            $acc->setIntegration($integration);
+            $acc->setIdDriver($idDriver);
+            $this->em->persist($acc);
+            $this->em->flush();
+        }
+        return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+    }
+
+    #[Route('/admin/users/{id}/integration-accounts/{accId}/sync', name: 'admin_user_integration_account_sync', methods: ['POST'], requirements: ['id' => '\\d+', 'accId' => '\\d+'])]
+    public function syncIntegrationAccount(Request $request, int $id, int $accId): Response
+    {
+        $debug = ((string) $request->request->get('debug', '0') === '1');
+        $user = $this->em->getRepository(User::class)->find($id);
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('admin_users_list');
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+        }
+        $token = (string) $request->request->get('_token', '');
+        if (!$this->isCsrfTokenValid('sync_integration_account_' . $user->getId() . '_' . $accId, $token)) {
+            return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+        }
+        $acc = $this->em->getRepository(DriverIntegrationAccount::class)->find($accId);
+        if (!$acc instanceof DriverIntegrationAccount || $acc->getDriver()->getId() !== $driver->getId()) {
+            return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+        }
+        $integration = $acc->getIntegration();
+        if (!$integration instanceof DriverIntegration || !$integration->isEnabled()) {
+            return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+        }
+        try {
+            $cid = $integration->getBoltCustomerId();
+            $secret = $integration->getBoltCustomerSecret();
+            $scope = $integration->getBoltScope() ?? 'fleet-integration:api';
+            $tokenPayload = ($cid && $secret) ? $this->bolt->getTokenUsing($cid, $secret, $scope) : $this->bolt->getToken();
+
+            $accessToken = (string) ($tokenPayload['access_token'] ?? '');
+            if ($this->logger) {
+                $this->logger->info('bolt_token_retrieved', [
+                    'integration_code' => $integration->getCode(),
+                    'has_access_token' => $accessToken !== '',
+                ]);
+            }
+            if ($accessToken === '') {
+                $this->addFlash('warning', 'Bolt authentication failed for ' . $integration->getName());
+                return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+            }
+            $now = time();
+            $startTs = 1767291077;
+            $endTs = 1767809477;
+            $companyIds = $integration->getBoltCompanyIds();
+            $ordersPayload = $this->bolt->getFleetOrders($accessToken, 0, 1000, $companyIds, $startTs, $endTs, 'price_review');
+
+
+            $orders = [];
+            if (isset($ordersPayload['data'])) {
+                if (isset($ordersPayload['data']['orders']) && is_array($ordersPayload['data']['orders'])) {
+                    $orders = $ordersPayload['data']['orders'];
+                } elseif (is_array($ordersPayload['data'])) {
+                    foreach ($ordersPayload['data'] as $item) {
+                        if (is_array($item) && isset($item['orders']) && is_array($item['orders'])) {
+                            $orders = array_merge($orders, $item['orders']);
+                        }
+                    }
+                }
+            }
+            if ($this->logger) {
+                $this->logger->info('bolt_orders_received', [
+                    'integration_code' => $integration->getCode(),
+                    'orders_count' => is_countable($orders) ? count($orders) : 0,
+                ]);
+            }
+            $targetDriverUuid = (string) $acc->getIdDriver();
+            $opRepo = $this->em->getRepository(PaymentOperation::class);
+            $processed = 0;
+            foreach ($orders as $ord) {
+                $uuid = (string) ($ord['driver_uuid'] ?? '');
+                if ($uuid === '' || strcasecmp($uuid, $targetDriverUuid) !== 0) {
+                    continue;
+                }
+                $ref = (string) ($ord['order_reference'] ?? '');
+                $price = is_array($ord['order_price'] ?? null) ? $ord['order_price'] : [];
+                $net = (float) ($price['net_earnings'] ?? 0);
+                $tip = (float) ($price['tip'] ?? 0);
+                $bonus = (float) (($price['in_app_discount'] ?? 0) + ($price['cash_discount'] ?? 0));
+                $methodRaw = strtolower((string) ($ord['payment_method'] ?? ''));
+                $pmEnum = $methodRaw === 'cash' ? PaymentMethodType::CASH : PaymentMethodType::CB;
+                $ts = (int) ($ord['payment_confirmed_timestamp'] ?? $ord['order_finished_timestamp'] ?? $ord['order_drop_off_timestamp'] ?? $ord['order_created_timestamp'] ?? time());
+                $occurredAt = (new \DateTimeImmutable('@' . $ts))->setTimezone(new \DateTimeZone('UTC'));
+                $status = strtoupper((string) ($ord['order_status'] ?? 'FINISHED'));
+                $existing = null;
+                if ($ref !== '') {
+                    $existing = $opRepo->findOneBy([
+                        'driver' => $driver,
+                        'integrationCode' => $integration->getCode(),
+                        'externalReference' => $ref,
+                    ]);
+                }
+                if ($existing instanceof PaymentOperation) {
+                    $existing->setOperationType('ORDER');
+                    $existing->setDirection('IN');
+                    $existing->setAmount(number_format($net, 3, '.', ''));
+                    $existing->setCurrency('EUR');
+                    $existing->setStatus($status);
+                    $existing->setDescription(null);
+                    $existing->setOriginalObject(is_array($ord) ? $ord : null);
+                    $existing->setPaymentMethodEnum($pmEnum);
+                    $existing->setTips(number_format($tip, 3, '.', ''));
+                    $existing->setBonus(number_format($bonus, 3, '.', ''));
+                    $existing->setOccurredAt($occurredAt);
+                    $processed++;
+                } else {
+                    $op = new PaymentOperation();
+                    $op->setDriver($driver);
+                    $op->setIntegrationCode($integration->getCode());
+                    $op->setOperationType('ORDER');
+                    $op->setDirection('IN');
+                    $op->setAmount(number_format($net, 3, '.', ''));
+                    $op->setCurrency('EUR');
+                    $op->setStatus($status);
+                    $op->setExternalReference($ref !== '' ? $ref : null);
+                    $op->setDescription(null);
+                    $op->setOriginalObject(is_array($ord) ? $ord : null);
+                    $op->setPaymentMethodEnum($pmEnum);
+                    $op->setTips(number_format($tip, 3, '.', ''));
+                    $op->setBonus(number_format($bonus, 3, '.', ''));
+                    $op->setOccurredAt($occurredAt);
+                    $this->em->persist($op);
+                    $processed++;
+                }
+            }
+            $this->em->flush();
+            $this->addFlash('info', 'Synced ' . $processed . ' operations for ' . $integration->getName());
+        } catch (\Throwable $e) {
+            if ($this->logger) {
+                $this->logger->error('integration_sync_failed', [
+                    'integration_code' => $integration->getCode(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            $this->addFlash('error', 'Sync failed: ' . $e->getMessage());
+        }
+        return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
+    }
     #[Route('/admin/users/{id}/docs/valid', name: 'admin_user_doc_valid', methods: ['POST'], requirements: ['id' => '\\d+'])]
     public function userUpdateValidation(Request $request, int $id): Response
     {

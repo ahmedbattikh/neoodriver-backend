@@ -83,6 +83,9 @@ final class PaymentsSeedCommand extends Command
                 $op->setDirection('credit');
                 $op->setAmount(number_format($amount, 3, '.', ''));
                 $op->setCurrency('TND');
+                $op->setPaymentMethod(random_int(0, 1) === 0 ? 'CASH' : 'CB');
+                $op->setBonus(number_format(random_int(0, 300) / 100.0, 3, '.', ''));
+                $op->setTips(number_format(random_int(0, 500) / 100.0, 3, '.', ''));
                 $op->setStatus('completed');
                 $op->setExternalReference('RID-' . strtoupper(bin2hex(random_bytes(4))));
                 $op->setDescription(null);
@@ -100,6 +103,9 @@ final class PaymentsSeedCommand extends Command
             $op2->setDirection('debit');
             $op2->setAmount(number_format($commission, 3, '.', ''));
             $op2->setCurrency('TND');
+            $op2->setPaymentMethod('CB');
+            $op2->setBonus('0.000');
+            $op2->setTips('0.000');
             $op2->setStatus('completed');
             $op2->setExternalReference('COM-' . strtoupper(bin2hex(random_bytes(4))));
             $op2->setDescription(null);
@@ -117,6 +123,9 @@ final class PaymentsSeedCommand extends Command
                 $op3->setDirection('credit');
                 $op3->setAmount(number_format($refund, 3, '.', ''));
                 $op3->setCurrency('TND');
+                $op3->setPaymentMethod('CB');
+                $op3->setBonus('0.000');
+                $op3->setTips('0.000');
                 $op3->setStatus('completed');
                 $op3->setExternalReference('REF-' . strtoupper(bin2hex(random_bytes(4))));
                 $op3->setDescription(null);
@@ -150,6 +159,9 @@ final class PaymentsSeedCommand extends Command
             $payout->setDirection('credit');
             $payout->setAmount(number_format($net, 3, '.', ''));
             $payout->setCurrency('TND');
+            $payout->setPaymentMethod('CB');
+            $payout->setBonus('0.000');
+            $payout->setTips('0.000');
             $payout->setStatus('completed');
             $payout->setExternalReference('PAY-' . strtoupper(bin2hex(random_bytes(4))));
             $payout->setDescription('Weekly payout');
@@ -166,4 +178,3 @@ final class PaymentsSeedCommand extends Command
         return Command::SUCCESS;
     }
 }
-

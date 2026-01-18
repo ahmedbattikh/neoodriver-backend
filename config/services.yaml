@@ -13,6 +13,11 @@ parameters:
     r2.default_secret_access_key: ''
     r2.default_bucket: ''
     r2.default_endpoint: ''
+    bolt.default_oidc_url: 'https://oidc.bolt.eu/token'
+    bolt.default_orders_url: 'https://node.bolt.eu/fleet-integration-gateway/fleetIntegration/v1/getFleetOrders'
+    bolt.default_client_id: ''
+    bolt.default_client_secret: ''
+    bolt.default_scope: 'fleet-integration:api'
 
     r2.account_id: '%env(default:r2.default_account_id:R2_ACCOUNT_ID)%'
     r2.access_key_id: '%env(default:r2.default_access_key_id:R2_ACCESS_KEY_ID)%'
@@ -20,6 +25,11 @@ parameters:
     r2.bucket: '%env(default:r2.default_bucket:R2_BUCKET)%'
     r2.endpoint: '%env(default:r2.default_endpoint:R2_ENDPOINT)%'
     otp.fixed_code: '%env(default:otp.default_fixed_code:OTP_FIXED_CODE)%'
+    bolt.oidc_url: '%env(default:bolt.default_oidc_url:BOLT_OIDC_URL)%'
+    bolt.orders_url: '%env(default:bolt.default_orders_url:BOLT_ORDERS_URL)%'
+    bolt.client_id: '%env(default:bolt.default_client_id:BOLT_CLIENT_ID)%'
+    bolt.client_secret: '%env(default:bolt.default_client_secret:BOLT_CLIENT_SECRET)%'
+    bolt.scope: '%env(default:bolt.default_scope:BOLT_SCOPE)%'
 
 services:
     _defaults:
@@ -41,6 +51,13 @@ services:
             $secretAccessKey: '%r2.secret_access_key%'
             $bucket: '%r2.bucket%'
             $endpoint: '%r2.endpoint%'
+    App\Service\BoltService:
+        arguments:
+            $oidcUrl: '%bolt.oidc_url%'
+            $ordersUrl: '%bolt.orders_url%'
+            $clientId: '%bolt.client_id%'
+            $clientSecret: '%bolt.client_secret%'
+            $scope: '%bolt.scope%'
 
     App\Form\UserWizard\VehicleStepType:
         arguments:

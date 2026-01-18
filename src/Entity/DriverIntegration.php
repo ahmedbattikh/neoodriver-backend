@@ -46,6 +46,22 @@ class DriverIntegration
     #[JMS\Groups(['me:read'])]
     private \DateTimeImmutable $updatedAt;
 
+    #[ORM\Column(length: 128, nullable: true)]
+    #[JMS\Exclude]
+    private ?string $boltCustomerId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[JMS\Exclude]
+    private ?string $boltCustomerSecret = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    #[JMS\Groups(['me:read'])]
+    private ?array $boltCompanyIds = [];
+
+    #[ORM\Column(length: 128, nullable: true)]
+    #[JMS\Groups(['me:read'])]
+    private ?string $boltScope = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -122,5 +138,45 @@ class DriverIntegration
     public function onPreUpdate(): void
     {
         $this->updatedAt = new \DateTimeImmutable('now');
+    }
+
+    public function getBoltCustomerId(): ?string
+    {
+        return $this->boltCustomerId;
+    }
+    public function setBoltCustomerId(?string $v): self
+    {
+        $this->boltCustomerId = $v;
+        return $this;
+    }
+
+    public function getBoltCustomerSecret(): ?string
+    {
+        return $this->boltCustomerSecret;
+    }
+    public function setBoltCustomerSecret(?string $v): self
+    {
+        $this->boltCustomerSecret = $v;
+        return $this;
+    }
+
+    public function getBoltCompanyIds(): array
+    {
+        return array_values(array_map(fn($x) => (int) $x, $this->boltCompanyIds ?? []));
+    }
+    public function setBoltCompanyIds(?array $ids): self
+    {
+        $this->boltCompanyIds = $ids !== null ? array_values(array_map(fn($x) => (int) $x, $ids)) : null;
+        return $this;
+    }
+
+    public function getBoltScope(): ?string
+    {
+        return $this->boltScope;
+    }
+    public function setBoltScope(?string $scope): self
+    {
+        $this->boltScope = $scope;
+        return $this;
     }
 }

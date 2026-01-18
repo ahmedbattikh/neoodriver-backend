@@ -1,8 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\PaymentMethodType;
 use App\Repository\PaymentOperationRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -30,6 +32,15 @@ class PaymentOperation
     #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
     private string $amount;
 
+    #[ORM\Column(enumType: PaymentMethodType::class)]
+    private PaymentMethodType $paymentMethod = PaymentMethodType::CB;
+
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    private string $bonus = '0.000';
+
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    private string $tips = '0.000';
+
     #[ORM\Column(length: 3)]
     private string $currency = 'TND';
 
@@ -41,6 +52,9 @@ class PaymentOperation
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $originalObject = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $occurredAt;
@@ -118,6 +132,46 @@ class PaymentOperation
         return $this;
     }
 
+    public function getPaymentMethod(): string
+    {
+        return $this->paymentMethod->value;
+    }
+    public function setPaymentMethod(string $method): self
+    {
+        $val = strtoupper($method);
+        $this->paymentMethod = PaymentMethodType::tryFrom($val) ?? PaymentMethodType::CB;
+        return $this;
+    }
+    public function getPaymentMethodEnum(): PaymentMethodType
+    {
+        return $this->paymentMethod;
+    }
+    public function setPaymentMethodEnum(PaymentMethodType $method): self
+    {
+        $this->paymentMethod = $method;
+        return $this;
+    }
+
+    public function getBonus(): string
+    {
+        return $this->bonus;
+    }
+    public function setBonus(string $bonus): self
+    {
+        $this->bonus = $bonus;
+        return $this;
+    }
+
+    public function getTips(): string
+    {
+        return $this->tips;
+    }
+    public function setTips(string $tips): self
+    {
+        $this->tips = $tips;
+        return $this;
+    }
+
     public function getStatus(): string
     {
         return $this->status;
@@ -148,6 +202,16 @@ class PaymentOperation
         return $this;
     }
 
+    public function getOriginalObject(): ?array
+    {
+        return $this->originalObject;
+    }
+    public function setOriginalObject(?array $original): self
+    {
+        $this->originalObject = $original;
+        return $this;
+    }
+
     public function getOccurredAt(): \DateTimeImmutable
     {
         return $this->occurredAt;
@@ -163,4 +227,3 @@ class PaymentOperation
         return $this->createdAt;
     }
 }
-

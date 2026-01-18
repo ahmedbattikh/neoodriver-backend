@@ -12,8 +12,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use EasyCorp\Bundle\EasyAdminBundle\Field;
 
 #[IsGranted('ROLE_SUPER_ADMIN')]
 final class DriverIntegrationCrudController extends AbstractCrudController
@@ -50,6 +53,15 @@ final class DriverIntegrationCrudController extends AbstractCrudController
             ->setUploadDir('public/uploads/integration')
             ->setUploadedFileNamePattern('[timestamp]-[slug].[extension]')
             ->setRequired(false);
+        $boltCustomerId = TextField::new('boltCustomerId')->setRequired(false)->setHelp('Bolt OAuth Client ID');
+        $boltCustomerSecret = TextField::new('boltCustomerSecret')->setRequired(false)->setHelp('Bolt OAuth Client Secret');
+        $boltScope = TextField::new('boltScope')->setRequired(false)->setHelp('Bolt OAuth Scope');
+        $boltCompanyIds = CollectionField::new('boltCompanyIds')
+            ->setRequired(false)
+            ->allowAdd()
+            ->allowDelete()
+            ->setEntryType(IntegerType::class)
+            ->setHelp('Bolt company IDs');
         $createdAt = DateTimeField::new('createdAt')->setFormTypeOption('disabled', true);
         $updatedAt = DateTimeField::new('updatedAt')->setFormTypeOption('disabled', true);
 
@@ -57,15 +69,15 @@ final class DriverIntegrationCrudController extends AbstractCrudController
             return [$code, $name, $enabled, $logo];
         }
         if ($pageName === Crud::PAGE_DETAIL) {
-            return [$code, $name, $description, $enabled, $logo, $createdAt, $updatedAt];
+            return [$code, $name, $description, $enabled, $logo, $boltCustomerId, $boltScope, $boltCompanyIds, $createdAt, $updatedAt];
         }
         if ($pageName === Crud::PAGE_NEW) {
-            return [$code, $name, $description, $enabled, $logo];
+            return [$code, $name, $description, $enabled, $logo, $boltCustomerId, $boltCustomerSecret, $boltScope, $boltCompanyIds];
         }
         if ($pageName === Crud::PAGE_EDIT) {
-            return [$code, $name, $description, $enabled, $logo];
+            return [$code, $name, $description, $enabled, $logo, $boltCustomerId, $boltCustomerSecret, $boltScope, $boltCompanyIds];
         }
-        return [$code, $name, $description, $enabled, $logo];
+        return [$code, $name, $description, $enabled, $logo, $boltCustomerId, $boltScope, $boltCompanyIds];
     }
 
     public function persistEntity(EntityManagerInterface $entityManager, $entityInstance): void

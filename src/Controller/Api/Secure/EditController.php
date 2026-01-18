@@ -453,6 +453,9 @@ final class EditController extends AbstractFOSRestController
                     'operationType' => $o->getOperationType(),
                     'direction' => $o->getDirection(),
                     'amount' => $o->getAmount(),
+                    'paymentMethod' => $o->getPaymentMethod(),
+                    'bonus' => $o->getBonus(),
+                    'tips' => $o->getTips(),
                     'currency' => $o->getCurrency(),
                     'status' => $o->getStatus(),
                     'externalReference' => $o->getExternalReference(),
@@ -488,7 +491,54 @@ final class EditController extends AbstractFOSRestController
         }
         $total = (int) $countQb->getQuery()->getSingleScalarResult();
         $totalPages = max(1, (int) ceil($total / $size));
-        $view = $this->view(['items' => $rows, 'page' => $page, 'size' => $size, 'total' => $total, 'totalPages' => $totalPages], Response::HTTP_OK);
+        $sumQb = $this->em->createQueryBuilder()
+            ->select('SUM(o.amount) AS totalAmount')
+            ->addSelect('SUM(CASE WHEN o.paymentMethod = :cb THEN o.amount ELSE 0 END) AS totalCB')
+            ->addSelect('SUM(CASE WHEN o.paymentMethod = :cash THEN o.amount ELSE 0 END) AS totalCash')
+            ->addSelect('SUM(o.tips) AS totalTips')
+            ->addSelect('SUM(o.bonus) AS totalBonus')
+            ->from(PaymentOperation::class, 'o')
+            ->where('o.driver = :driver')
+            ->setParameter('driver', $driver)
+            ->setParameter('cb', \App\Enum\PaymentMethodType::CB)
+            ->setParameter('cash', \App\Enum\PaymentMethodType::CASH);
+        if ($intCode !== '') $sumQb->andWhere('o.integrationCode = :integrationCode')->setParameter('integrationCode', $intCode);
+        if ($opType !== '') $sumQb->andWhere('o.operationType = :operationType')->setParameter('operationType', $opType);
+        if ($direction !== '') $sumQb->andWhere('LOWER(o.direction) = :direction')->setParameter('direction', $direction);
+        if ($status !== '') $sumQb->andWhere('o.status = :status')->setParameter('status', $status);
+        if ($currency !== '') $sumQb->andWhere('o.currency = :currency')->setParameter('currency', $currency);
+        if ($from !== '') {
+            try {
+                $df = new \DateTimeImmutable($from);
+                $sumQb->andWhere('o.occurredAt >= :dateFrom')->setParameter('dateFrom', $df);
+            } catch (\Throwable) {
+            }
+        }
+        if ($to !== '') {
+            try {
+                $dt = new \DateTimeImmutable($to);
+                $sumQb->andWhere('o.occurredAt <= :dateTo')->setParameter('dateTo', $dt);
+            } catch (\Throwable) {
+            }
+        }
+        $totalsRow = (array) ($sumQb->getQuery()->getOneOrNullResult() ?? []);
+        $totalAmount = (float) (($totalsRow['totalAmount'] ?? 0) ?: 0);
+        $totalCB = (float) (($totalsRow['totalCB'] ?? 0) ?: 0);
+        $totalCash = (float) (($totalsRow['totalCash'] ?? 0) ?: 0);
+        $totalTips = (float) (($totalsRow['totalTips'] ?? 0) ?: 0);
+        $totalBonus = (float) (($totalsRow['totalBonus'] ?? 0) ?: 0);
+        $view = $this->view([
+            'items' => $rows,
+            'page' => $page,
+            'size' => $size,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'totalAmount' => number_format($totalAmount, 3, '.', ''),
+            'totalCB' => number_format($totalCB, 3, '.', ''),
+            'totalCash' => number_format($totalCash, 3, '.', ''),
+            'totalTips' => number_format($totalTips, 3, '.', ''),
+            'totalBonus' => number_format($totalBonus, 3, '.', ''),
+        ], Response::HTTP_OK);
         return $this->handleView($view);
     }
 
