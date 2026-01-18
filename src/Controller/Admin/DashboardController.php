@@ -109,7 +109,18 @@ final class DashboardController extends AbstractDashboardController
             }
         };
         $add($user->getPicProfile());
-        $driver = $user->getDriverProfile();
+        $driver = null;
+        try {
+            $driver = $user->getDriverProfile();
+        } catch (\Throwable $e) {
+            if ($this->logger) {
+                $this->logger->error('admin_user_show_driver_load_failed', [
+                    'user_id' => $user->getId(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            $this->addFlash('error', 'Driver data unavailable. Please ensure database migrations are applied.');
+        }
         $operations = [];
         $batches = [];
         $integrationCodes = [];
@@ -159,67 +170,78 @@ final class DashboardController extends AbstractDashboardController
                 $add($v->getVehicleFrontPhoto());
                 $add($v->getInsuranceNote());
             }
-            $opRepo = $this->em->getRepository(PaymentOperation::class);
-            $opsCount = $opRepo->count(['driver' => $driver]);
-            $operations = $opRepo->findBy(['driver' => $driver], ['occurredAt' => 'DESC'], $opsSize, $opsOffset);
-            $codesRows = $this->em->createQueryBuilder()
-                ->select('DISTINCT o.integrationCode')
-                ->from(PaymentOperation::class, 'o')
-                ->where('o.driver = :driver')
-                ->setParameter('driver', $driver)
-                ->getQuery()
-                ->getArrayResult();
-            foreach ($codesRows as $row) {
-                $integrationCodes[$row['integrationCode']] = true;
-            }
-            $batchesAll = [];
-            foreach (array_keys($integrationCodes) as $code) {
-                $integration = $this->em->getRepository(\App\Entity\DriverIntegration::class)->findOneBy(['code' => $code]);
-                if ($integration instanceof \App\Entity\DriverIntegration) {
-                    $list = $this->em->getRepository(PaymentBatch::class)->findBy(['integration' => $integration], ['periodStart' => 'DESC']);
-                    foreach ($list as $b) {
-                        $batchesAll[] = $b;
+            try {
+                $opRepo = $this->em->getRepository(PaymentOperation::class);
+                $opsCount = $opRepo->count(['driver' => $driver]);
+                $operations = $opRepo->findBy(['driver' => $driver], ['occurredAt' => 'DESC'], $opsSize, $opsOffset);
+                $codesRows = $this->em->createQueryBuilder()
+                    ->select('DISTINCT o.integrationCode')
+                    ->from(PaymentOperation::class, 'o')
+                    ->where('o.driver = :driver')
+                    ->setParameter('driver', $driver)
+                    ->getQuery()
+                    ->getArrayResult();
+                foreach ($codesRows as $row) {
+                    $integrationCodes[$row['integrationCode']] = true;
+                }
+                $batchesAll = [];
+                foreach (array_keys($integrationCodes) as $code) {
+                    $integration = $this->em->getRepository(\App\Entity\DriverIntegration::class)->findOneBy(['code' => $code]);
+                    if ($integration instanceof \App\Entity\DriverIntegration) {
+                        $list = $this->em->getRepository(PaymentBatch::class)->findBy(['integration' => $integration], ['periodStart' => 'DESC']);
+                        foreach ($list as $b) {
+                            $batchesAll[] = $b;
+                        }
                     }
                 }
-            }
-            usort($batchesAll, function ($a, $b) {
-                return $a->getPeriodStart() < $b->getPeriodStart() ? 1 : -1;
-            });
-            $batchesCount = count($batchesAll);
-            $batches = array_slice($batchesAll, $batchesOffset, $batchesSize);
-            $opsTotalPages = max(1, (int) ceil($opsCount / $opsSize));
-            $batchesTotalPages = max(1, (int) ceil($batchesCount / $batchesSize));
-            $totalsRow = $this->em->createQueryBuilder()
-                ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
-                ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('out','debit') THEN o.amount ELSE 0 END) AS totalOut")
-                ->from(PaymentOperation::class, 'o')
-                ->where('o.driver = :driver')
-                ->andWhere('o.occurredAt >= :start')
-                ->andWhere('o.occurredAt < :end')
-                ->setParameter('driver', $driver)
-                ->setParameter('start', $weekStart)
-                ->setParameter('end', $weekEnd)
-                ->getQuery()
-                ->getOneOrNullResult();
-            $weekIn = (float) (($totalsRow['totalIn'] ?? 0) ?: 0);
-            $weekOut = (float) (($totalsRow['totalOut'] ?? 0) ?: 0);
-            $weekNet = $weekIn - $weekOut;
-            $weekCurrency = null;
-            $weekOp = $this->em->createQueryBuilder()
-                ->select('o')
-                ->from(PaymentOperation::class, 'o')
-                ->where('o.driver = :driver')
-                ->andWhere('o.occurredAt >= :start')
-                ->andWhere('o.occurredAt < :end')
-                ->orderBy('o.occurredAt', 'DESC')
-                ->setMaxResults(1)
-                ->setParameter('driver', $driver)
-                ->setParameter('start', $weekStart)
-                ->setParameter('end', $weekEnd)
-                ->getQuery()
-                ->getOneOrNullResult();
-            if ($weekOp instanceof PaymentOperation) {
-                $weekCurrency = $weekOp->getCurrency();
+                usort($batchesAll, function ($a, $b) {
+                    return $a->getPeriodStart() < $b->getPeriodStart() ? 1 : -1;
+                });
+                $batchesCount = count($batchesAll);
+                $batches = array_slice($batchesAll, $batchesOffset, $batchesSize);
+                $opsTotalPages = max(1, (int) ceil($opsCount / $opsSize));
+                $batchesTotalPages = max(1, (int) ceil($batchesCount / $batchesSize));
+                $totalsRow = $this->em->createQueryBuilder()
+                    ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
+                    ->addSelect("SUM(CASE WHEN LOWER(o.direction) IN ('out','debit') THEN o.amount ELSE 0 END) AS totalOut")
+                    ->from(PaymentOperation::class, 'o')
+                    ->where('o.driver = :driver')
+                    ->andWhere('o.occurredAt >= :start')
+                    ->andWhere('o.occurredAt < :end')
+                    ->setParameter('driver', $driver)
+                    ->setParameter('start', $weekStart)
+                    ->setParameter('end', $weekEnd)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+                $weekIn = (float) (($totalsRow['totalIn'] ?? 0) ?: 0);
+                $weekOut = (float) (($totalsRow['totalOut'] ?? 0) ?: 0);
+                $weekNet = $weekIn - $weekOut;
+                $weekCurrency = null;
+                $weekOp = $this->em->createQueryBuilder()
+                    ->select('o')
+                    ->from(PaymentOperation::class, 'o')
+                    ->where('o.driver = :driver')
+                    ->andWhere('o.occurredAt >= :start')
+                    ->andWhere('o.occurredAt < :end')
+                    ->orderBy('o.occurredAt', 'DESC')
+                    ->setMaxResults(1)
+                    ->setParameter('driver', $driver)
+                    ->setParameter('start', $weekStart)
+                    ->setParameter('end', $weekEnd)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+                if ($weekOp instanceof PaymentOperation) {
+                    $weekCurrency = $weekOp->getCurrency();
+                }
+            } catch (\Throwable $e) {
+                if ($this->logger) {
+                    $this->logger->error('admin_user_show_operations_failed', [
+                        'user_id' => $user->getId(),
+                        'driver_id' => $driver->getId(),
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+                $this->addFlash('warning', 'Operations unavailable. Please ensure database migrations are applied.');
             }
             $integrationAccounts = $driver->getIntegrationAccounts()->toArray();
             $enabledIntegrations = $this->em->getRepository(DriverIntegration::class)->findBy(['enabled' => true], ['name' => 'ASC']);
