@@ -31,6 +31,10 @@ class ExpenseNote
     #[JMS\Groups(['me:read'])]
     private string $amountTtc;
 
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 3, nullable: true)]
+    #[JMS\Groups(['me:read'])]
+    private ?string $vat = null;
+
     #[ORM\Column(enumType: ExpenseNoteType::class)]
     #[JMS\Exclude]
     private ExpenseNoteType $type = ExpenseNoteType::OTHER;
@@ -39,6 +43,9 @@ class ExpenseNote
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     #[JMS\Groups(['me:read'])]
     private ?Attachment $invoice = null;
+
+    #[ORM\Column(type: 'boolean', nullable: true)]
+    private ?bool $valide = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     #[JMS\Groups(['me:read'])]
@@ -83,6 +90,16 @@ class ExpenseNote
         return $this;
     }
 
+    public function getVat(): ?string
+    {
+        return $this->vat;
+    }
+    public function setVat(?string $v): self
+    {
+        $this->vat = $v;
+        return $this;
+    }
+
     public function getType(): string
     {
         return $this->type->value;
@@ -117,6 +134,16 @@ class ExpenseNote
     public function setInvoice(?Attachment $a): self
     {
         $this->invoice = $a;
+        return $this;
+    }
+
+    public function getValide(): ?bool
+    {
+        return $this->valide;
+    }
+    public function setValide(?bool $v): self
+    {
+        $this->valide = $v;
         return $this;
     }
 

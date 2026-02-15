@@ -56,6 +56,9 @@ class PaymentOperation
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $originalObject = null;
 
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 3, nullable: true)]
+    private ?string $rideDistance = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $occurredAt;
 
@@ -209,6 +212,16 @@ class PaymentOperation
     public function setOriginalObject(?array $original): self
     {
         $this->originalObject = $original;
+        return $this;
+    }
+
+    public function getRideDistance(): ?string
+    {
+        return $this->rideDistance;
+    }
+    public function setRideDistance(?string $distance): self
+    {
+        $this->rideDistance = $distance;
         return $this;
     }
 

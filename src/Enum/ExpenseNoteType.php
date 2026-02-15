@@ -1,14 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Enum;
 
 enum ExpenseNoteType: string
 {
-    case FUEL = 'FUEL';
+    case FOOD = 'FOOD';
     case TOLL = 'TOLL';
-    case PARKING = 'PARKING';
-    case MAINTENANCE = 'MAINTENANCE';
+    case LOCATION = 'LOCATION';
     case OTHER = 'OTHER';
 }
-

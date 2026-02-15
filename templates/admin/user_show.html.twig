@@ -95,6 +95,101 @@
 					<button type="submit" class="btn btn-outline-success">Add Company Documents</button>
 				</form>
 			</div>
+			{% if driver %}
+				<div class="row g-3 mb-3">
+					<div class="col-md-6 col-lg-3">
+						<div class="card h-100">
+							<div class="card-body">
+								<div class="fw-bold">Profile Picture</div>
+								{% if user.picProfile %}
+									{{ ui.preview(user.picProfile, attachmentUrls[user.picProfile.id] ?? null) }}
+								{% else %}
+									<div class="text-muted">Not uploaded</div>
+								{% endif %}
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6 col-lg-4">
+						<div class="card h-100">
+							<div class="card-body">
+								<div class="fw-bold mb-2">User Details</div>
+								<div>
+									<strong>User ID:</strong>
+									{{ user.id }}</div>
+								<div>
+									<strong>Email:</strong>
+									{{ user.email }}</div>
+								<div>
+									<strong>Full Name:</strong>
+									{{ user.firstName }}
+									{{ user.lastName }}</div>
+								<div>
+									<strong>Phone:</strong>
+									{{ user.mobileNumber }}</div>
+								<div>
+									<strong>Verified:</strong>
+									{{ user.verified ? 'Yes' : 'No' }}</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6 col-lg-5">
+						<div class="card h-100">
+							<div class="card-body">
+								<div class="fw-bold mb-2">Driver Details</div>
+								<div>
+									<strong>Driver ID:</strong>
+									{{ driver.id }}</div>
+								<div>
+									<strong>Class:</strong>
+									{{ driver.classDriver }}</div>
+								<div>
+									<strong>Status:</strong>
+									{{ status }}</div>
+								<div>
+									<strong>Created At:</strong>
+									{{ driver.createdAt|date('Y-m-d H:i') }}</div>
+								<div>
+									<strong>Updated At:</strong>
+									{{ driver.updatedAt|date('Y-m-d H:i') }}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row g-3 mb-3">
+					<div class="col-md-6 col-lg-3">
+						<div class="card h-100">
+							<div class="card-body">
+								<div class="fw-bold">Total</div>
+								<div class="display-6">{{ balanceSold|number_format(3, '.', ' ') }}</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6 col-lg-3">
+						<div class="card h-100">
+							<div class="card-body">
+								<div class="fw-bold">Total Debits</div>
+								<div class="display-6 text-danger">{{ balanceTotalDebit|number_format(3, '.', ' ') }}</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6 col-lg-3">
+						<div class="card h-100">
+							<div class="card-body">
+								<div class="fw-bold">Sold Congé</div>
+								<div class="display-6">{{ balanceSoldConge|number_format(3, '.', ' ') }}</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-6 col-lg-3">
+						<div class="card h-100">
+							<div class="card-body">
+								<div class="fw-bold">Last Update</div>
+								<div class="display-6" style="font-size:1.25rem">{{ balanceLastUpdate ? balanceLastUpdate|date('Y-m-d H:i') : 'N/A' }}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			{% endif %}
 			<ul class="nav nav-tabs" role="tablist">
 				<li class="nav-item" role="presentation">
 					<button class="nav-link {{ activeTab == 'info' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab">Info</button>
@@ -114,12 +209,23 @@
 					<li class="nav-item" role="presentation">
 						<button class="nav-link {{ activeTab == 'integrations' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-integrations" type="button" role="tab">Driver Integrations</button>
 					</li>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link {{ activeTab == 'expenses' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-expenses" type="button" role="tab">Expense Notes</button>
+					</li>
 				{% endif %}
 				<li class="nav-item" role="presentation">
 					<button class="nav-link {{ activeTab == 'ops' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-ops" type="button" role="tab">Operations</button>
 				</li>
+				{% if driver %}
+					<li class="nav-item" role="presentation">
+						<button class="nav-link {{ activeTab == 'advance' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-advance" type="button" role="tab">Advance Requests</button>
+					</li>
+				{% endif %}
 				<li class="nav-item" role="presentation">
 					<button class="nav-link {{ activeTab == 'batches' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-batches" type="button" role="tab">Payment Batches</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<a class="nav-link {{ activeTab == 'neoo' ? 'active' : '' }}" href="{{ path('admin_user_show', { id: user.id, tab: 'neoo' }) }}" role="tab">Neoo Details Paye</a>
 				</li>
 			</ul>
 
@@ -438,6 +544,77 @@
 							{{ docs.updatedAt|date('Y-m-d H:i') }}</div>
 					</div>
 				{% endif %}
+				{% if driver %}
+					<div class="tab-pane fade {{ activeTab == 'advance' ? 'show active' : '' }}" id="tab-advance" role="tabpanel">
+						<div class="card">
+							<div class="card-body">
+								<div class="fw-bold mb-2">Advance Requests</div>
+								{% if advanceRequests is defined and advanceRequests|length > 0 %}
+									<div class="table-responsive">
+										<table class="table table-sm table-striped align-middle">
+											<thead>
+												<tr>
+													<th>ID</th>
+													<th>Amount</th>
+													<th>Status</th>
+													<th>Description</th>
+													<th>Created</th>
+													<th>Approved</th>
+													<th>Attachment</th>
+													<th>Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{% for r in advanceRequests %}
+													<tr>
+														<td>{{ r.id }}</td>
+														<td>{{ r.amount|number_format(3, '.', ' ') }}</td>
+														<td>{{ r.status.value }}</td>
+														<td>{{ r.description ?? '' }}</td>
+														<td>{{ r.createdAt|date('Y-m-d H:i') }}</td>
+														<td>{{ r.approvedAt ? r.approvedAt|date('Y-m-d H:i') : '—' }}</td>
+														<td>
+															{% if r.attachment %}
+																{% set aurl = attachmentUrls[r.attachment.id] ?? null %}
+																{% if aurl %}
+																	<a href="{{ aurl }}" target="_blank" class="link-primary">Open</a>
+																{% else %}
+																	<span class="text-muted">N/A</span>
+																{% endif %}
+															{% else %}
+																<span class="text-muted">None</span>
+															{% endif %}
+														</td>
+														<td>
+															{% if r.status.value == 'PENDING' %}
+																<div class="d-flex flex-wrap align-items-center gap-2">
+																	<form method="post" action="{{ path('admin_advance_request_approve', { id: r.id }) }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+																		<input type="hidden" name="_token" value="{{ csrf_token('approve_advance_' ~ r.id) }}"/>
+																		<input type="file" name="proof" class="form-control form-control-sm" accept="image/*,application/pdf" required />
+																		<button type="submit" class="btn btn-sm btn-success">Approve</button>
+																	</form>
+																	<form method="post" action="{{ path('admin_advance_request_reject', { id: r.id }) }}" class="d-flex align-items-center gap-2">
+																		<input type="hidden" name="_token" value="{{ csrf_token('reject_advance_' ~ r.id) }}"/>
+																		<input type="text" name="admin_note" class="form-control form-control-sm" placeholder="Reason..." />
+																		<button type="submit" class="btn btn-sm btn-outline-danger">Refuse</button>
+																	</form>
+																</div>
+															{% else %}
+																<span class="text-muted">—</span>
+															{% endif %}
+														</td>
+													</tr>
+												{% endfor %}
+											</tbody>
+										</table>
+									</div>
+								{% else %}
+									<div class="text-muted">No advance requests</div>
+								{% endif %}
+							</div>
+						</div>
+					</div>
+				{% endif %}
 
 				{% if driver and driver.companyDocuments %}
 					{% set cdocs = driver.companyDocuments %}
@@ -686,6 +863,7 @@
 											<th>Type</th>
 											<th>Direction</th>
 											<th>Amount</th>
+											<th>Distance</th>
 											<th>Tips</th>
 											<th>Bonus</th>
 											<th>Status</th>
@@ -702,6 +880,14 @@
 												<td>{{ op.operationType }}</td>
 												<td>{{ op.direction }}</td>
 												<td>{{ op.amount|number_format(3, '.', ' ') ~ ' ' ~ op.currency }}</td>
+												<td>
+													{% if op.rideDistance is not null %}
+														{{ op.rideDistance|number_format(3, '.', ' ') }}
+														km
+													{% else %}
+														<span class="text-muted">N/A</span>
+													{% endif %}
+												</td>
 												<td>{{ op.tips|number_format(3, '.', ' ') }}</td>
 												<td>{{ op.bonus|number_format(3, '.', ' ') }}</td>
 												<td>{{ op.status }}</td>
@@ -827,6 +1013,107 @@
 						</div>
 					</div>
 
+					<div class="tab-pane fade {{ activeTab == 'expenses' ? 'show active' : '' }}" id="tab-expenses" role="tabpanel">
+						<div class="d-flex align-items-center justify-content-between mb-2">
+							<div class="btn-group" role="group" aria-label="Notes filter">
+								<a class="btn btn-sm btn-outline-secondary {{ notesFilter == 'all' ? 'active' : '' }}" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'all', notes_week: 0, notes_page: 1, notes_size: notesSize }) }}">All</a>
+								<a class="btn btn-sm btn-outline-secondary {{ notesFilter == 'week' ? 'active' : '' }}" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek, notes_page: 1, notes_size: notesSize }) }}">This Week</a>
+							</div>
+							{% if notesFilter == 'week' %}
+								<div class="d-flex align-items-center gap-2">
+									<span class="text-muted small">Week
+										{{ notesWeekStart|date('Y-m-d') }}
+										→
+										{{ notesWeekEnd|date_modify('-1 day')|date('Y-m-d') }}</span>
+									<div class="btn-group" role="group">
+										<a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek - 1, notes_page: notesPage, notes_size: notesSize }) }}">Prev</a>
+										<a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek + 1, notes_page: notesPage, notes_size: notesSize }) }}">Next</a>
+									</div>
+								</div>
+							{% endif %}
+							{% if expenseNotes|length > 0 %}
+								<div class="table-responsive">
+									<table class="table table-sm table-striped align-middle">
+										<thead>
+											<tr>
+												<th>Date</th>
+												<th>Amount TTC</th>
+												<th>VAT</th>
+												<th>Type</th>
+												<th>Invoice</th>
+												<th>Valide</th>
+												<th>Actions</th>
+											</tr>
+										</thead>
+										<tbody>
+											{% for n in expenseNotes %}
+												<tr>
+													<td>{{ n.noteDate|date('Y-m-d') }}</td>
+													<td>{{ n.amountTtc|number_format(3, '.', ' ') }}</td>
+													<td>
+														{% if n.vat is not null %}
+															{{ n.vat|number_format(3, '.', ' ') }}
+														{% else %}
+															<span class="text-muted">N/A</span>
+														{% endif %}
+													</td>
+													<td>{{ n.type }}</td>
+													<td>
+														{% if n.invoice %}
+															{% set invUrl = attachmentUrls[n.invoice.id] ?? null %}
+															{% if invUrl %}
+																<a href="{{ invUrl }}" target="_blank" class="link-primary">Open</a>
+															{% else %}
+																<span class="text-muted">N/A</span>
+															{% endif %}
+														{% else %}
+															<span class="text-muted">None</span>
+														{% endif %}
+													</td>
+													<td>
+														{% if n.valide is same as(true) %}
+															<span class="badge bg-success">Valid</span>
+														{% elseif n.valide is same as(false) %}
+															<span class="badge bg-danger">Invalid</span>
+														{% else %}
+															<span class="badge bg-secondary">Unset</span>
+														{% endif %}
+													</td>
+													<td>
+														<form method="post" action="{{ path('admin_expense_note_valide', { id: n.id }) }}" class="d-inline">
+															<input type="hidden" name="_token" value="{{ csrf_token('set_expense_note_valide_' ~ n.id) }}"/>
+															<input type="hidden" name="valide" value="1"/>
+															<button type="submit" class="btn btn-sm btn-outline-success">Mark Valid</button>
+														</form>
+														<form method="post" action="{{ path('admin_expense_note_valide', { id: n.id }) }}" class="d-inline ms-1">
+															<input type="hidden" name="_token" value="{{ csrf_token('set_expense_note_valide_' ~ n.id) }}"/>
+															<input type="hidden" name="valide" value="0"/>
+															<button type="submit" class="btn btn-sm btn-outline-danger">Mark Invalid</button>
+														</form>
+													</td>
+												</tr>
+											{% endfor %}
+										</tbody>
+									</table>
+								</div>
+								{% if notesTotalPages > 1 %}
+									<div class="d-flex align-items-center justify-content-between mt-2">
+										<div>Page
+											{{ notesPage }}
+											of
+											{{ notesTotalPages }}</div>
+										<div class="btn-group">
+											<a class="btn btn-outline-secondary btn-sm {% if notesPage <= 1 %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, notes_page: notesPage - 1, notes_size: notesSize, tab: 'expenses', notes_filter: notesFilter, notes_week: notesWeek }) }}">Previous</a>
+											<a class="btn btn-outline-secondary btn-sm {% if notesPage >= notesTotalPages %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, notes_page: notesPage + 1, notes_size: notesSize, tab: 'expenses', notes_filter: notesFilter, notes_week: notesWeek }) }}">Next</a>
+										</div>
+									</div>
+								{% endif %}
+							{% else %}
+								<div class="text-muted">No expense notes</div>
+							{% endif %}
+						</div>
+					</div>
+
 					<div class="tab-pane fade {{ activeTab == 'batches' ? 'show active' : '' }}" id="tab-batches" role="tabpanel">
 						{% if batches|length > 0 %}
 							<div class="table-responsive">
@@ -875,6 +1162,222 @@
 						<div class="text-muted">No driver profile</div>
 					</div>
 				{% endif %}
+				<div class="tab-pane fade {{ activeTab == 'neoo' ? 'show active' : '' }}" id="tab-neoo" role="tabpanel">
+					{% if not driver %}
+						<div class="text-muted">No driver profile</div>
+					{% else %}
+						<div class="d-flex align-items-center justify-content-between mb-2">
+							<form method="get" action="{{ path('admin_user_show', { id: user.id }) }}" class="d-flex align-items-center gap-2">
+								<input type="hidden" name="tab" value="neoo"/>
+								<div>
+									<label class="form-label mb-0 small">Begin</label>
+									<input type="date" name="neoo_start" class="form-control form-control-sm" value="{{ neooStart|date('Y-m-d') }}"/>
+								</div>
+								<div>
+									<label class="form-label mb-0 small">End</label>
+									<input type="date" name="neoo_end" class="form-control form-control-sm" value="{{ neooEnd|date('Y-m-d') }}"/>
+								</div>
+								<div class="align-self-end">
+									<button type="submit" class="btn btn-sm btn-primary">Apply</button>
+								</div>
+							</form>
+							<div class="text-muted small">
+								{{ neooStart|date('Y-m-d') }}
+								→
+								{{ neooEnd|date('Y-m-d') }}
+							</div>
+						</div>
+						<div class="table-responsive mb-3">
+							<table class="table table-bordered align-middle">
+								<caption class="fw-bold">Activité & commission (sans % de commission)</caption>
+								<tbody>
+									<tr>
+										<td>CA HT reversé plateformes</td>
+										<td class="text-end">{{ neooTotalIn|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>Fixe NEOO mensuel (selon tranche CA)</td>
+										<td class="text-end">{{ neooFixed|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>Taux global charges URSSAF (paramètre)</td>
+										<td class="text-end">
+											{{ neooUrssaf|number_format(3, '.', ' ') }}
+											%
+										</td>
+									</tr>
+									<tr>
+										<td>Commission variable (égale aux CHARGES URSSAF)</td>
+										<td class="text-end">{{ neooCommissionVariable|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>Total commission NEOO (fixe + variable)</td>
+										<td class="text-end">{{ neooTotalCommission|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>Reversement chauffeur BRUT (enveloppe)</td>
+										<td class="text-end">{{ neooReversementBrut|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div class="table-responsive mb-3">
+							<table class="table table-bordered align-middle">
+								<caption class="fw-bold">Frais professionnels TTC (avancés)</caption>
+								<thead>
+									<tr>
+										<th>Type</th>
+										<th class="text-end">Total TTC</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% set totalExp = 0 %}
+									{% for t, v in neooExpenseGroups %}
+										<tr>
+											<td>{{ t }}</td>
+											<td class="text-end">{{ v|number_format(3, '.', ' ') }}
+												EUR</td>
+										</tr>
+										{% set totalExp = totalExp + v %}
+									{% endfor %}
+									<tr class="fw-bold">
+										<td>Total</td>
+										<td class="text-end">{{ totalExp|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div class="table-responsive mb-3">
+							<table class="table table-bordered align-middle">
+								<caption class="fw-bold">TVA (information – sur les frais)</caption>
+								<tbody>
+									<tr>
+										<td>Taux TVA moyen sur total frais pro</td>
+										<td class="text-end">20%</td>
+									</tr>
+									<tr>
+										<td>TVA récupérable (part TVA dans TTC)</td>
+										<td class="text-end">{{ neooVatRecoverable|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div class="table-responsive mb-3">
+							<table class="table table-bordered align-middle">
+								<caption class="fw-bold">SALAIRE NET SOCIAL 6) Salaire soumis à cotisations / Net social</caption>
+								<tbody>
+									<tr>
+										<td>Frais professionnels HT (calcul)</td>
+										<td class="text-end">
+											{{ neooC27|number_format(3, '.', ' ') }}
+											EUR
+										</td>
+									</tr>
+									<tr>
+										<td>Salaire brut soumis à cotisations</td>
+										<td class="text-end">
+											{{ neooSalaireBrutCotisations|number_format(3, '.', ' ') }}
+											EUR
+										</td>
+									</tr>
+									<tr>
+										<td>SALAIRE NET SOCIAL (avant PAS)</td>
+										<td class="text-end">{{ neooNetSocial|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>Taux PAS</td>
+										<td class="text-end">{{ neooTauxPas|number_format(3, '.', ' ') }}
+											%</td>
+									</tr>
+									<tr>
+										<td>Montant PAS</td>
+										<td class="text-end">{{ neooMontantPas|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>Acompte sur salaire déjà versé</td>
+										<td class="text-end">{{ neooAcompte|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>Net social après PAS et acompte</td>
+										<td class="text-end">{{ neooNetSocialAfter|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div class="table-responsive mb-3">
+							<table class="table table-bordered align-middle">
+								<caption class="fw-bold">Indemnités kilométriques (LÉGALES – au km réel)</caption>
+								<tbody>
+									<tr>
+										<td>Kilomètres professionnels du mois (km)</td>
+										<td class="text-end">{{ neooKm|number_format(3, '.', ' ') }}
+											km</td>
+									</tr>
+									<tr>
+										<td>Taux IK (€/km) – barème fiscal</td>
+										<td class="text-end">{{ neooFraisKm|number_format(3, '.', ' ') }}
+											EUR/km</td>
+									</tr>
+									<tr>
+										<td>Indemnité kilométrique (montant)</td>
+										<td class="text-end">{{ neooIk|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div class="table-responsive mb-3">
+							<table class="table table-bordered align-middle">
+								<caption class="fw-bold">Congés payés (option : indemnité non soumise)</caption>
+								<tbody>
+									<tr>
+										<td>Taux congés payés</td>
+										<td class="text-end">{{ neooCpTaux|number_format(3, '.', ' ') }}</td>
+									</tr>
+									<tr>
+										<td>Indemnité congés payés (non soumise)</td>
+										<td class="text-end">{{ neooCpIndemnite|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div class="table-responsive mb-3">
+							<table class="table table-bordered align-middle">
+								<caption class="fw-bold">Remboursements non imposables & net à payer</caption>
+								<tbody>
+									<tr>
+										<td>Remboursements NON imposables</td>
+										<td class="text-end">{{ neooRemboursementsNonImposables|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+									<tr>
+										<td>NET FINAL À PAYER</td>
+										<td class="text-end">{{ neooNetFinalPayer|number_format(3, '.', ' ') }}
+											EUR</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					{% endif %}
+				</div>
 			</div>
 		{% endif %}
 	</div>

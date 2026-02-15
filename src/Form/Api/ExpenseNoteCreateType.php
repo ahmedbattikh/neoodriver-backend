@@ -18,6 +18,7 @@ final class ExpenseNoteCreateType extends AbstractType
         $builder
             ->add('noteDate', DateType::class, ['required' => true, 'widget' => 'single_text', 'input' => 'datetime_immutable', 'mapped' => false])
             ->add('amountTtc', TextType::class, ['required' => true])
+            ->add('vat', TextType::class, ['required' => false])
             ->add('type', TextType::class, ['required' => true]);
     }
 

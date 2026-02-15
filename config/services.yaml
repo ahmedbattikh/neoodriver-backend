@@ -66,3 +66,7 @@ services:
     App\EventSubscriber\UserSubscriber:
         tags:
             - { name: 'doctrine.event_subscriber' }
+
+    App\EventSubscriber\PaymentOperationBalanceSubscriber:
+        tags:
+            - { name: 'doctrine.event_subscriber' }

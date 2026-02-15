@@ -110,7 +110,6 @@ final class BoltService
             'Authorization: Bearer ' . $accessToken,
             'Content-Type: application/json',
         ]);
-        var_dump($this->ordersUrl);
         $data = $this->decodeJsonOrThrow($resp['body'], $resp['status']);
         $ordersCount = 0;
         if (isset($data['data'])) {
@@ -125,14 +124,6 @@ final class BoltService
             }
         }
 
-        var_dump([
-            'offset' => $offset,
-            'limit' => $limit,
-            'start_ts' => $startTs,
-            'end_ts' => $endTs,
-            'company_ids' => array_values(array_map(fn($v) => (int) $v, $companyIds)),
-            'orders_count' => $ordersCount,
-        ]);
         $this->logInfo('bolt_fleet_orders_response', [
             'offset' => $offset,
             'limit' => $limit,

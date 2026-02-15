@@ -195,6 +195,23 @@ class Driver
         return $this;
     }
 
+    #[ORM\OneToOne(mappedBy: 'driver', cascade: ['persist', 'remove'])]
+    #[JMS\Groups(['me:read'])]
+    private ?Balance $balance = null;
+
+    public function getBalance(): ?Balance
+    {
+        return $this->balance;
+    }
+    public function setBalance(?Balance $balance): self
+    {
+        $this->balance = $balance;
+        if ($balance && $balance->getDriver() !== $this) {
+            $balance->setDriver($this);
+        }
+        return $this;
+    }
+
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
