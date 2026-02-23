@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
@@ -36,12 +37,14 @@ use App\Entity\NeooConfig;
 use App\Entity\NeooFee;
 use App\Entity\Balance;
 use App\Entity\AdvanceRequest;
+use App\Entity\CongeRequest;
+use App\Service\PayslipPdfBuilder;
 
 #[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 #[IsGranted('ROLE_SUPER_ADMIN')]
 final class DashboardController extends AbstractDashboardController
 {
-    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2, private readonly MailerInterface $mailer, private readonly BoltService $bolt, private readonly ?LoggerInterface $logger = null) {}
+    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2, private readonly MailerInterface $mailer, private readonly BoltService $bolt, private readonly PayslipPdfBuilder $payslipPdfBuilder, private readonly ?LoggerInterface $logger = null) {}
     public function index(): Response
     {
         return $this->render('admin/dashboard.html.twig');
@@ -395,208 +398,32 @@ final class DashboardController extends AbstractDashboardController
                     $this->addFlash('warning', 'Expense notes unavailable (' . $e2->getMessage() . ')');
                 }
             }
-            try {
-                $row = $this->em->createQueryBuilder()
-                    ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
-                    ->addSelect("SUM(COALESCE(o.rideDistance, 0)) AS totalKm")
-                    ->from(PaymentOperation::class, 'o')
-                    ->where('o.driver = :driver')
-                    ->andWhere('o.occurredAt >= :start')
-                    ->andWhere('o.occurredAt < :end')
-                    ->setParameter('driver', $driver)
-                    ->setParameter('start', $neooStart)
-                    ->setParameter('end', $neooEndQuery)
-                    ->getQuery()
-                    ->getOneOrNullResult();
-                $neooTotalIn = (float) (($row['totalIn'] ?? 0) ?: 0);
-                $neooKm = (float) (($row['totalKm'] ?? 0) ?: 0);
-                $cfg = $this->em->getRepository(NeooConfig::class)->findOneBy([], ['updatedAt' => 'DESC']);
-                if ($cfg instanceof NeooConfig) {
-                    $neooFraisKm = (float) $cfg->getFraisKm();
-                    $neooCpTaux = (float) $cfg->getTauxConge();
-                    $neooUrssaf = (float) $cfg->getTauxUrssaf();
-                    $neooTauxPas = (float) $cfg->getTauxPas();
-                }
-                $neooFixed = 0.0;
-                $periodStart = $neooStart;
-                $periodEnd = $neooEndQuery;
-                $weekStart = (new \DateTimeImmutable($periodStart->format('Y-m-d') . ' 00:00:00'))->modify('monday this week 00:00:00');
-                while ($weekStart < $periodEnd) {
-                    $weekEnd = $weekStart->modify('+7 days');
-                    $windowStart = $periodStart > $weekStart ? $periodStart : $weekStart;
-                    $windowEnd = $periodEnd < $weekEnd ? $periodEnd : $weekEnd;
-                    if ($windowEnd <= $windowStart) {
-                        $weekStart = $weekEnd;
-                        continue;
-                    }
-                    $windowDays = (int) $windowStart->diff($windowEnd)->days;
-                    $weekFraction = $windowDays / 7;
-                    $weekRow = $this->em->createQueryBuilder()
-                        ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
-                        ->from(PaymentOperation::class, 'o')
-                        ->where('o.driver = :driver')
-                        ->andWhere('o.occurredAt >= :start')
-                        ->andWhere('o.occurredAt < :end')
-                        ->setParameter('driver', $driver)
-                        ->setParameter('start', $windowStart)
-                        ->setParameter('end', $windowEnd)
-                        ->getQuery()
-                        ->getOneOrNullResult();
-                    $weekTotalIn = (float) (($weekRow['totalIn'] ?? 0) ?: 0);
-                    $weekFee = $this->em->createQueryBuilder()
-                        ->select('f')
-                        ->from(NeooFee::class, 'f')
-                        ->where(':ca >= f.start')
-                        ->andWhere(':ca <= f.end')
-                        ->setParameter('ca', $weekTotalIn)
-                        ->setMaxResults(1)
-                        ->getQuery()
-                        ->getOneOrNullResult();
-                    $weeklyFixed = $weekFee instanceof NeooFee ? (float) $weekFee->getTaux() : 0.0;
-                    $neooFixed += $weeklyFixed * $weekFraction;
-                    $weekStart = $weekEnd;
-                }
-                $groups = $this->em->createQueryBuilder()
-                    ->select('n.type AS type, SUM(n.amountTtc) AS total')
-                    ->from(ExpenseNote::class, 'n')
-                    ->where('n.driver = :driver')
-                    ->andWhere('n.noteDate >= :start')
-                    ->andWhere('n.noteDate <= :end')
-                    ->groupBy('n.type')
-                    ->setParameter('driver', $driver)
-                    ->setParameter('start', $neooStart, 'date_immutable')
-                    ->setParameter('end', $neooEndQuery, 'date_immutable')
-                    ->getQuery()
-                    ->getArrayResult();
-                $neooExpenseGroups = [];
-                $neooExpenseTotal = 0.0;
-                $neooGroupsFromItems = false;
-                $neooExpenseSource = 'noteDate';
-                $items = [];
-                foreach ($groups as $g) {
-                    $label = is_object($g['type']) ? (string) $g['type']->value : (string) $g['type'];
-                    $val = (float) (($g['total'] ?? 0) ?: 0);
-                    $neooExpenseGroups[$label] = $val;
-                    $neooExpenseTotal += $val;
-                }
-                if (count($neooExpenseGroups) === 0) {
-                    $items = $this->em->createQueryBuilder()
-                        ->select('n')
-                        ->from(ExpenseNote::class, 'n')
-                        ->where('n.driver = :driver')
-                        ->andWhere('n.noteDate >= :startDate')
-                        ->andWhere('n.noteDate <= :endDate')
-                        ->setParameter('driver', $driver)
-                        ->setParameter('startDate', $neooStart, 'date_immutable')
-                        ->setParameter('endDate', $neooEndQuery, 'date_immutable')
-                        ->getQuery()
-                        ->getResult();
-                    $neooGroupsFromItems = true;
-                    $neooExpenseSource = 'noteDate_items';
-                    foreach ($items as $n) {
-                        if ($n instanceof ExpenseNote) {
-                            $label = $n->getType();
-                            $val = (float) $n->getAmountTtc();
-                            $neooExpenseGroups[$label] = ($neooExpenseGroups[$label] ?? 0.0) + $val;
-                            $neooExpenseTotal += $val;
-                        }
-                    }
-                }
-                if (count($neooExpenseGroups) === 0) {
-                    $groups = $this->em->createQueryBuilder()
-                        ->select('n.type AS type, SUM(n.amountTtc) AS total')
-                        ->from(ExpenseNote::class, 'n')
-                        ->where('n.driver = :driver')
-                        ->andWhere('n.createdAt >= :start')
-                        ->andWhere('n.createdAt < :end')
-                        ->groupBy('n.type')
-                        ->setParameter('driver', $driver)
-                        ->setParameter('start', $neooStart, 'datetime_immutable')
-                        ->setParameter('end', $neooEndQuery, 'datetime_immutable')
-                        ->getQuery()
-                        ->getArrayResult();
-                    $neooExpenseSource = 'createdAt';
-                    foreach ($groups as $g) {
-                        $label = is_object($g['type']) ? (string) $g['type']->value : (string) $g['type'];
-                        $val = (float) (($g['total'] ?? 0) ?: 0);
-                        $neooExpenseGroups[$label] = $val;
-                        $neooExpenseTotal += $val;
-                    }
-                }
-                if (count($neooExpenseGroups) === 0) {
-                    $items = $this->em->createQueryBuilder()
-                        ->select('n')
-                        ->from(ExpenseNote::class, 'n')
-                        ->where('n.driver = :driver')
-                        ->andWhere('n.createdAt >= :startDate')
-                        ->andWhere('n.createdAt < :endDate')
-                        ->setParameter('driver', $driver)
-                        ->setParameter('startDate', $neooStart, 'datetime_immutable')
-                        ->setParameter('endDate', $neooEndQuery, 'datetime_immutable')
-                        ->getQuery()
-                        ->getResult();
-                    $neooGroupsFromItems = true;
-                    $neooExpenseSource = 'createdAt_items';
-                    foreach ($items as $n) {
-                        if ($n instanceof ExpenseNote) {
-                            $label = $n->getType();
-                            $val = (float) $n->getAmountTtc();
-                            $neooExpenseGroups[$label] = ($neooExpenseGroups[$label] ?? 0.0) + $val;
-                            $neooExpenseTotal += $val;
-                        }
-                    }
-                }
-                $neooVatRecoverable = $neooVatRate > 0 ? ($neooExpenseTotal * $neooVatRate / (1 + $neooVatRate)) : 0.0;
-                $neooC27 = $neooExpenseTotal - $neooVatRecoverable;
-                $neooIk = $neooKm * $neooFraisKm;
-                $netSocialDenominator = (1 / 0.78) + ($neooUrssaf / 100);
-                $netSocialNumerator = $neooTotalIn - $neooFixed - $neooC27 - $neooIk;
-                $neooNetSocialNumerator = $netSocialNumerator;
-                $neooNetSocial = $netSocialDenominator > 0 ? ($netSocialNumerator / $netSocialDenominator) : 0.0;
-                $neooSalaireBrutCotisations = $neooNetSocial / 0.78;
-                $neooMontantPas = $neooNetSocial * ($neooTauxPas / 100);
-                $advanceRow = $this->em->createQueryBuilder()
-                    ->select('SUM(o.amount) AS totalAdvance')
-                    ->from(PaymentOperation::class, 'o')
-                    ->where('o.driver = :driver')
-                    ->andWhere('(o.operationType = :opType OR o.paymentMethod = :cash)')
-                    ->andWhere('o.occurredAt >= :start')
-                    ->andWhere('o.occurredAt < :end')
-                    ->setParameter('driver', $driver)
-                    ->setParameter('opType', 'CASH_ADVANCE')
-                    ->setParameter('cash', \App\Enum\PaymentMethodType::CASH)
-                    ->setParameter('start', $neooStart)
-                    ->setParameter('end', $neooEndQuery)
-                    ->getQuery()
-                    ->getOneOrNullResult();
-                $neooAcompte = (float) (($advanceRow['totalAdvance'] ?? 0) ?: 0);
-                $neooCpIndemnite = $neooSalaireBrutCotisations * ($neooCpTaux / 100);
-                $neooNetSocialAfter = $neooNetSocial - $neooMontantPas - $neooAcompte;
-                $neooRemboursementsNonImposables = $neooExpenseTotal + $neooIk + $neooCpIndemnite;
-                $neooNetFinalPayer = $neooNetSocialAfter + $neooRemboursementsNonImposables;
-                $neooCommissionVariable = $neooNetSocial * ($neooUrssaf / 100);
-                $neooTotalCommission = $neooFixed + $neooCommissionVariable;
-                $neooReversementBrut = $neooTotalIn - $neooTotalCommission;
-                if ($neooDebug) {
-                    $neooDebugData = [
-                        'items' => $items,
-                        'start' => $neooStart->format('Y-m-d'),
-                        'end' => $neooEnd->format('Y-m-d'),
-                        'groups' => $neooExpenseGroups,
-                        'total' => $neooExpenseTotal,
-                        'fallbackUsed' => $neooGroupsFromItems,
-                        'source' => $neooExpenseSource,
-                    ];
-                }
-            } catch (\Throwable $e) {
-                if ($this->logger) {
-                    $this->logger->error('admin_user_show_neoo_failed', [
-                        'user_id' => $user->getId(),
-                        'driver_id' => $driver->getId(),
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
+            $neooData = $this->buildNeooData($driver, $neooStart, $neooEnd);
+            $neooTotalIn = $neooData['neooTotalIn'];
+            $neooFixed = $neooData['neooFixed'];
+            $neooExpenseGroups = $neooData['neooExpenseGroups'];
+            $neooExpenseTotal = $neooData['neooExpenseTotal'];
+            $neooVatRate = $neooData['neooVatRate'];
+            $neooVatRecoverable = $neooData['neooVatRecoverable'];
+            $neooC27 = $neooData['neooC27'];
+            $neooKm = $neooData['neooKm'];
+            $neooFraisKm = $neooData['neooFraisKm'];
+            $neooIk = $neooData['neooIk'];
+            $neooCpTaux = $neooData['neooCpTaux'];
+            $neooCpIndemnite = $neooData['neooCpIndemnite'];
+            $neooUrssaf = $neooData['neooUrssaf'];
+            $neooNetSocial = $neooData['neooNetSocial'];
+            $neooNetSocialNumerator = $neooData['neooNetSocialNumerator'];
+            $neooSalaireBrutCotisations = $neooData['neooSalaireBrutCotisations'];
+            $neooTauxPas = $neooData['neooTauxPas'];
+            $neooMontantPas = $neooData['neooMontantPas'];
+            $neooAcompte = $neooData['neooAcompte'];
+            $neooNetSocialAfter = $neooData['neooNetSocialAfter'];
+            $neooRemboursementsNonImposables = $neooData['neooRemboursementsNonImposables'];
+            $neooNetFinalPayer = $neooData['neooNetFinalPayer'];
+            $neooCommissionVariable = $neooData['neooCommissionVariable'];
+            $neooTotalCommission = $neooData['neooTotalCommission'];
+            $neooReversementBrut = $neooData['neooReversementBrut'];
             try {
                 $balance = $this->em->getRepository(Balance::class)->findOneBy(['driver' => $driver]);
                 if (!$balance instanceof Balance) {
@@ -636,6 +463,7 @@ final class DashboardController extends AbstractDashboardController
             'DOCUMENT_REJECTED',
         ];
         $advanceRequests = [];
+        $congeRequests = [];
         if ($driver instanceof Driver) {
             try {
                 $advanceRequests = $this->em->getRepository(AdvanceRequest::class)->findBy(['driver' => $driver], ['createdAt' => 'DESC']);
@@ -646,6 +474,11 @@ final class DashboardController extends AbstractDashboardController
                 if ($r instanceof AdvanceRequest) {
                     $add($r->getAttachment());
                 }
+            }
+            try {
+                $congeRequests = $this->em->getRepository(CongeRequest::class)->findBy(['driver' => $driver], ['createdAt' => 'DESC']);
+            } catch (\Throwable) {
+                $congeRequests = [];
             }
         }
         return $this->render('admin/user_show.html.twig', [
@@ -711,7 +544,347 @@ final class DashboardController extends AbstractDashboardController
             'balanceSoldConge' => $balanceSoldConge,
             'balanceLastUpdate' => $balanceLastUpdate,
             'advanceRequests' => $advanceRequests,
+            'congeRequests' => $congeRequests,
         ]);
+    }
+
+    #[Route('/admin/users/{id}/neoo', name: 'admin_user_neoo_json', methods: ['GET'], requirements: ['id' => '\\d+'], defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
+    public function userNeooJson(Request $request, int $id): JsonResponse
+    {
+        $user = $this->em->getRepository(User::class)->find($id);
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            return new JsonResponse(['error' => 'Driver profile not found'], Response::HTTP_NOT_FOUND);
+        }
+        $dateBeginParam = (string) $request->query->get('dateBegin', '');
+        $dateEndParam = (string) $request->query->get('dateEnd', '');
+        if ($dateBeginParam === '' || $dateEndParam === '') {
+            return new JsonResponse(['error' => 'dateBegin and dateEnd are required'], Response::HTTP_BAD_REQUEST);
+        }
+        $dateBegin = \DateTimeImmutable::createFromFormat('Y-m-d', $dateBeginParam);
+        $dateEnd = \DateTimeImmutable::createFromFormat('Y-m-d', $dateEndParam);
+        if (!$dateBegin instanceof \DateTimeImmutable || $dateBegin->format('Y-m-d') !== $dateBeginParam) {
+            return new JsonResponse(['error' => 'dateBegin must be in Y-m-d format'], Response::HTTP_BAD_REQUEST);
+        }
+        if (!$dateEnd instanceof \DateTimeImmutable || $dateEnd->format('Y-m-d') !== $dateEndParam) {
+            return new JsonResponse(['error' => 'dateEnd must be in Y-m-d format'], Response::HTTP_BAD_REQUEST);
+        }
+        $dateBegin = new \DateTimeImmutable($dateBegin->format('Y-m-d 00:00:00'));
+        $dateEnd = new \DateTimeImmutable($dateEnd->format('Y-m-d 00:00:00'));
+        if ($dateEnd <= $dateBegin) {
+            return new JsonResponse(['error' => 'dateEnd must be after dateBegin'], Response::HTTP_BAD_REQUEST);
+        }
+        $maxEnd = $dateBegin->modify('+1 month');
+        if ($dateEnd > $maxEnd) {
+            return new JsonResponse(['error' => 'date range must not exceed one month'], Response::HTTP_BAD_REQUEST);
+        }
+        $data = $this->buildNeooData($driver, $dateBegin, $dateEnd);
+        $data['neooStart'] = $dateBegin->format('Y-m-d');
+        $data['neooEnd'] = $dateEnd->format('Y-m-d');
+        return new JsonResponse($data);
+    }
+
+    #[Route('/admin/users/{id}/neoo-payslip', name: 'admin_user_neoo_payslip', methods: ['GET'], requirements: ['id' => '\\d+'], defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
+    public function userNeooPayslip(Request $request, int $id): Response
+    {
+        $user = $this->em->getRepository(User::class)->find($id);
+        if (!$user instanceof User) {
+            return new Response('User not found', Response::HTTP_NOT_FOUND);
+        }
+        $driver = $user->getDriverProfile();
+        if (!$driver instanceof Driver) {
+            return new Response('Driver profile not found', Response::HTTP_NOT_FOUND);
+        }
+        $dateBeginParam = (string) $request->query->get('neoo_start', '');
+        $dateEndParam = (string) $request->query->get('neoo_end', '');
+        if ($dateBeginParam === '' || $dateEndParam === '') {
+            return new Response('neoo_start and neoo_end are required', Response::HTTP_BAD_REQUEST);
+        }
+        $dateBegin = \DateTimeImmutable::createFromFormat('Y-m-d', $dateBeginParam);
+        $dateEnd = \DateTimeImmutable::createFromFormat('Y-m-d', $dateEndParam);
+        if (!$dateBegin instanceof \DateTimeImmutable || $dateBegin->format('Y-m-d') !== $dateBeginParam) {
+            return new Response('neoo_start must be in Y-m-d format', Response::HTTP_BAD_REQUEST);
+        }
+        if (!$dateEnd instanceof \DateTimeImmutable || $dateEnd->format('Y-m-d') !== $dateEndParam) {
+            return new Response('neoo_end must be in Y-m-d format', Response::HTTP_BAD_REQUEST);
+        }
+        $dateBegin = new \DateTimeImmutable($dateBegin->format('Y-m-d 00:00:00'));
+        $dateEnd = new \DateTimeImmutable($dateEnd->format('Y-m-d 00:00:00'));
+        if ($dateEnd < $dateBegin) {
+            return new Response('neoo_end must be after or equal to neoo_start', Response::HTTP_BAD_REQUEST);
+        }
+        $maxEnd = $dateBegin->modify('+1 month');
+        if ($dateEnd > $maxEnd) {
+            return new Response('date range must not exceed one month', Response::HTTP_BAD_REQUEST);
+        }
+        $data = $this->buildNeooData($driver, $dateBegin, $dateEnd);
+        try {
+            $pdf = $this->payslipPdfBuilder->build($user, $driver, $data, $dateBegin, $dateEnd);
+        } catch (\Throwable $e) {
+            if ($this->logger) {
+                $this->logger->error('admin_payslip_pdf_failed', [
+                    'user_id' => $user->getId(),
+                    'driver_id' => $driver->getId(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            return new Response('Payslip PDF generation failed', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        if ($pdf === '' || strlen($pdf) < 100) {
+            return new Response('Payslip PDF is empty', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+        $fileName = 'payslip-' . $driver->getId() . '-' . $dateBegin->format('Ymd') . '-' . $dateEnd->format('Ymd') . '.pdf';
+        return new Response($pdf, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Transfer-Encoding' => 'binary',
+            'Cache-Control' => 'private, max-age=0, must-revalidate',
+            'Pragma' => 'public',
+            'Content-Length' => (string) strlen($pdf),
+        ]);
+    }
+
+    private function buildNeooData(Driver $driver, \DateTimeImmutable $neooStart, \DateTimeImmutable $neooEnd): array
+    {
+        $neooEndQuery = $neooEnd->modify('+1 day');
+        $neooTotalIn = 0.0;
+        $neooFixed = 0.0;
+        $neooExpenseGroups = [];
+        $neooExpenseTotal = 0.0;
+        $neooVatRate = 0.20;
+        $neooVatRecoverable = 0.0;
+        $neooC27 = 0.0;
+        $neooKm = 0.0;
+        $neooFraisKm = 0.0;
+        $neooIk = 0.0;
+        $neooCpTaux = 0.0;
+        $neooCpIndemnite = null;
+        $neooUrssaf = 0.0;
+        $neooNetSocial = 0.0;
+        $neooNetSocialNumerator = 0.0;
+        $neooSalaireBrutCotisations = 0.0;
+        $neooTauxPas = 0.0;
+        $neooMontantPas = 0.0;
+        $neooAcompte = 0.0;
+        $neooNetSocialAfter = 0.0;
+        $neooRemboursementsNonImposables = 0.0;
+        $neooNetFinalPayer = 0.0;
+        $neooCommissionVariable = 0.0;
+        $neooTotalCommission = 0.0;
+        $neooReversementBrut = 0.0;
+        try {
+            $row = $this->em->createQueryBuilder()
+                ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
+                ->addSelect("SUM(COALESCE(o.rideDistance, 0)) AS totalKm")
+                ->from(PaymentOperation::class, 'o')
+                ->where('o.driver = :driver')
+                ->andWhere('o.occurredAt >= :start')
+                ->andWhere('o.occurredAt < :end')
+                ->setParameter('driver', $driver)
+                ->setParameter('start', $neooStart)
+                ->setParameter('end', $neooEndQuery)
+                ->getQuery()
+                ->getOneOrNullResult();
+            $neooTotalIn = (float) (($row['totalIn'] ?? 0) ?: 0);
+            $neooKm = (float) (($row['totalKm'] ?? 0) ?: 0);
+            $cfg = $this->em->getRepository(NeooConfig::class)->findOneBy([], ['updatedAt' => 'DESC']);
+            if ($cfg instanceof NeooConfig) {
+                $neooFraisKm = (float) $cfg->getFraisKm();
+                $neooCpTaux = (float) $cfg->getTauxConge();
+                $neooUrssaf = (float) $cfg->getTauxUrssaf();
+                $neooTauxPas = (float) $cfg->getTauxPas();
+            }
+            $neooFixed = 0.0;
+            $periodStart = $neooStart;
+            $periodEnd = $neooEndQuery;
+            $weekStart = (new \DateTimeImmutable($periodStart->format('Y-m-d') . ' 00:00:00'))->modify('monday this week 00:00:00');
+            while ($weekStart < $periodEnd) {
+                $weekEnd = $weekStart->modify('+7 days');
+                $windowStart = $periodStart > $weekStart ? $periodStart : $weekStart;
+                $windowEnd = $periodEnd < $weekEnd ? $periodEnd : $weekEnd;
+                if ($windowEnd <= $windowStart) {
+                    $weekStart = $weekEnd;
+                    continue;
+                }
+                $windowDays = (int) $windowStart->diff($windowEnd)->days;
+                $weekFraction = $windowDays / 7;
+                $weekRow = $this->em->createQueryBuilder()
+                    ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
+                    ->from(PaymentOperation::class, 'o')
+                    ->where('o.driver = :driver')
+                    ->andWhere('o.occurredAt >= :start')
+                    ->andWhere('o.occurredAt < :end')
+                    ->setParameter('driver', $driver)
+                    ->setParameter('start', $windowStart)
+                    ->setParameter('end', $windowEnd)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+                $weekTotalIn = (float) (($weekRow['totalIn'] ?? 0) ?: 0);
+                $weekFee = $this->em->createQueryBuilder()
+                    ->select('f')
+                    ->from(NeooFee::class, 'f')
+                    ->where(':ca >= f.start')
+                    ->andWhere(':ca <= f.end')
+                    ->setParameter('ca', $weekTotalIn)
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+                $weeklyFixed = $weekFee instanceof NeooFee ? (float) $weekFee->getTaux() : 0.0;
+                $neooFixed += $weeklyFixed * $weekFraction;
+                $weekStart = $weekEnd;
+            }
+            $groups = $this->em->createQueryBuilder()
+                ->select('n.type AS type, SUM(n.amountTtc) AS total')
+                ->from(ExpenseNote::class, 'n')
+                ->where('n.driver = :driver')
+                ->andWhere('n.noteDate >= :start')
+                ->andWhere('n.noteDate <= :end')
+                ->groupBy('n.type')
+                ->setParameter('driver', $driver)
+                ->setParameter('start', $neooStart, 'date_immutable')
+                ->setParameter('end', $neooEndQuery, 'date_immutable')
+                ->getQuery()
+                ->getArrayResult();
+            $neooExpenseGroups = [];
+            $neooExpenseTotal = 0.0;
+            $items = [];
+            foreach ($groups as $g) {
+                $label = is_object($g['type']) ? (string) $g['type']->value : (string) $g['type'];
+                $val = (float) (($g['total'] ?? 0) ?: 0);
+                $neooExpenseGroups[$label] = $val;
+                $neooExpenseTotal += $val;
+            }
+            if (count($neooExpenseGroups) === 0) {
+                $items = $this->em->createQueryBuilder()
+                    ->select('n')
+                    ->from(ExpenseNote::class, 'n')
+                    ->where('n.driver = :driver')
+                    ->andWhere('n.noteDate >= :startDate')
+                    ->andWhere('n.noteDate <= :endDate')
+                    ->setParameter('driver', $driver)
+                    ->setParameter('startDate', $neooStart, 'date_immutable')
+                    ->setParameter('endDate', $neooEndQuery, 'date_immutable')
+                    ->getQuery()
+                    ->getResult();
+                foreach ($items as $n) {
+                    if ($n instanceof ExpenseNote) {
+                        $label = $n->getType();
+                        $val = (float) $n->getAmountTtc();
+                        $neooExpenseGroups[$label] = ($neooExpenseGroups[$label] ?? 0.0) + $val;
+                        $neooExpenseTotal += $val;
+                    }
+                }
+            }
+            if (count($neooExpenseGroups) === 0) {
+                $groups = $this->em->createQueryBuilder()
+                    ->select('n.type AS type, SUM(n.amountTtc) AS total')
+                    ->from(ExpenseNote::class, 'n')
+                    ->where('n.driver = :driver')
+                    ->andWhere('n.createdAt >= :start')
+                    ->andWhere('n.createdAt < :end')
+                    ->groupBy('n.type')
+                    ->setParameter('driver', $driver)
+                    ->setParameter('start', $neooStart, 'datetime_immutable')
+                    ->setParameter('end', $neooEndQuery, 'datetime_immutable')
+                    ->getQuery()
+                    ->getArrayResult();
+                foreach ($groups as $g) {
+                    $label = is_object($g['type']) ? (string) $g['type']->value : (string) $g['type'];
+                    $val = (float) (($g['total'] ?? 0) ?: 0);
+                    $neooExpenseGroups[$label] = $val;
+                    $neooExpenseTotal += $val;
+                }
+            }
+            if (count($neooExpenseGroups) === 0) {
+                $items = $this->em->createQueryBuilder()
+                    ->select('n')
+                    ->from(ExpenseNote::class, 'n')
+                    ->where('n.driver = :driver')
+                    ->andWhere('n.createdAt >= :startDate')
+                    ->andWhere('n.createdAt < :endDate')
+                    ->setParameter('driver', $driver)
+                    ->setParameter('startDate', $neooStart, 'datetime_immutable')
+                    ->setParameter('endDate', $neooEndQuery, 'datetime_immutable')
+                    ->getQuery()
+                    ->getResult();
+                foreach ($items as $n) {
+                    if ($n instanceof ExpenseNote) {
+                        $label = $n->getType();
+                        $val = (float) $n->getAmountTtc();
+                        $neooExpenseGroups[$label] = ($neooExpenseGroups[$label] ?? 0.0) + $val;
+                        $neooExpenseTotal += $val;
+                    }
+                }
+            }
+            $neooVatRecoverable = $neooVatRate > 0 ? ($neooExpenseTotal * $neooVatRate / (1 + $neooVatRate)) : 0.0;
+            $neooC27 = $neooExpenseTotal - $neooVatRecoverable;
+            $neooIk = $neooKm * $neooFraisKm;
+            $netSocialDenominator = (1 / 0.78) + ($neooUrssaf / 100);
+            $netSocialNumerator = $neooTotalIn - $neooFixed - $neooC27 - $neooIk;
+            $neooNetSocialNumerator = $netSocialNumerator;
+            $neooNetSocial = $netSocialDenominator > 0 ? ($netSocialNumerator / $netSocialDenominator) : 0.0;
+            $neooSalaireBrutCotisations = $neooNetSocial / 0.78;
+            $neooMontantPas = $neooNetSocial * ($neooTauxPas / 100);
+            $advanceRow = $this->em->createQueryBuilder()
+                ->select('SUM(o.amount) AS totalAdvance')
+                ->from(PaymentOperation::class, 'o')
+                ->where('o.driver = :driver')
+                ->andWhere('(o.operationType = :opType OR o.paymentMethod = :cash)')
+                ->andWhere('o.occurredAt >= :start')
+                ->andWhere('o.occurredAt < :end')
+                ->setParameter('driver', $driver)
+                ->setParameter('opType', 'CASH_ADVANCE')
+                ->setParameter('cash', PaymentMethodType::CASH)
+                ->setParameter('start', $neooStart)
+                ->setParameter('end', $neooEndQuery)
+                ->getQuery()
+                ->getOneOrNullResult();
+            $neooAcompte = (float) (($advanceRow['totalAdvance'] ?? 0) ?: 0);
+            $neooCpIndemnite = $neooSalaireBrutCotisations * ($neooCpTaux / 100);
+            $neooNetSocialAfter = $neooNetSocial - $neooMontantPas - $neooAcompte;
+            $neooRemboursementsNonImposables = $neooExpenseTotal + $neooIk + $neooCpIndemnite;
+            $neooNetFinalPayer = $neooNetSocialAfter + $neooRemboursementsNonImposables;
+            $neooCommissionVariable = $neooNetSocial * ($neooUrssaf / 100);
+            $neooTotalCommission = $neooFixed + $neooCommissionVariable;
+            $neooReversementBrut = $neooTotalIn - $neooTotalCommission;
+        } catch (\Throwable $e) {
+            if ($this->logger) {
+                $this->logger->error('admin_user_neoo_api_failed', [
+                    'driver_id' => $driver->getId(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+        return [
+            'neooTotalIn' => $neooTotalIn,
+            'neooFixed' => $neooFixed,
+            'neooExpenseGroups' => $neooExpenseGroups,
+            'neooExpenseTotal' => $neooExpenseTotal,
+            'neooVatRate' => $neooVatRate,
+            'neooVatRecoverable' => $neooVatRecoverable,
+            'neooC27' => $neooC27,
+            'neooKm' => $neooKm,
+            'neooFraisKm' => $neooFraisKm,
+            'neooIk' => $neooIk,
+            'neooCpTaux' => $neooCpTaux,
+            'neooCpIndemnite' => $neooCpIndemnite,
+            'neooUrssaf' => $neooUrssaf,
+            'neooNetSocial' => $neooNetSocial,
+            'neooNetSocialNumerator' => $neooNetSocialNumerator,
+            'neooSalaireBrutCotisations' => $neooSalaireBrutCotisations,
+            'neooTauxPas' => $neooTauxPas,
+            'neooMontantPas' => $neooMontantPas,
+            'neooAcompte' => $neooAcompte,
+            'neooNetSocialAfter' => $neooNetSocialAfter,
+            'neooRemboursementsNonImposables' => $neooRemboursementsNonImposables,
+            'neooNetFinalPayer' => $neooNetFinalPayer,
+            'neooCommissionVariable' => $neooCommissionVariable,
+            'neooTotalCommission' => $neooTotalCommission,
+            'neooReversementBrut' => $neooReversementBrut,
+        ];
     }
 
     #[Route('/admin/users/{id}/edit', name: 'admin_user_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'], defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
@@ -811,9 +984,8 @@ final class DashboardController extends AbstractDashboardController
                 $this->addFlash('warning', 'Bolt authentication failed for ' . $integration->getName());
                 return $this->redirectToRoute('admin_user_show', ['id' => $user->getId(), 'tab' => 'integrations']);
             }
-            $now = time();
-            $startTs = 1767398400;
-            $endTs = 1769904000;
+            $startTs = (new \DateTimeImmutable('today 00:00:00', new \DateTimeZone('UTC')))->getTimestamp();
+            $endTs = (new \DateTimeImmutable('tomorrow 00:00:00', new \DateTimeZone('UTC')))->getTimestamp();
             $companyIds = $integration->getBoltCompanyIds();
             $ordersPayload = $this->bolt->getFleetOrders($accessToken, 0, 1000, $companyIds, $startTs, $endTs, 'price_review');
             if ($debug) {

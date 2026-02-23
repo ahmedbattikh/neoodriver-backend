@@ -220,6 +220,9 @@
 					<li class="nav-item" role="presentation">
 						<button class="nav-link {{ activeTab == 'advance' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-advance" type="button" role="tab">Advance Requests</button>
 					</li>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link {{ activeTab == 'conge' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-conge" type="button" role="tab">Congé Requests</button>
+					</li>
 				{% endif %}
 				<li class="nav-item" role="presentation">
 					<button class="nav-link {{ activeTab == 'batches' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-batches" type="button" role="tab">Payment Batches</button>
@@ -610,6 +613,63 @@
 									</div>
 								{% else %}
 									<div class="text-muted">No advance requests</div>
+								{% endif %}
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade {{ activeTab == 'conge' ? 'show active' : '' }}" id="tab-conge" role="tabpanel">
+						<div class="card">
+							<div class="card-body">
+								<div class="fw-bold mb-2">Congé Requests</div>
+								{% if congeRequests is defined and congeRequests|length > 0 %}
+									<div class="table-responsive">
+										<table class="table table-sm table-striped align-middle">
+											<thead>
+												<tr>
+													<th>ID</th>
+													<th>Amount</th>
+													<th>Status</th>
+													<th>Description</th>
+													<th>Created</th>
+													<th>Approved</th>
+													<th>Admin Note</th>
+													<th>Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{% for r in congeRequests %}
+													<tr>
+														<td>{{ r.id }}</td>
+														<td>{{ r.amount|number_format(3, '.', ' ') }}</td>
+														<td>{{ r.status.value }}</td>
+														<td>{{ r.description ?? '' }}</td>
+														<td>{{ r.createdAt|date('Y-m-d H:i') }}</td>
+														<td>{{ r.approvedAt ? r.approvedAt|date('Y-m-d H:i') : '—' }}</td>
+														<td>{{ r.adminNote ?? '—' }}</td>
+														<td>
+															{% if r.status.value == 'PENDING' %}
+																<div class="d-flex flex-wrap align-items-center gap-2">
+																	<form method="post" action="{{ path('admin_conge_request_approve', { id: r.id }) }}" class="d-flex align-items-center gap-2">
+																		<input type="hidden" name="_token" value="{{ csrf_token('approve_conge_' ~ r.id) }}"/>
+																		<button type="submit" class="btn btn-sm btn-success">Approve</button>
+																	</form>
+																	<form method="post" action="{{ path('admin_conge_request_reject', { id: r.id }) }}" class="d-flex align-items-center gap-2">
+																		<input type="hidden" name="_token" value="{{ csrf_token('reject_conge_' ~ r.id) }}"/>
+																		<input type="text" name="admin_note" class="form-control form-control-sm" placeholder="Reason..." />
+																		<button type="submit" class="btn btn-sm btn-outline-danger">Refuse</button>
+																	</form>
+																</div>
+															{% else %}
+																<span class="text-muted">—</span>
+															{% endif %}
+														</td>
+													</tr>
+												{% endfor %}
+											</tbody>
+										</table>
+									</div>
+								{% else %}
+									<div class="text-muted">No congé requests</div>
 								{% endif %}
 							</div>
 						</div>
@@ -1167,20 +1227,23 @@
 						<div class="text-muted">No driver profile</div>
 					{% else %}
 						<div class="d-flex align-items-center justify-content-between mb-2">
-							<form method="get" action="{{ path('admin_user_show', { id: user.id }) }}" class="d-flex align-items-center gap-2">
-								<input type="hidden" name="tab" value="neoo"/>
-								<div>
-									<label class="form-label mb-0 small">Begin</label>
-									<input type="date" name="neoo_start" class="form-control form-control-sm" value="{{ neooStart|date('Y-m-d') }}"/>
-								</div>
-								<div>
-									<label class="form-label mb-0 small">End</label>
-									<input type="date" name="neoo_end" class="form-control form-control-sm" value="{{ neooEnd|date('Y-m-d') }}"/>
-								</div>
-								<div class="align-self-end">
-									<button type="submit" class="btn btn-sm btn-primary">Apply</button>
-								</div>
-							</form>
+							<div class="d-flex align-items-end gap-2">
+								<form method="get" action="{{ path('admin_user_show', { id: user.id }) }}" class="d-flex align-items-center gap-2">
+									<input type="hidden" name="tab" value="neoo"/>
+									<div>
+										<label class="form-label mb-0 small">Begin</label>
+										<input type="date" name="neoo_start" class="form-control form-control-sm" value="{{ neooStart|date('Y-m-d') }}"/>
+									</div>
+									<div>
+										<label class="form-label mb-0 small">End</label>
+										<input type="date" name="neoo_end" class="form-control form-control-sm" value="{{ neooEnd|date('Y-m-d') }}"/>
+									</div>
+									<div class="align-self-end">
+										<button type="submit" class="btn btn-sm btn-primary">Apply</button>
+									</div>
+								</form>
+								<a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_neoo_payslip', { id: user.id, neoo_start: neooStart|date('Y-m-d'), neoo_end: neooEnd|date('Y-m-d') }) }}">Download PDF</a>
+							</div>
 							<div class="text-muted small">
 								{{ neooStart|date('Y-m-d') }}
 								→
