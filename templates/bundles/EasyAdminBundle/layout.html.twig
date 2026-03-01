@@ -1,28 +1,28 @@
-{% extends '@EasyAdmin/layout.html.twig' %}
+{% extends '@ea/layout.html.twig' %}
 
 {% block responsive_header %}
-    <twig:ea:Button type="button" isInvisible icon="internal:menu-bars" id="navigation-toggler" aria-label="Toggle navigation"></twig:ea:Button>
+	<twig:ea:Button type="button" isinvisible icon="internal:menu-bars" id="navigation-toggler" aria-label="Toggle navigation"></twig:ea:Button>
 
-    <div id="responsive-header-logo" class="text-truncate ms-auto">
-        {% block responsive_header_logo %}
-            <a class="responsive-logo" title="{{ ea.dashboardTitle|striptags }}" href="{{ path(ea.dashboardRouteName) }}">
-                {{ ea.dashboardTitle|raw }}
-            </a>
-        {% endblock responsive_header_logo %}
-    </div>
+	<div id="responsive-header-logo" class="text-truncate ms-auto">
+		{% block responsive_header_logo %}
+			<a class="responsive-logo" title="{{ ea.dashboardTitle|striptags }}" href="{{ path(ea.dashboardRouteName) }}">
+				{{ ea.dashboardTitle|raw }}
+			</a>
+		{% endblock responsive_header_logo %}
+	</div>
 
-    <twig:ea:ActionMenu class="ms-auto user-menu-wrapper {{ is_granted(impersonator_permission) ? 'user-is-impersonated' }}">
-        <twig:ea:ActionMenu:Button class="user-details" data-bs-offset="0,5" withoutDropdownToggleMarker>
-            {% if ea.userMenu.avatarDisplayed %}
-                {{ user_menu_avatar }}
-            {% else %}
-                <twig:ea:Icon class="user-avatar" name="{{ ea.user is not null ? 'internal:user' : 'internal:user-xmark' }}" />
-            {% endif %}
-        </twig:ea:ActionMenu:Button>
-        <twig:ea:ActionMenu:Overlay>
-            {{ user_menu_dropdown }}
-        </twig:ea:ActionMenu:Overlay>
-    </twig:ea:ActionMenu>
+	<twig:ea:ActionMenu class="ms-auto user-menu-wrapper {{ is_granted(impersonator_permission) ? 'user-is-impersonated' }}">
+		<twig:ea:ActionMenu:Button class="user-details" data-bs-offset="0,5" withoutdropdowntogglemarker>
+			{% if ea.userMenu.avatarDisplayed %}
+				{{ user_menu_avatar }}
+			{% else %}
+				<twig:ea:Icon class="user-avatar" name="{{ ea.user is not null ? 'internal:user' : 'internal:user-xmark' }}"/>
+			{% endif %}
+		</twig:ea:ActionMenu:Button>
+		<twig:ea:ActionMenu:Overlay>
+			{{ user_menu_dropdown }}
+		</twig:ea:ActionMenu:Overlay>
+	</twig:ea:ActionMenu>
 {% endblock responsive_header %}
 
 {% block settings_dropdown_wrapper %}{% endblock %}
