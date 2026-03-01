@@ -1,14 +1,16 @@
 {
     "info": {
-        "name": "NeoDriver API",
+        "name": "NeoDriver API new",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         "_postman_id": "b7f4f1a3-4c52-4f1e-9c01-000000000001"
     },
     "variable": [
         { "key": "baseUrl", "value": "http://localhost" },
         { "key": "accessToken", "value": "" },
+        { "key": "refreshToken", "value": "" },
         { "key": "otpCode", "value": "" },
-        { "key": "vehicleId", "value": "1" }
+        { "key": "vehicleId", "value": "1" },
+        { "key": "expenseNoteId", "value": "1" }
     ],
     "auth": {
         "type": "bearer",
@@ -18,86 +20,187 @@
     },
     "item": [
         {
-            "name": "Register",
+            "name": "Health",
             "request": {
-                "method": "POST",
-                "header": [
-                    { "key": "Content-Type", "value": "application/json" }
-                ],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n  \"email\": \"user@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"mobileNumber\": \"+33123456789\"\n}"
-                },
+                "auth": { "type": "noauth" },
+                "method": "GET",
                 "url": {
-                    "raw": "{{baseUrl}}/api/register",
+                    "raw": "{{baseUrl}}/health",
                     "host": ["{{baseUrl}}"],
-                    "path": ["api", "register"]
+                    "path": ["health"]
                 }
             }
         },
         {
-            "name": "Request OTP Code",
-            "request": {
-                "method": "POST",
-                "header": [
-                    { "key": "Content-Type", "value": "application/json" }
-                ],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n  \"email\": \"user@example.com\"\n}"
-                },
-                "url": {
-                    "raw": "{{baseUrl}}/api/login/email",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "login", "email"]
-                }
-            },
-            "event": [
+            "name": "Open",
+            "item": [
                 {
-                    "listen": "test",
-                    "script": {
-                        "type": "text/javascript",
-                        "exec": [
-                            "const json = pm.response.json();",
-                            "if (json.debugCode) { pm.collectionVariables.set('otpCode', json.debugCode); }"
-                        ]
+                    "name": "Ping",
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/open/ping",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "open", "ping"]
+                        }
                     }
                 }
             ]
         },
         {
-            "name": "Login with OTP",
-            "request": {
-                "method": "POST",
-                "header": [
-                    { "key": "Content-Type", "value": "application/json" }
-                ],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}"
-                },
-                "url": {
-                    "raw": "{{baseUrl}}/api/login/otp",
-                    "host": ["{{baseUrl}}"],
-                    "path": ["api", "login", "otp"]
-                }
-            },
-            "event": [
+            "name": "Auth",
+            "item": [
                 {
-                    "listen": "test",
-                    "script": {
-                        "type": "text/javascript",
-                        "exec": [
-                            "const json = pm.response.json();",
-                            "if (json.token) { pm.collectionVariables.set('accessToken', json.token); }"
-                        ]
+                    "name": "Register",
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"mobileNumber\": \"+33123456789\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/register",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "register"]
+                        }
                     }
+                },
+                {
+                    "name": "Request OTP Code",
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/login/email",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "login", "email"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.debugCode) { pm.collectionVariables.set('otpCode', json.debugCode); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login with OTP",
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/login/otp",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "login", "otp"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.token) { pm.collectionVariables.set('accessToken', json.token); }",
+                                    "if (json.refreshToken) { pm.collectionVariables.set('refreshToken', json.refreshToken); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login with Password",
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "login"]
+                        }
+                    }
+                },
+                {
+                    "name": "Refresh Token",
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "POST",
+                        "header": [
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/token/refresh",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["token", "refresh"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.token) { pm.collectionVariables.set('accessToken', json.token); }",
+                                    "if (json.refreshToken) { pm.collectionVariables.set('refreshToken', json.refreshToken); }"
+                                ]
+                            }
+                        }
+                    ]
                 }
             ]
         },
         {
             "name": "Secure",
             "item": [
+                {
+                    "name": "Ping",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/ping",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "ping"]
+                        }
+                    }
+                },
                 {
                     "name": "Me",
                     "request": {
@@ -110,6 +213,101 @@
                         }
                     }
                 },
+                {
+                    "name": "Driver Integrations",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/driver-integrations",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "driver-integrations"]
+                        }
+                    }
+                },
+                {
+                    "name": "Payments Summary",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/payments-summary?dateBegin=2024-01-01&dateEnd=2024-01-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "payments-summary"],
+                            "query": [
+                                { "key": "dateBegin", "value": "2024-01-01" },
+                                { "key": "dateEnd", "value": "2024-01-31" }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Payment Operations",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/payment-operations?page=1&size=20&sort=occurredAt&dir=DESC",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "payment-operations"],
+                            "query": [
+                                { "key": "page", "value": "1" },
+                                { "key": "size", "value": "20" },
+                                { "key": "sort", "value": "occurredAt" },
+                                { "key": "dir", "value": "DESC" },
+                                { "key": "integrationCode", "value": "", "disabled": true },
+                                { "key": "operationType", "value": "", "disabled": true },
+                                { "key": "direction", "value": "", "disabled": true },
+                                { "key": "status", "value": "", "disabled": true },
+                                { "key": "currency", "value": "", "disabled": true },
+                                { "key": "dateFrom", "value": "2024-01-01", "disabled": true },
+                                { "key": "dateTo", "value": "2024-01-31", "disabled": true }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Payment Batches",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/payment-batches?page=1&size=20&sort=periodStart&dir=DESC",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "payment-batches"],
+                            "query": [
+                                { "key": "page", "value": "1" },
+                                { "key": "size", "value": "20" },
+                                { "key": "sort", "value": "periodStart" },
+                                { "key": "dir", "value": "DESC" },
+                                { "key": "integrationCode", "value": "", "disabled": true },
+                                { "key": "periodFrom", "value": "2024-01-01", "disabled": true },
+                                { "key": "periodTo", "value": "2024-01-31", "disabled": true }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Payslip",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/payslip?dateBegin=2024-01-01&dateEnd=2024-01-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "payslip"],
+                            "query": [
+                                { "key": "dateBegin", "value": "2024-01-01" },
+                                { "key": "dateEnd", "value": "2024-01-31" }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Secure Profile",
+            "item": [
                 {
                     "name": "Add Driver",
                     "request": {
@@ -181,15 +379,26 @@
                     "request": {
                         "auth": { "type": "inherit" },
                         "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
                         "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"vtcCardValid\": \"DOCUMENT_VALID\",\n  \"drivingLicenseValid\": \"DOCUMENT_INVALIDE\",\n  \"identityCardValid\": \"VALIDATION_INPROGRESS\",\n  \"vtcCardExpirationDate\": \"2026-12-31\",\n  \"drivingLicenseExpirationDate\": \"2027-01-01\",\n  \"identityCardExpirationDate\": \"2028-06-30\"\n}"
+                            "mode": "formdata",
+                            "formdata": [
+                                { "key": "vtcCardExpirationDate", "value": "2026-12-31", "type": "text" },
+                                { "key": "drivingLicenseExpirationDate", "value": "2027-01-01", "type": "text" },
+                                { "key": "identityCardExpirationDate", "value": "2028-06-30", "type": "text" },
+                                { "key": "socialSecurityNumber", "value": "1234567890123", "type": "text" },
+                                { "key": "iban", "value": "FR7612345987650123456789014", "type": "text" },
+                                { "key": "isHosted", "value": "false", "type": "text" },
+                                { "key": "vtcCardFront", "type": "file", "disabled": true },
+                                { "key": "vtcCardBack", "type": "file", "disabled": true },
+                                { "key": "drivingLicenseFront", "type": "file", "disabled": true },
+                                { "key": "drivingLicenseBack", "type": "file", "disabled": true },
+                                { "key": "identityCardFront", "type": "file", "disabled": true },
+                                { "key": "identityCardBack", "type": "file", "disabled": true },
+                                { "key": "healthCard", "type": "file", "disabled": true },
+                                { "key": "bankStatement", "type": "file", "disabled": true },
+                                { "key": "proofOfResidence", "type": "file", "disabled": true },
+                                { "key": "secureDrivingRightCertificate", "type": "file", "disabled": true }
+                            ]
                         },
                         "url": {
                             "raw": "{{baseUrl}}/api/secure/driver-documents",
@@ -222,6 +431,147 @@
                                 "vehicle",
                                 "{{vehicleId}}"
                             ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Expense Notes",
+            "item": [
+                {
+                    "name": "List Expense Notes",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/expense-notes?page=1&size=20&sort=noteDate&dir=DESC",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "expense-notes"],
+                            "query": [
+                                { "key": "page", "value": "1" },
+                                { "key": "size", "value": "20" },
+                                { "key": "sort", "value": "noteDate" },
+                                { "key": "dir", "value": "DESC" }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Expense Note Detail",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/expense-notes/{{expenseNoteId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "expense-notes", "{{expenseNoteId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Expense Note",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "POST",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                { "key": "noteDate", "value": "2024-01-15", "type": "text" },
+                                { "key": "amountTtc", "value": "25.000", "type": "text" },
+                                { "key": "vat", "value": "5.000", "type": "text" },
+                                { "key": "type", "value": "FUEL", "type": "text" },
+                                { "key": "invoice", "type": "file" }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/secure/expense-notes",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "secure", "expense-notes"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Advance Requests",
+            "item": [
+                {
+                    "name": "List Advance Requests",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/me/advance-requests",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "me", "advance-requests"]
+                        }
+                    }
+                },
+                {
+                    "name": "Allowed Amount",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/me/advance-requests/allowed-amount",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "me", "advance-requests", "allowed-amount"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Advance Request",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "POST",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                { "key": "amount", "value": "150.000", "type": "text" },
+                                { "key": "description", "value": "Advance request", "type": "text" }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/me/advance-requests",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "me", "advance-requests"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Conge Requests",
+            "item": [
+                {
+                    "name": "List Conge Requests",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/me/conge-requests",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "me", "conge-requests"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Conge Request",
+                    "request": {
+                        "auth": { "type": "inherit" },
+                        "method": "POST",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                { "key": "amount", "value": "120.000", "type": "text" },
+                                { "key": "description", "value": "Congé request", "type": "text" }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/me/conge-requests",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "me", "conge-requests"]
                         }
                     }
                 }
