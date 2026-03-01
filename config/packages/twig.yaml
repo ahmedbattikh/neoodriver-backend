@@ -1,7 +1,6 @@
 twig:
     file_name_pattern: "*.twig"
     paths:
-        '%kernel.project_dir%/templates/bundles/EasyAdminBundle': 'ea'
         '%kernel.project_dir%/vendor/easycorp/easyadmin-bundle/templates': 'ea'
 
 when@test:
