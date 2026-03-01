@@ -54,7 +54,8 @@ final class DashboardController extends AbstractDashboardController
     {
         return Dashboard::new()
             ->setTitle('Administration')
-            ->setFaviconPath('favicon.ico');
+            ->setFaviconPath('favicon.ico')
+            ->disableDarkMode();
     }
 
     public function configureAssets(): Assets
