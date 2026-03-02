@@ -33,6 +33,7 @@ services:
 
   scheduler:
     image: ${IMAGES_PREFIX:-}app-php
+    pull_policy: never
     restart: unless-stopped
     env_file:
       - .env.prod
@@ -56,7 +57,9 @@ services:
         condition: service_healthy
     command: >
       sh -lc 'while true; do
-        php bin/console app:integrations:sync || true;
+        START_AT="$(date -u -d "2 hours ago" "+%F %T")";
+        END_AT="$(date -u "+%F %T")";
+        php bin/console app:integrations:sync --start="$START_AT" --end="$END_AT" || true;
         sleep 7200;
       done'
 
