@@ -59,7 +59,7 @@ services:
       sh -lc 'while true; do
         START_AT="$(date -u -d "2 hours ago" "+%F %T")";
         END_AT="$(date -u "+%F %T")";
-        php bin/console app:integrations:sync --start="$START_AT" --end="$END_AT" || true;
+        php bin/console app:integrations:sync --start="$$START_AT" --end="$$END_AT" || true;
         sleep 7200;
       done'
 
