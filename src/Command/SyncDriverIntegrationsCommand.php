@@ -1,8 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\Driver;
 use App\Entity\DriverIntegration;
 use App\Entity\DriverIntegrationAccount;
 use App\Entity\PaymentOperation;
@@ -79,6 +81,7 @@ final class SyncDriverIntegrationsCommand extends Command
         $totalOps = 0;
         $syncedAccounts = 0;
 
+        $accountsByIntegration = [];
         foreach ($accounts as $acc) {
             if (!$acc instanceof DriverIntegrationAccount) {
                 continue;
@@ -87,10 +90,47 @@ final class SyncDriverIntegrationsCommand extends Command
             if (!$integration instanceof DriverIntegration || !$integration->isEnabled()) {
                 continue;
             }
-            $processed = $this->syncAccount($acc, $integration, $startTs, $endTs);
-            if ($processed > 0) {
-                $syncedAccounts++;
-                $totalOps += $processed;
+            $key = $integration->getId() ?? $integration->getCode();
+            if (!isset($accountsByIntegration[$key])) {
+                $accountsByIntegration[$key] = [
+                    'integration' => $integration,
+                    'accounts' => [],
+                ];
+            }
+            $accountsByIntegration[$key]['accounts'][] = $acc;
+        }
+
+        foreach ($accountsByIntegration as $group) {
+            $integration = $group['integration'];
+            $accountsGroup = $group['accounts'];
+            $accessToken = $this->getAccessToken($integration);
+            if ($accessToken === '') {
+                continue;
+            }
+            $companyIds = $integration->getBoltCompanyIds();
+            $ordersPayload = $this->bolt->getFleetOrders($accessToken, 0, 1000, $companyIds, $startTs, $endTs, 'price_review');
+            $orders = $this->extractOrders($ordersPayload);
+            if ($orders === []) {
+                continue;
+            }
+            $ordersByDriver = $this->groupOrdersByDriver($orders);
+            foreach ($accountsGroup as $acc) {
+                if (!$acc instanceof DriverIntegrationAccount) {
+                    continue;
+                }
+                $externalRef = strtolower(trim($acc->getIdDriver()));
+                if ($externalRef === '') {
+                    continue;
+                }
+                $driverOrders = $ordersByDriver[$externalRef] ?? [];
+                if ($driverOrders === []) {
+                    continue;
+                }
+                $processed = $this->syncOrdersForDriver($acc->getDriver(), $integration, $driverOrders);
+                if ($processed > 0) {
+                    $syncedAccounts++;
+                    $totalOps += $processed;
+                }
             }
         }
 
@@ -98,31 +138,16 @@ final class SyncDriverIntegrationsCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function syncAccount(DriverIntegrationAccount $acc, DriverIntegration $integration, int $startTs, int $endTs): int
+    private function syncOrdersForDriver(Driver $driver, DriverIntegration $integration, array $orders): int
     {
-        $accessToken = $this->getAccessToken($integration);
-        if ($accessToken === '') {
-            return 0;
-        }
-
-        $companyIds = $integration->getBoltCompanyIds();
-        $ordersPayload = $this->bolt->getFleetOrders($accessToken, 0, 1000, $companyIds, $startTs, $endTs, 'price_review');
-        $orders = $this->extractOrders($ordersPayload);
-
-        $targetDriverUuid = (string) $acc->getIdDriver();
-        if ($targetDriverUuid === '') {
+        if ($orders === []) {
             return 0;
         }
 
         $opRepo = $this->em->getRepository(PaymentOperation::class);
-        $driver = $acc->getDriver();
         $processed = 0;
 
         foreach ($orders as $ord) {
-            $uuid = (string) ($ord['driver_uuid'] ?? '');
-            if ($uuid === '' || strcasecmp($uuid, $targetDriverUuid) !== 0) {
-                continue;
-            }
             $ref = (string) ($ord['order_reference'] ?? '');
             $price = is_array($ord['order_price'] ?? null) ? $ord['order_price'] : [];
             $net = (float) ($price['net_earnings'] ?? 0);
@@ -183,6 +208,22 @@ final class SyncDriverIntegrationsCommand extends Command
 
         $this->em->flush();
         return $processed;
+    }
+
+    private function groupOrdersByDriver(array $orders): array
+    {
+        $grouped = [];
+        foreach ($orders as $ord) {
+            $uuid = strtolower(trim((string) ($ord['driver_uuid'] ?? '')));
+            if ($uuid === '') {
+                continue;
+            }
+            if (!isset($grouped[$uuid])) {
+                $grouped[$uuid] = [];
+            }
+            $grouped[$uuid][] = $ord;
+        }
+        return $grouped;
     }
 
     private function getAccessToken(DriverIntegration $integration): string
