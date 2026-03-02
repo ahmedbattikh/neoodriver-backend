@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
-use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
@@ -20,8 +16,8 @@ use App\Entity\Driver;
 use App\Entity\Attachment;
 use App\Entity\PaymentOperation;
 use App\Entity\PaymentBatch;
-use App\Controller\Admin\DriverIntegrationCrudController;
 use App\Entity\Goals;
+use App\Service\BackofficeMenuBuilder;
 use App\Service\Storage\R2Client;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -33,56 +29,39 @@ use App\Service\BoltService;
 use App\Enum\PaymentMethodType;
 use Psr\Log\LoggerInterface;
 use App\Entity\ExpenseNote;
-use App\Entity\NeooConfig;
-use App\Entity\NeooFee;
 use App\Entity\Balance;
 use App\Entity\AdvanceRequest;
 use App\Entity\CongeRequest;
 use App\Service\PayslipPdfBuilder;
 
-#[AdminDashboard(routePath: '/admin', routeName: 'admin')]
 #[IsGranted('ROLE_SUPER_ADMIN')]
-final class DashboardController extends AbstractDashboardController
+final class DashboardController extends AbstractController
 {
-    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2, private readonly MailerInterface $mailer, private readonly BoltService $bolt, private readonly PayslipPdfBuilder $payslipPdfBuilder, private readonly ?LoggerInterface $logger = null) {}
+    public function __construct(private readonly EntityManagerInterface $em, private readonly R2Client $r2, private readonly MailerInterface $mailer, private readonly BoltService $bolt, private readonly PayslipPdfBuilder $payslipPdfBuilder, private readonly BackofficeMenuBuilder $menuBuilder, private readonly ?LoggerInterface $logger = null) {}
+
+    #[Route('/admin', name: 'admin', methods: ['GET'])]
     public function index(): Response
     {
-        return $this->render('admin/dashboard.html.twig');
+        return $this->render('admin/dashboard.html.twig', [
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => '/admin',
+        ]);
     }
 
-    public function configureDashboard(): Dashboard
+    #[Route('/backoffice', name: 'backoffice', methods: ['GET'])]
+    public function backofficeIndex(Request $request): Response
     {
-        return Dashboard::new()
-            ->setTitle('Administration')
-            ->setFaviconPath('favicon.ico');
-    }
-
-    public function configureAssets(): Assets
-    {
-        return Assets::new()
-            ->addCssFile('css/admin-users.css');
-    }
-
-    // Optional: show icons in the main menu using Font Awesome (loaded by layout override)
-    // Add more menu items as needed.
-    // use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
-    public function configureMenuItems(): iterable
-    {
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToDashboard('Dashboard', 'fas fa-home');
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Users', 'fas fa-users', 'admin_users_list');
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToRoute('Unverified Users', 'fas fa-user-times', 'admin_users_unverified');
-        yield \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::subMenu('Configuration', 'fas fa-cog')->setSubItems([
-            \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToCrud('Integration', 'fas fa-plug', \App\Entity\DriverIntegration::class),
-            \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToCrud('Goals', 'fas fa-bullseye', Goals::class),
-            \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToCrud('Neoo Config', 'fas fa-sliders-h', NeooConfig::class),
-            \EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem::linkToCrud('Neoo Fees', 'fas fa-percent', \App\Entity\NeooFee::class),
+        return $this->render('backoffice/dashboard.html.twig', [
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
         ]);
     }
 
 
 
-    #[Route('/admin/users', name: 'admin_users_list', defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
-    public function users(): Response
+    #[Route('/backoffice/users', name: 'backoffice_users_list')]
+    #[Route('/admin/users', name: 'admin_users_list')]
+    public function users(Request $request): Response
     {
         $users = $this->em->getRepository(User::class)->findBy([], ['id' => 'DESC']);
         $avatars = [];
@@ -92,27 +71,38 @@ final class DashboardController extends AbstractDashboardController
                 $avatars[$u->getId()] = $this->r2->getSignedUrl($pic->getFilePath(), 900);
             }
         }
-        return $this->render('admin/users_list.html.twig', [
+        $isBackoffice = $this->isBackoffice($request);
+        $payload = [
             'users' => $users,
             'avatars' => $avatars,
-        ]);
+        ];
+        $payload['menuItems'] = $this->menuBuilder->build();
+        $payload['currentPath'] = $request->getPathInfo();
+        return $this->render($isBackoffice ? 'backoffice/users_list.html.twig' : 'admin/users_list.html.twig', $payload);
     }
 
-    #[Route('/admin/users/unverified', name: 'admin_users_unverified', defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
-    public function usersUnverified(): Response
+    #[Route('/backoffice/users/unverified', name: 'backoffice_users_unverified')]
+    #[Route('/admin/users/unverified', name: 'admin_users_unverified')]
+    public function usersUnverified(Request $request): Response
     {
         $users = $this->em->getRepository(User::class)->findBy(['verified' => false], ['id' => 'DESC']);
-        return $this->render('admin/users_list.html.twig', [
+        $isBackoffice = $this->isBackoffice($request);
+        $payload = [
             'users' => $users,
-        ]);
+        ];
+        $payload['menuItems'] = $this->menuBuilder->build();
+        $payload['currentPath'] = $request->getPathInfo();
+        return $this->render($isBackoffice ? 'backoffice/users_list.html.twig' : 'admin/users_list.html.twig', $payload);
     }
 
-    #[Route('/admin/users/{id}', name: 'admin_user_show', methods: ['GET'], requirements: ['id' => '\\d+'], defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
+    #[Route('/backoffice/users/{id}', name: 'backoffice_user_show', methods: ['GET'], requirements: ['id' => '\\d+'])]
+    #[Route('/admin/users/{id}', name: 'admin_user_show', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function userShow(Request $request, int $id): Response
     {
+        $isBackoffice = $this->isBackoffice($request);
         $user = $this->em->getRepository(User::class)->find($id);
         if (!$user instanceof User) {
-            return $this->redirectToRoute('admin_users_list');
+            return $this->redirectToRoute($isBackoffice ? 'backoffice_users_list' : 'admin_users_list');
         }
         $attachmentUrls = [];
         $add = function ($att) use (&$attachmentUrls) {
@@ -481,7 +471,7 @@ final class DashboardController extends AbstractDashboardController
                 $congeRequests = [];
             }
         }
-        return $this->render('admin/user_show.html.twig', [
+        $payload = [
             'user' => $user,
             'attachmentUrls' => $attachmentUrls,
             'validationChoices' => $validationChoices,
@@ -545,10 +535,13 @@ final class DashboardController extends AbstractDashboardController
             'balanceLastUpdate' => $balanceLastUpdate,
             'advanceRequests' => $advanceRequests,
             'congeRequests' => $congeRequests,
-        ]);
+        ];
+        $payload['menuItems'] = $this->menuBuilder->build();
+        $payload['currentPath'] = $request->getPathInfo();
+        return $this->render($isBackoffice ? 'backoffice/user_show.html.twig' : 'admin/user_show.html.twig', $payload);
     }
 
-    #[Route('/admin/users/{id}/neoo', name: 'admin_user_neoo_json', methods: ['GET'], requirements: ['id' => '\\d+'], defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
+    #[Route('/admin/users/{id}/neoo', name: 'admin_user_neoo_json', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function userNeooJson(Request $request, int $id): JsonResponse
     {
         $user = $this->em->getRepository(User::class)->find($id);
@@ -587,7 +580,7 @@ final class DashboardController extends AbstractDashboardController
         return new JsonResponse($data);
     }
 
-    #[Route('/admin/users/{id}/neoo-payslip', name: 'admin_user_neoo_payslip', methods: ['GET'], requirements: ['id' => '\\d+'], defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
+    #[Route('/admin/users/{id}/neoo-payslip', name: 'admin_user_neoo_payslip', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function userNeooPayslip(Request $request, int $id): Response
     {
         $user = $this->em->getRepository(User::class)->find($id);
@@ -887,7 +880,7 @@ final class DashboardController extends AbstractDashboardController
         ];
     }
 
-    #[Route('/admin/users/{id}/edit', name: 'admin_user_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'], defaults: [EA::DASHBOARD_CONTROLLER_FQCN => self::class])]
+    #[Route('/admin/users/{id}/edit', name: 'admin_user_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
     public function userEdit(Request $request, int $id): Response
     {
         $user = $this->em->getRepository(User::class)->find($id);
@@ -908,6 +901,8 @@ final class DashboardController extends AbstractDashboardController
         return $this->render('admin/user_show.html.twig', [
             'user' => $user,
             'form' => $form->createView(),
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
         ]);
     }
 
@@ -1301,4 +1296,10 @@ final class DashboardController extends AbstractDashboardController
         }
         return $this->redirectToRoute('admin_user_wizard', ['step' => 3]);
     }
+
+    private function isBackoffice(Request $request): bool
+    {
+        return str_starts_with($request->getPathInfo(), '/backoffice');
+    }
+
 }

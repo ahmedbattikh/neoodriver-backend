@@ -30,14 +30,29 @@ security:
             logout:
                 path: /admin/logout
                 target: /admin/login
+        backoffice:
+            pattern: ^/backoffice
+            provider: app_user_provider
+            lazy: true
+            stateless: false
+
+            form_login:
+                login_path: backoffice_login
+                check_path: backoffice_login
+                username_parameter: email
+                password_parameter: password
+                enable_csrf: true
+                default_target_path: /backoffice
+
+            logout:
+                path: /backoffice/logout
+                target: /backoffice/login
         main:
-            # Ensure the firewall is always active so json_login can intercept
             lazy: false
             provider: app_user_provider
             stateless: true
             entry_point: jwt
 
-            # JSON login that issues JWT on success (handled by LexikJWTAuthenticationBundle)
             json_login:
                 check_path: /api/login
                 login_path: /api/login
@@ -46,23 +61,17 @@ security:
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-            # Authenticate subsequent requests using JWT (Authorization: Bearer <token>)
             jwt: ~
             
-            # Enable refresh token flow on /token/refresh (Gesdinet bundle)
             refresh_jwt: ~
-
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
-
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_SUPER_ADMIN }
+        - { path: ^/backoffice/login, roles: PUBLIC_ACCESS }
+        - { path: ^/backoffice, roles: ROLE_SUPER_ADMIN }
         - { path: ^/api/login/email, roles: PUBLIC_ACCESS }
         - { path: ^/api/login/otp, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
@@ -80,8 +89,6 @@ when@test:
             # important to generate secure password hashes. In tests however, secure hashes
             # are not important, waste resources and increase test times. The following
             # reduces the work factor to the lowest possible values.
-            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
-                algorithm: auto
                 cost: 4 # Lowest possible value for bcrypt
                 time_cost: 3 # Lowest possible value for argon
                 memory_cost: 10 # Lowest possible value for argon

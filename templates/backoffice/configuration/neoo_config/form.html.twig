@@ -1,0 +1,46 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block content_title %}
+	{{ title }}
+{% endblock %}
+
+{% block content %}
+	<div class="card shadow-sm">
+		<div class="card-body">
+			{{ form_start(form) }}
+			<div class="row g-3">
+				<div class="col-md-6">
+					{{ form_label(form.fixNeooMonthly, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.fixNeooMonthly, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.fixNeooMonthly) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.tauxConge, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.tauxConge, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.tauxConge) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.fraisKm, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.fraisKm, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.fraisKm) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.tauxPas, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.tauxPas, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.tauxPas) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.tauxUrssaf, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.tauxUrssaf, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.tauxUrssaf) }}
+				</div>
+			</div>
+			<div class="mt-4 d-flex gap-2">
+				<button class="btn btn-primary" type="submit">Save</button>
+				<a class="btn btn-outline-secondary" href="{{ path('backoffice_neoo_config_index') }}">Cancel</a>
+			</div>
+			{{ form_rest(form) }}
+			{{ form_end(form, { render_rest: false }) }}
+		</div>
+	</div>
+{% endblock %}

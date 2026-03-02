@@ -1,24 +1,5 @@
 {% extends 'backoffice/layout.html.twig' %}
 
-{% block head_favicon %}
-	<link rel="icon" href="{{ asset('favicon.ico') }}">
-{% endblock %}
-
-{% block responsive_header_logo %}
-	<a class="responsive-logo" title="Administration" href="{{ path('admin') }}">
-		Administration
-	</a>
-{% endblock %}
-
-{% block header_logo %}
-	<a class="logo" title="Administration" href="{{ path('admin') }}">
-		<span class="logo-custom">Administration</span>
-		<span class="logo-compact">
-			<i class="fas fa-home"></i>
-		</span>
-	</a>
-{% endblock %}
-
 {% macro preview(att, url) %}
 	{% if url %}
 		{% set mime = att.mimeType|lower %}
@@ -50,6 +31,9 @@
 {% endblock %}
 
 {% block content %}
+	{% set isBackoffice = app.request.pathinfo starts with '/backoffice' %}
+	{% set userShowRoute = isBackoffice ? 'backoffice_user_show' : 'admin_user_show' %}
+	{% set userListRoute = isBackoffice ? 'backoffice_users_list' : 'admin_users_list' %}
 	<div class="container py-4">
 		{% for label, messages in app.flashes() %}
 			{% for message in messages %}
@@ -63,7 +47,7 @@
 			{{ form_start(form) }}
 			{{ form_widget(form) }}
 			<button type="submit" class="btn btn-primary">Save</button>
-			<a href="{{ path('admin_users_list') }}" class="btn btn-outline-secondary">Back</a>
+			<a href="{{ path(userListRoute) }}" class="btn btn-outline-secondary">Back</a>
 			{{ form_end(form) }}
 		{% else %}
 			<div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
@@ -228,7 +212,7 @@
 					<button class="nav-link {{ activeTab == 'batches' ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-batches" type="button" role="tab">Payment Batches</button>
 				</li>
 				<li class="nav-item" role="presentation">
-					<a class="nav-link {{ activeTab == 'neoo' ? 'active' : '' }}" href="{{ path('admin_user_show', { id: user.id, tab: 'neoo' }) }}" role="tab">Neoo Details Paye</a>
+					<a class="nav-link {{ activeTab == 'neoo' ? 'active' : '' }}" href="{{ path(userShowRoute, { id: user.id, tab: 'neoo' }) }}" role="tab">Neoo Details Paye</a>
 				</li>
 			</ul>
 
@@ -285,7 +269,7 @@
 						{% else %}
 							<a class="btn btn-success" href="{{ path('admin_user_toggle', { id: user.id, active: 1 }) }}">Enable</a>
 						{% endif %}
-						<a class="btn btn-outline-secondary" href="{{ path('admin_users_list') }}">Back</a>
+						<a class="btn btn-outline-secondary" href="{{ path(userListRoute) }}">Back</a>
 					</div>
 				</div>
 
@@ -593,12 +577,12 @@
 																<div class="d-flex flex-wrap align-items-center gap-2">
 																	<form method="post" action="{{ path('admin_advance_request_approve', { id: r.id }) }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
 																		<input type="hidden" name="_token" value="{{ csrf_token('approve_advance_' ~ r.id) }}"/>
-																		<input type="file" name="proof" class="form-control form-control-sm" accept="image/*,application/pdf" required />
+																		<input type="file" name="proof" class="form-control form-control-sm" accept="image/*,application/pdf" required/>
 																		<button type="submit" class="btn btn-sm btn-success">Approve</button>
 																	</form>
 																	<form method="post" action="{{ path('admin_advance_request_reject', { id: r.id }) }}" class="d-flex align-items-center gap-2">
 																		<input type="hidden" name="_token" value="{{ csrf_token('reject_advance_' ~ r.id) }}"/>
-																		<input type="text" name="admin_note" class="form-control form-control-sm" placeholder="Reason..." />
+																		<input type="text" name="admin_note" class="form-control form-control-sm" placeholder="Reason..."/>
 																		<button type="submit" class="btn btn-sm btn-outline-danger">Refuse</button>
 																	</form>
 																</div>
@@ -655,7 +639,7 @@
 																	</form>
 																	<form method="post" action="{{ path('admin_conge_request_reject', { id: r.id }) }}" class="d-flex align-items-center gap-2">
 																		<input type="hidden" name="_token" value="{{ csrf_token('reject_conge_' ~ r.id) }}"/>
-																		<input type="text" name="admin_note" class="form-control form-control-sm" placeholder="Reason..." />
+																		<input type="text" name="admin_note" class="form-control form-control-sm" placeholder="Reason..."/>
 																		<button type="submit" class="btn btn-sm btn-outline-danger">Refuse</button>
 																	</form>
 																</div>
@@ -985,8 +969,8 @@
 										of
 										{{ opsTotalPages }}</div>
 									<div class="btn-group">
-										<a class="btn btn-outline-secondary btn-sm {% if opsPage <= 1 %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage - 1, ops_size: opsSize, batches_page: batchesPage, batches_size: batchesSize, tab: 'ops' }) }}">Previous</a>
-										<a class="btn btn-outline-secondary btn-sm {% if opsPage >= opsTotalPages %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage + 1, ops_size: opsSize, batches_page: batchesPage, batches_size: batchesSize, tab: 'ops' }) }}">Next</a>
+										<a class="btn btn-outline-secondary btn-sm {% if opsPage <= 1 %}disabled{% endif %}" href="{{ path(userShowRoute, { id: user.id, ops_page: opsPage - 1, ops_size: opsSize, batches_page: batchesPage, batches_size: batchesSize, tab: 'ops' }) }}">Previous</a>
+										<a class="btn btn-outline-secondary btn-sm {% if opsPage >= opsTotalPages %}disabled{% endif %}" href="{{ path(userShowRoute, { id: user.id, ops_page: opsPage + 1, ops_size: opsSize, batches_page: batchesPage, batches_size: batchesSize, tab: 'ops' }) }}">Next</a>
 									</div>
 								</div>
 							{% endif %}
@@ -1076,8 +1060,8 @@
 					<div class="tab-pane fade {{ activeTab == 'expenses' ? 'show active' : '' }}" id="tab-expenses" role="tabpanel">
 						<div class="d-flex align-items-center justify-content-between mb-2">
 							<div class="btn-group" role="group" aria-label="Notes filter">
-								<a class="btn btn-sm btn-outline-secondary {{ notesFilter == 'all' ? 'active' : '' }}" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'all', notes_week: 0, notes_page: 1, notes_size: notesSize }) }}">All</a>
-								<a class="btn btn-sm btn-outline-secondary {{ notesFilter == 'week' ? 'active' : '' }}" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek, notes_page: 1, notes_size: notesSize }) }}">This Week</a>
+								<a class="btn btn-sm btn-outline-secondary {{ notesFilter == 'all' ? 'active' : '' }}" href="{{ path(userShowRoute, { id: user.id, tab: 'expenses', notes_filter: 'all', notes_week: 0, notes_page: 1, notes_size: notesSize }) }}">All</a>
+								<a class="btn btn-sm btn-outline-secondary {{ notesFilter == 'week' ? 'active' : '' }}" href="{{ path(userShowRoute, { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek, notes_page: 1, notes_size: notesSize }) }}">This Week</a>
 							</div>
 							{% if notesFilter == 'week' %}
 								<div class="d-flex align-items-center gap-2">
@@ -1086,8 +1070,8 @@
 										→
 										{{ notesWeekEnd|date_modify('-1 day')|date('Y-m-d') }}</span>
 									<div class="btn-group" role="group">
-										<a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek - 1, notes_page: notesPage, notes_size: notesSize }) }}">Prev</a>
-										<a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_show', { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek + 1, notes_page: notesPage, notes_size: notesSize }) }}">Next</a>
+										<a class="btn btn-sm btn-outline-secondary" href="{{ path(userShowRoute, { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek - 1, notes_page: notesPage, notes_size: notesSize }) }}">Prev</a>
+										<a class="btn btn-sm btn-outline-secondary" href="{{ path(userShowRoute, { id: user.id, tab: 'expenses', notes_filter: 'week', notes_week: notesWeek + 1, notes_page: notesPage, notes_size: notesSize }) }}">Next</a>
 									</div>
 								</div>
 							{% endif %}
@@ -1163,8 +1147,8 @@
 											of
 											{{ notesTotalPages }}</div>
 										<div class="btn-group">
-											<a class="btn btn-outline-secondary btn-sm {% if notesPage <= 1 %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, notes_page: notesPage - 1, notes_size: notesSize, tab: 'expenses', notes_filter: notesFilter, notes_week: notesWeek }) }}">Previous</a>
-											<a class="btn btn-outline-secondary btn-sm {% if notesPage >= notesTotalPages %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, notes_page: notesPage + 1, notes_size: notesSize, tab: 'expenses', notes_filter: notesFilter, notes_week: notesWeek }) }}">Next</a>
+											<a class="btn btn-outline-secondary btn-sm {% if notesPage <= 1 %}disabled{% endif %}" href="{{ path(userShowRoute, { id: user.id, notes_page: notesPage - 1, notes_size: notesSize, tab: 'expenses', notes_filter: notesFilter, notes_week: notesWeek }) }}">Previous</a>
+											<a class="btn btn-outline-secondary btn-sm {% if notesPage >= notesTotalPages %}disabled{% endif %}" href="{{ path(userShowRoute, { id: user.id, notes_page: notesPage + 1, notes_size: notesSize, tab: 'expenses', notes_filter: notesFilter, notes_week: notesWeek }) }}">Next</a>
 										</div>
 									</div>
 								{% endif %}
@@ -1205,8 +1189,8 @@
 										of
 										{{ batchesTotalPages }}</div>
 									<div class="btn-group">
-										<a class="btn btn-outline-secondary btn-sm {% if batchesPage <= 1 %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage, ops_size: opsSize, batches_page: batchesPage - 1, batches_size: batchesSize, tab: 'batches' }) }}">Previous</a>
-										<a class="btn btn-outline-secondary btn-sm {% if batchesPage >= batchesTotalPages %}disabled{% endif %}" href="{{ path('admin_user_show', { id: user.id, ops_page: opsPage, ops_size: opsSize, batches_page: batchesPage + 1, batches_size: batchesSize, tab: 'batches' }) }}">Next</a>
+										<a class="btn btn-outline-secondary btn-sm {% if batchesPage <= 1 %}disabled{% endif %}" href="{{ path(userShowRoute, { id: user.id, ops_page: opsPage, ops_size: opsSize, batches_page: batchesPage - 1, batches_size: batchesSize, tab: 'batches' }) }}">Previous</a>
+										<a class="btn btn-outline-secondary btn-sm {% if batchesPage >= batchesTotalPages %}disabled{% endif %}" href="{{ path(userShowRoute, { id: user.id, ops_page: opsPage, ops_size: opsSize, batches_page: batchesPage + 1, batches_size: batchesSize, tab: 'batches' }) }}">Next</a>
 									</div>
 								</div>
 							{% endif %}
@@ -1228,7 +1212,7 @@
 					{% else %}
 						<div class="d-flex align-items-center justify-content-between mb-2">
 							<div class="d-flex align-items-end gap-2">
-								<form method="get" action="{{ path('admin_user_show', { id: user.id }) }}" class="d-flex align-items-center gap-2">
+								<form method="get" action="{{ path(userShowRoute, { id: user.id }) }}" class="d-flex align-items-center gap-2">
 									<input type="hidden" name="tab" value="neoo"/>
 									<div>
 										<label class="form-label mb-0 small">Begin</label>

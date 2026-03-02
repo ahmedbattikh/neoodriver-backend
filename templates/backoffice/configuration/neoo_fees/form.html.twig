@@ -1,0 +1,36 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block content_title %}
+	{{ title }}
+{% endblock %}
+
+{% block content %}
+	<div class="card shadow-sm">
+		<div class="card-body">
+			{{ form_start(form) }}
+			<div class="row g-3">
+				<div class="col-md-4">
+					{{ form_label(form.taux, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.taux, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.taux) }}
+				</div>
+				<div class="col-md-4">
+					{{ form_label(form.start, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.start, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.start) }}
+				</div>
+				<div class="col-md-4">
+					{{ form_label(form.end, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.end, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.end) }}
+				</div>
+			</div>
+			<div class="mt-4 d-flex gap-2">
+				<button class="btn btn-primary" type="submit">Save</button>
+				<a class="btn btn-outline-secondary" href="{{ path('backoffice_neoo_fees_index') }}">Cancel</a>
+			</div>
+			{{ form_rest(form) }}
+			{{ form_end(form, { render_rest: false }) }}
+		</div>
+	</div>
+{% endblock %}

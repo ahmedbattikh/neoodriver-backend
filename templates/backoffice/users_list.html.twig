@@ -1,24 +1,5 @@
 {% extends 'backoffice/layout.html.twig' %}
 
-{% block head_favicon %}
-	<link rel="icon" href="{{ asset('favicon.ico') }}">
-{% endblock %}
-
-{% block responsive_header_logo %}
-	<a class="responsive-logo" title="Administration" href="{{ path('admin') }}">
-		Administration
-	</a>
-{% endblock %}
-
-{% block header_logo %}
-	<a class="logo" title="Administration" href="{{ path('admin') }}">
-		<span class="logo-custom">Administration</span>
-		<span class="logo-compact">
-			<i class="fas fa-home"></i>
-		</span>
-	</a>
-{% endblock %}
-
 {% block content_title %}Users
 {% endblock %}
 
@@ -30,53 +11,23 @@
 	{% endfor %}
 {% endblock %}
 
-{% block head_styles %}
-	<style>
-		.users-grid {
-			display: grid;
-			grid-template-columns: repeat(3, 400px);
-			justify-content: start;
-			justify-items: start;
-			align-items: start;
-			grid-auto-flow: row;
-			width: 100%;
-			gap: 1rem;
-		}
-		.user-card .card {
-			max-width: 400px;
-		}
-		.user-card {
-			display: block;
-		}
-		.user-card .card-body {
-			align-items: center;
-		}
-		.user-card img.rounded-circle.me-3 {
-			width: 100px;
-			height: 100px;
-			object-fit: cover;
-		}
-		.user-card .placeholder {
-			width: 100px;
-			height: 100px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-	</style>
-{% endblock %}
-
 {% block content %}
-	<div class="container py-3">
-		<div class="mb-3 d-flex align-items-center gap-2">
-			<input id="user-search" type="text" class="form-control" placeholder="Search users by name, email or phone"/>
-			<div class="btn-group ms-2" role="group">
-				<button type="button" class="btn btn-outline-secondary filter-btn active" data-filter="all">All</button>
-				<button type="button" class="btn btn-outline-secondary filter-btn" data-filter="verified">Verified</button>
-				<button type="button" class="btn btn-outline-secondary filter-btn" data-filter="unverified">Unverified</button>
+	{% set isBackoffice = app.request.pathinfo starts with '/backoffice' %}
+	{% set showRoute = isBackoffice ? 'backoffice_user_show' : 'admin_user_show' %}
+	<div class="container-fluid">
+		<div class="row g-3 align-items-center mb-3">
+			<div class="col-12 col-lg-6">
+				<input id="user-search" type="text" class="form-control" placeholder="Search users by name, email or phone"/>
+			</div>
+			<div class="col-12 col-lg-6 text-lg-end">
+				<div class="btn-group" role="group">
+					<button type="button" class="btn btn-outline-secondary filter-btn active" data-filter="all">All</button>
+					<button type="button" class="btn btn-outline-secondary filter-btn" data-filter="verified">Verified</button>
+					<button type="button" class="btn btn-outline-secondary filter-btn" data-filter="unverified">Unverified</button>
+				</div>
 			</div>
 		</div>
-		<div class="users-grid" id="users-grid">
+		<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3" id="users-grid">
 			{% for u in users %}
 				{% set driver = u.driverProfile %}
 				{% set step = 1 %}
@@ -95,14 +46,14 @@
 				{% set status = driver and driver.active ? 'Active' : 'Disabled' %}
 				{% set searchText = (u.email ~ ' ' ~ (u.firstName ?? '') ~ ' ' ~ (u.lastName ?? '') ~ ' ' ~ (u.mobileNumber ?? ''))|lower %}
 				{% set verifiedFlag = u.verified ? 'verified' : 'unverified' %}
-				<div class="user-card" data-search="{{ searchText }}" data-verified="{{ verifiedFlag }}">
+				<div class="col user-card" data-search="{{ searchText }}" data-verified="{{ verifiedFlag }}">
 					<div class="card h-100">
 						<div class="card-body d-flex align-items-center">
 							{% set avatar = avatars[u.id] ?? null %}
 							{% if avatar %}
-								<img src="{{ avatar }}" alt="avatar" class="rounded-circle me-3">
+								<img src="{{ avatar }}" alt="avatar" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
 							{% else %}
-								<div class="rounded-circle bg-secondary text-white fw-bold placeholder me-3">
+								<div class="rounded-circle bg-secondary text-white fw-bold d-flex align-items-center justify-content-center me-3" style="width: 80px; height: 80px;">
 									{{ (u.firstName ?? '')|slice(0,1)|upper }}
 								</div>
 							{% endif %}
@@ -123,7 +74,7 @@
 									{% if step < 5 %}
 										<a class="btn btn-sm btn-primary" href="{{ path('admin_user_wizard_resume', { id: u.id, step: step }) }}">Resume</a>
 									{% endif %}
-									<a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_user_show', { id: u.id }) }}">Show</a>
+									<a class="btn btn-sm btn-outline-secondary" href="{{ path(showRoute, { id: u.id }) }}">Show</a>
 									<a class="btn btn-sm btn-outline-info" href="{{ path('admin_user_edit', { id: u.id }) }}">Edit</a>
 									{% if status == 'Active' %}
 										<a class="btn btn-sm btn-warning" href="{{ path('admin_user_toggle', { id: u.id, active: 0 }) }}">Disable</a>
@@ -139,7 +90,7 @@
 		</div>
 	{% endblock %}
 
-	{% block body_javascript %}
+	{% block body_javascripts %}
 		<script>
 			(function () {
 const searchInput = document.getElementById('user-search');

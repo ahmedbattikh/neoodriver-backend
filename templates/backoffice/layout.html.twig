@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"/>
+		<meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+		<title>
+			{% block title %}Backoffice
+			{% endblock %}
+		</title>
+		<link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet"> {% block head_styles %}{% endblock %}
+		</head>
+		<body class="bg-light">
+			{% set pathInfo = currentPath ?? app.request.pathinfo %}
+			<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
+				<div class="container-fluid">
+					<a class="navbar-brand" href="{{ path('backoffice') }}">Backoffice</a>
+					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#backofficeNavbar" aria-controls="backofficeNavbar" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse" id="backofficeNavbar">
+						<form class="d-flex ms-auto me-3" role="search">
+							<input class="form-control form-control-sm" type="search" placeholder="Search" aria-label="Search">
+						</form>
+						<ul class="navbar-nav">
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+									{{ app.user ? app.user.userIdentifier : 'Guest' }}
+								</a>
+								<ul class="dropdown-menu dropdown-menu-end">
+									<li>
+										<a class="dropdown-item" href="{{ path('backoffice') }}">Dashboard</a>
+									</li>
+									<li>
+										<a class="dropdown-item" href="/backoffice/logout">Logout</a>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</nav>
+			<div class="container-fluid">
+				<div class="row">
+					<nav class="col-12 col-lg-2 bg-white border-end min-vh-100 p-3">
+						<div class="list-group">
+							{% for item in menuItems %}
+								{% if item.children is defined and item.children %}
+									{% set isGroupActive = false %}
+									{% for child in item.children %}
+										{% if pathInfo starts with child.url %}
+											{% set isGroupActive = true %}
+										{% endif %}
+									{% endfor %}
+									<a class="list-group-item list-group-item-action d-flex align-items-center {{ isGroupActive ? 'active' : '' }}" data-bs-toggle="collapse" href="#menu-{{ loop.index }}" role="button" aria-expanded="{{ isGroupActive ? 'true' : 'false' }}" aria-controls="menu-{{ loop.index }}">
+										<span>{{ item.label }}</span>
+										<span class="ms-auto small">▾</span>
+									</a>
+									<div class="collapse {{ isGroupActive ? 'show' : '' }}" id="menu-{{ loop.index }}">
+										{% for child in item.children %}
+											{% set isActive = pathInfo starts with child.url %}
+											<a class="list-group-item list-group-item-action ps-4 {{ isActive ? 'active' : '' }}" href="{{ child.url }}">{{ child.label }}</a>
+										{% endfor %}
+									</div>
+								{% else %}
+									{% set isActive = pathInfo starts with item.url %}
+									<a class="list-group-item list-group-item-action {{ isActive ? 'active' : '' }}" href="{{ item.url }}">{{ item.label }}</a>
+								{% endif %}
+							{% endfor %}
+						</div>
+					</nav>
+					<main class="col-12 col-lg-10 p-4">
+						{% set contentTitle = block('content_title')|trim %}
+						{% if contentTitle %}
+							<div class="mb-4">
+								<h1 class="h4 mb-0">{{ contentTitle }}</h1>
+							</div>
+						{% endif %}
+						{% block flash_messages %}
+							{% for label, messages in app.flashes() %}
+								{% for message in messages %}
+									<div class="alert alert-{{ label }} mb-3">{{ message }}</div>
+								{% endfor %}
+							{% endfor %}
+						{% endblock %}
+						{% block content %}{% endblock %}
+					</main>
+				</div>
+			</div>
+			<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+			{% block body_javascripts %}{% endblock %}
+			{% block body_javascript %}{% endblock %}
+		</body>
+	</html>

@@ -20,22 +20,24 @@ use App\Enum\AttachmentType;
 use App\Entity\Attachment;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Doctrine\ORM\EntityManagerInterface;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\BackofficeMenuBuilder;
 
 #[IsGranted('ROLE_SUPER_ADMIN')]
-final class UserWizardController extends AbstractDashboardController
+final class UserWizardController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly RequestStack $requestStack,
         private readonly R2Client $r2,
+        private readonly BackofficeMenuBuilder $menuBuilder,
     ) {}
 
     #[Route('/admin/users/create', name: 'admin_user_wizard', methods: ['GET', 'POST'])]
@@ -71,6 +73,8 @@ final class UserWizardController extends AbstractDashboardController
                 'step' => 1,
                 'form' => $form->createView(),
                 'title' => 'Step 1 — User Information',
+                'menuItems' => $this->menuBuilder->build(),
+                'currentPath' => $request->getPathInfo(),
             ]);
         }
 
@@ -137,11 +141,10 @@ final class UserWizardController extends AbstractDashboardController
                 'step' => 2,
                 'form' => $form->createView(),
                 'title' => 'Step 2 — Driver Documents',
+                'menuItems' => $this->menuBuilder->build(),
+                'currentPath' => $request->getPathInfo(),
             ]);
         }
-
-        
-
 
         $companyDocs = $driver->getCompanyDocuments() ?? new CompanyDocuments();
         $companyDocs->setDriver($driver);
@@ -177,6 +180,8 @@ final class UserWizardController extends AbstractDashboardController
                 'step' => 3,
                 'form' => $form->createView(),
                 'title' => 'Step 3 — Company Documents',
+                'menuItems' => $this->menuBuilder->build(),
+                'currentPath' => $request->getPathInfo(),
             ]);
         }
 

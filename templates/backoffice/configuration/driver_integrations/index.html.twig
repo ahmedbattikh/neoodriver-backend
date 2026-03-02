@@ -1,0 +1,58 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block content_title %}Integrations{% endblock %}
+
+{% block content %}
+	<div class="d-flex justify-content-between align-items-center mb-3">
+		<div class="text-muted small">Manage enabled platform integrations.</div>
+		<a class="btn btn-primary btn-sm" href="{{ path('backoffice_integrations_new') }}">New Integration</a>
+	</div>
+	<div class="card shadow-sm">
+		<div class="table-responsive">
+			<table class="table align-middle mb-0">
+				<thead class="table-light">
+					<tr>
+						<th>Logo</th>
+						<th>Code</th>
+						<th>Name</th>
+						<th>Enabled</th>
+						<th>Updated</th>
+						<th class="text-end">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% if integrations is empty %}
+						<tr>
+							<td colspan="6" class="text-center text-muted py-4">No integrations found</td>
+						</tr>
+					{% else %}
+						{% for integration in integrations %}
+							<tr>
+								<td>
+									{% if integration.logoPath %}
+										<img src="{{ asset('uploads/integration/' ~ integration.logoPath) }}" alt="{{ integration.name }}" style="width: 48px; height: 48px; object-fit: cover;" class="rounded border">
+									{% else %}
+										<span class="text-muted">—</span>
+									{% endif %}
+								</td>
+								<td>{{ integration.code }}</td>
+								<td>{{ integration.name }}</td>
+								<td>
+									<span class="badge {{ integration.enabled ? 'text-bg-success' : 'text-bg-secondary' }}">{{ integration.enabled ? 'Yes' : 'No' }}</span>
+								</td>
+								<td>{{ integration.updatedAt|date('Y-m-d H:i') }}</td>
+								<td class="text-end">
+									<a class="btn btn-sm btn-outline-primary" href="{{ path('backoffice_integrations_edit', { id: integration.id }) }}">Edit</a>
+									<form method="post" action="{{ path('backoffice_integrations_delete', { id: integration.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('delete_integration_' ~ integration.id) }}">
+										<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this integration?')">Delete</button>
+									</form>
+								</td>
+							</tr>
+						{% endfor %}
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+{% endblock %}

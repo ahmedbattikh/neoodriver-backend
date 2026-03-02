@@ -12,7 +12,6 @@
         "doctrine/doctrine-bundle": ">=2.18.1",
         "doctrine/doctrine-migrations-bundle": ">=3.6",
         "doctrine/orm": ">=3.5.3",
-        "easycorp/easyadmin-bundle": "^4.27",
         "friendsofsymfony/rest-bundle": "^3.8",
         "gesdinet/jwt-refresh-token-bundle": "*",
         "jms/serializer-bundle": "^5.5",

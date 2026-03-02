@@ -40,6 +40,10 @@ services:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
+    App\Controller\Admin\DashboardController:
+        arguments:
+            $menuBuilder: '@App\Service\BackofficeMenuBuilder'
+
     App\:
         resource: '../src/'
         exclude: '../src/{DependencyInjection,Entity,Kernel.php,Tests,Controller}'

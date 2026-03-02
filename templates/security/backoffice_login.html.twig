@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Backoffice Login
+{% endblock %}
+
+{% block stylesheets %}
+	<link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+	<div class="container d-flex align-items-center justify-content-center min-vh-100">
+		<div class="card shadow-sm w-100" style="max-width: 420px;">
+			<div class="card-body p-4">
+				<div class="text-center mb-4">
+					<div class="h4 mb-1">Backoffice</div>
+					<div class="text-muted">Sign in to continue</div>
+				</div>
+
+				{% if error %}
+					<div class="alert alert-danger" role="alert">
+						{{ error.messageKey|trans(error.messageData, 'security') }}
+					</div>
+				{% endif %}
+
+				<form method="post" action="{{ path('backoffice_login') }}">
+					<input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}"/>
+
+					<div class="mb-3">
+						<label for="input-email" class="form-label">Email</label>
+						<input id="input-email" type="email" name="email" value="{{ last_username }}" required autofocus class="form-control" autocomplete="username"/>
+					</div>
+
+					<div class="mb-4">
+						<label for="input-password" class="form-label">Password</label>
+						<input id="input-password" type="password" name="password" required class="form-control" autocomplete="current-password"/>
+					</div>
+
+					<button type="submit" class="btn btn-primary w-100">Sign in</button>
+				</form>
+			</div>
+		</div>
+	</div>
+{% endblock %}

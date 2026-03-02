@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Form\Backoffice;
+
+use App\Entity\NeooFee;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+final class NeooFeeType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('taux', NumberType::class, ['input' => 'string', 'scale' => 3])
+            ->add('start', NumberType::class, ['input' => 'number', 'scale' => 3])
+            ->add('end', NumberType::class, ['input' => 'number', 'scale' => 3]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults(['data_class' => NeooFee::class]);
+    }
+}

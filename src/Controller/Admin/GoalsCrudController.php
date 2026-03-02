@@ -5,96 +5,86 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Goals;
-use App\Enum\DriverClass;
-use App\Enum\GoalFrequency;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
-use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
-use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
-use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
-use Doctrine\ORM\QueryBuilder;
+use App\Form\Backoffice\GoalsType;
+use App\Service\BackofficeMenuBuilder;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_SUPER_ADMIN')]
-class GoalsCrudController extends AbstractCrudController
+final class GoalsCrudController extends AbstractController
 {
-    public static function getEntityFqcn(): string
+    public function __construct(private readonly EntityManagerInterface $em, private readonly BackofficeMenuBuilder $menuBuilder) {}
+
+    #[Route('/backoffice/goals', name: 'backoffice_goals_index', methods: ['GET'])]
+    public function index(Request $request): Response
     {
-        return Goals::class;
+        $goals = $this->em->getRepository(Goals::class)->findBy([], ['updatedAt' => 'DESC']);
+        return $this->render('backoffice/configuration/goals/index.html.twig', [
+            'goals' => $goals,
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
+        ]);
     }
 
-    public function configureCrud(Crud $crud): Crud
+    #[Route('/backoffice/goals/new', name: 'backoffice_goals_new', methods: ['GET', 'POST'])]
+    public function new(Request $request): Response
     {
-        return $crud
-            ->setEntityLabelInSingular('Goal')
-            ->setEntityLabelInPlural('Goals')
-            ->setPageTitle(Crud::PAGE_INDEX, 'Goals')
-            ->setPageTitle(Crud::PAGE_NEW, 'Create Goal')
-            ->setPageTitle(Crud::PAGE_EDIT, 'Edit Goal')
-            ->setPageTitle(Crud::PAGE_DETAIL, 'Goal Details')
-            ->setDefaultSort(['updatedAt' => 'DESC']);
+        $goal = new Goals();
+        $form = $this->createForm(GoalsType::class, $goal);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->em->persist($goal);
+            $this->em->flush();
+            $this->addFlash('success', 'Goal created.');
+            return $this->redirectToRoute('backoffice_goals_index');
+        }
+        return $this->render('backoffice/configuration/goals/form.html.twig', [
+            'form' => $form->createView(),
+            'title' => 'Create Goal',
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
+        ]);
     }
 
-    public function configureFields(string $pageName): iterable
+    #[Route('/backoffice/goals/{id}/edit', name: 'backoffice_goals_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
+    public function edit(Request $request, int $id): Response
     {
-        $name = TextField::new('name', 'Name');
-        $amount = NumberField::new('amount', 'Amount')->setNumDecimals(3);
-
-        $freqChoices = [
-            'Daily' => GoalFrequency::DAILY->value,
-            'Weekly' => GoalFrequency::WEEKLY->value,
-            'Monthly' => GoalFrequency::MONTHLY->value,
-        ];
-        $frequency = ChoiceField::new('frequency', 'Frequency')
-            ->setChoices($freqChoices)
-            ->allowMultipleChoices(false)
-            ->renderExpanded(false);
-
-        $targetChoices = [
-            'Class 1' => DriverClass::CLASS1->value,
-            'Class 2' => DriverClass::CLASS2->value,
-            'Class 3' => DriverClass::CLASS3->value,
-            'Class 5' => DriverClass::CLASS5->value,
-        ];
-        $targetClassesEdit = ChoiceField::new('targetClasses', 'Target Classes')
-            ->setChoices($targetChoices)
-            ->allowMultipleChoices(true)
-            ->renderExpanded(false)
-            ->setRequired(false);
-        $targetClassesView = ArrayField::new('targetClasses', 'Target Classes');
-
-        $enabled = BooleanField::new('enabled', 'Enabled');
-        $createdAt = DateTimeField::new('createdAt', 'Created At')->setFormTypeOption('disabled', true);
-        $updatedAt = DateTimeField::new('updatedAt', 'Updated At')->setFormTypeOption('disabled', true);
-
-        if ($pageName === Crud::PAGE_INDEX) {
-            return [$name, $amount, $frequency, $enabled, $updatedAt];
+        $goal = $this->em->getRepository(Goals::class)->find($id);
+        if (!$goal instanceof Goals) {
+            return $this->redirectToRoute('backoffice_goals_index');
         }
-        if ($pageName === Crud::PAGE_DETAIL) {
-            return [$name, $amount, $frequency, $targetClassesView, $enabled, $createdAt, $updatedAt];
+        $form = $this->createForm(GoalsType::class, $goal);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->em->flush();
+            $this->addFlash('success', 'Goal updated.');
+            return $this->redirectToRoute('backoffice_goals_index');
         }
-        if ($pageName === Crud::PAGE_NEW) {
-            return [$name, $amount, $frequency, $targetClassesEdit, $enabled];
-        }
-        if ($pageName === Crud::PAGE_EDIT) {
-            return [$name, $amount, $frequency, $targetClassesEdit, $enabled];
-        }
-        return [$name, $amount, $frequency, $enabled];
+        return $this->render('backoffice/configuration/goals/form.html.twig', [
+            'form' => $form->createView(),
+            'title' => 'Edit Goal',
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
+        ]);
     }
 
-    public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
+    #[Route('/backoffice/goals/{id}/delete', name: 'backoffice_goals_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function delete(Request $request, int $id): Response
     {
-        $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
-        $alias = $qb->getRootAliases()[0] ?? 'entity';
-        $qb->andWhere(sprintf('%s.enabled = :enabled', $alias))
-            ->setParameter('enabled', true);
-        return $qb;
+        $goal = $this->em->getRepository(Goals::class)->find($id);
+        if (!$goal instanceof Goals) {
+            return $this->redirectToRoute('backoffice_goals_index');
+        }
+        $token = (string) $request->request->get('_token', '');
+        if ($this->isCsrfTokenValid('delete_goal_' . $goal->getId(), $token)) {
+            $this->em->remove($goal);
+            $this->em->flush();
+            $this->addFlash('success', 'Goal deleted.');
+        }
+        return $this->redirectToRoute('backoffice_goals_index');
     }
 }

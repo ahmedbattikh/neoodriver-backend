@@ -1,0 +1,162 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block content_title %}Dashboard
+{% endblock %}
+
+{% block content %}
+	<div class="row g-4">
+		<div class="col-12">
+			<div class="card border-0 shadow-sm">
+				<div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+					<div class="d-flex align-items-center gap-3">
+						<div class="rounded-circle bg-primary-subtle text-primary fw-semibold d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+							{{ app.user ? (app.user.userIdentifier|slice(0, 1)|upper) : 'A' }}
+						</div>
+						<div>
+							<div class="text-muted small">Welcome back</div>
+							<div class="h5 mb-0">{{ app.user ? app.user.userIdentifier : 'Admin' }}</div>
+						</div>
+					</div>
+					<div class="d-flex flex-wrap gap-2">
+						<a href="{{ path('backoffice_users_list') }}" class="btn btn-primary btn-sm">Manage Users</a>
+						<a href="{{ path('backoffice_users_list') }}" class="btn btn-outline-secondary btn-sm">View Reports</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-6 col-xl-3">
+			<div class="card border-0 shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Active Drivers</div>
+					<div class="h3 mb-1">0</div>
+					<div class="text-success small">No data yet</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-6 col-xl-3">
+			<div class="card border-0 shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Pending Verifications</div>
+					<div class="h3 mb-1">0</div>
+					<div class="text-muted small">No pending items</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-6 col-xl-3">
+			<div class="card border-0 shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Monthly Payouts</div>
+					<div class="h3 mb-1">€0</div>
+					<div class="text-muted small">Awaiting data</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-6 col-xl-3">
+			<div class="card border-0 shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Open Support</div>
+					<div class="h3 mb-1">0</div>
+					<div class="text-muted small">No open tickets</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-xl-8">
+			<div class="card border-0 shadow-sm h-100">
+				<div class="card-body">
+					<div class="d-flex align-items-center justify-content-between mb-3">
+						<div class="fw-semibold">Operations Overview</div>
+						<span class="badge text-bg-light">Today</span>
+					</div>
+					<div class="row g-3 mb-4">
+						<div class="col-md-6">
+							<div class="border rounded p-3 h-100">
+								<div class="text-muted small">Verification Flow</div>
+								<div class="fw-semibold mt-2">Stable</div>
+								<div class="progress mt-3" style="height: 6px;">
+									<div class="progress-bar" style="width: 70%"></div>
+								</div>
+								<div class="text-muted small mt-2">70% automated</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="border rounded p-3 h-100">
+								<div class="text-muted small">Payments Pipeline</div>
+								<div class="fw-semibold mt-2">On schedule</div>
+								<div class="progress mt-3" style="height: 6px;">
+									<div class="progress-bar bg-success" style="width: 85%"></div>
+								</div>
+								<div class="text-muted small mt-2">85% processed</div>
+							</div>
+						</div>
+					</div>
+					<div class="row g-3">
+						<div class="col-md-6">
+							<div class="border rounded p-3 h-100 bg-light">
+								<div class="text-muted small">Next Actions</div>
+								<ul class="list-unstyled mb-0 mt-2">
+									<li class="d-flex justify-content-between">
+										<span>Verify new drivers</span>
+										<span class="text-muted">0</span>
+									</li>
+									<li class="d-flex justify-content-between mt-2">
+										<span>Approve payouts</span>
+										<span class="text-muted">0</span>
+									</li>
+									<li class="d-flex justify-content-between mt-2">
+										<span>Review tickets</span>
+										<span class="text-muted">0</span>
+									</li>
+								</ul>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="border rounded p-3 h-100 bg-light">
+								<div class="text-muted small">Team</div>
+								<div class="fw-semibold mt-2">Admin Team</div>
+								<div class="text-muted small">Head Office</div>
+								<div class="mt-3 d-flex gap-2">
+									<span class="badge text-bg-primary">Full Access</span>
+									<span class="badge text-bg-secondary">Backoffice</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-xl-4">
+			<div class="card border-0 shadow-sm">
+				<div class="card-body">
+					<div class="fw-semibold mb-3">Quick Actions</div>
+					<div class="d-grid gap-2">
+						<a href="{{ path('backoffice_users_list') }}" class="btn btn-outline-primary">Review Users</a>
+						<a href="{{ path('backoffice_users_list') }}" class="btn btn-outline-secondary">Export Reports</a>
+						<a href="{{ path('backoffice_users_list') }}" class="btn btn-outline-secondary">Manage Access</a>
+					</div>
+				</div>
+			</div>
+			<div class="card border-0 shadow-sm mt-4">
+				<div class="card-body">
+					<div class="fw-semibold mb-3">Recent Activity</div>
+					<div class="list-group list-group-flush">
+						<div class="list-group-item px-0 d-flex justify-content-between">
+							<span>New driver signup</span>
+							<span class="text-muted small">Just now</span>
+						</div>
+						<div class="list-group-item px-0 d-flex justify-content-between">
+							<span>Payment batch queued</span>
+							<span class="text-muted small">Today</span>
+						</div>
+						<div class="list-group-item px-0 d-flex justify-content-between">
+							<span>Profile updated</span>
+							<span class="text-muted small">Yesterday</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block content_title %}
+	{{ title }}
+{% endblock %}
+
+{% block content %}
+	<div class="card shadow-sm">
+		<div class="card-body">
+			{{ form_start(form) }}
+			<div class="row g-3">
+				<div class="col-md-6">
+					{{ form_label(form.code, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.code, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.code) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.name, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.name, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.name) }}
+				</div>
+				<div class="col-12">
+					{{ form_label(form.description, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.description, { attr: { class: 'form-control', rows: 3 } }) }}
+					{{ form_errors(form.description) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.logoFile, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.logoFile, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.logoFile) }}
+				</div>
+				<div class="col-md-6 d-flex align-items-end">
+					<div class="form-check">
+						{{ form_widget(form.enabled, { attr: { class: 'form-check-input' } }) }}
+						{{ form_label(form.enabled, null, { label_attr: { class: 'form-check-label' } }) }}
+						{{ form_errors(form.enabled) }}
+					</div>
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.boltCustomerId, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.boltCustomerId, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.boltCustomerId) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.boltCustomerSecret, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.boltCustomerSecret, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.boltCustomerSecret) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.boltScope, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.boltScope, { attr: { class: 'form-control' } }) }}
+					{{ form_errors(form.boltScope) }}
+				</div>
+				<div class="col-md-6">
+					{{ form_label(form.boltCompanyIds, null, { label_attr: { class: 'form-label' } }) }}
+					{{ form_widget(form.boltCompanyIds, { attr: { class: 'form-control', placeholder: '1, 2, 3' } }) }}
+					{{ form_errors(form.boltCompanyIds) }}
+					<div class="form-text">Comma-separated list of company IDs.</div>
+				</div>
+			</div>
+			<div class="mt-4 d-flex gap-2">
+				<button class="btn btn-primary" type="submit">Save</button>
+				<a class="btn btn-outline-secondary" href="{{ path('backoffice_integrations_index') }}">Cancel</a>
+			</div>
+			{{ form_rest(form) }}
+			{{ form_end(form, { render_rest: false }) }}
+		</div>
+	</div>
+{% endblock %}

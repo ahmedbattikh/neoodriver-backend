@@ -1,0 +1,54 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block content_title %}Goals{% endblock %}
+
+{% block content %}
+	<div class="d-flex justify-content-between align-items-center mb-3">
+		<div class="text-muted small">Manage performance goals shown to drivers.</div>
+		<a class="btn btn-primary btn-sm" href="{{ path('backoffice_goals_new') }}">New Goal</a>
+	</div>
+	<div class="card shadow-sm">
+		<div class="table-responsive">
+			<table class="table align-middle mb-0">
+				<thead class="table-light">
+					<tr>
+						<th>Name</th>
+						<th>Amount</th>
+						<th>Frequency</th>
+						<th>Target Classes</th>
+						<th>Enabled</th>
+						<th>Updated</th>
+						<th class="text-end">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% if goals is empty %}
+						<tr>
+							<td colspan="7" class="text-center text-muted py-4">No goals found</td>
+						</tr>
+					{% else %}
+						{% for goal in goals %}
+							<tr>
+								<td>{{ goal.name }}</td>
+								<td>{{ goal.amount|number_format(3, '.', ' ') }}</td>
+								<td>{{ goal.frequency }}</td>
+								<td>{{ goal.targetClasses|join(', ') }}</td>
+								<td>
+									<span class="badge {{ goal.enabled ? 'text-bg-success' : 'text-bg-secondary' }}">{{ goal.enabled ? 'Yes' : 'No' }}</span>
+								</td>
+								<td>{{ goal.updatedAt|date('Y-m-d H:i') }}</td>
+								<td class="text-end">
+									<a class="btn btn-sm btn-outline-primary" href="{{ path('backoffice_goals_edit', { id: goal.id }) }}">Edit</a>
+									<form method="post" action="{{ path('backoffice_goals_delete', { id: goal.id }) }}" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('delete_goal_' ~ goal.id) }}">
+										<button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this goal?')">Delete</button>
+									</form>
+								</td>
+							</tr>
+						{% endfor %}
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+{% endblock %}

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -40,6 +41,19 @@ final class SecurityController extends AbstractController
         }
 
         return $this->render('security/login.html.twig', [
+            'last_username' => $authUtils->getLastUsername(),
+            'error' => $authUtils->getLastAuthenticationError(),
+        ]);
+    }
+
+    #[Route('/backoffice/login', name: 'backoffice_login', methods: ['GET', 'POST'])]
+    public function backofficeLogin(AuthenticationUtils $authUtils): Response
+    {
+        if ($this->getUser()) {
+            return $this->redirectToRoute('backoffice');
+        }
+
+        return $this->render('security/backoffice_login.html.twig', [
             'last_username' => $authUtils->getLastUsername(),
             'error' => $authUtils->getLastAuthenticationError(),
         ]);

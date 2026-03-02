@@ -4,54 +4,86 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\NeooConfig;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\MoneyField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
+use App\Form\Backoffice\NeooConfigType;
+use App\Service\BackofficeMenuBuilder;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_SUPER_ADMIN')]
-class NeooConfigCrudController extends AbstractCrudController
+final class NeooConfigCrudController extends AbstractController
 {
-    public static function getEntityFqcn(): string
+    public function __construct(private readonly EntityManagerInterface $em, private readonly BackofficeMenuBuilder $menuBuilder) {}
+
+    #[Route('/backoffice/neoo-config', name: 'backoffice_neoo_config_index', methods: ['GET'])]
+    public function index(Request $request): Response
     {
-        return NeooConfig::class;
+        $configs = $this->em->getRepository(NeooConfig::class)->findBy([], ['updatedAt' => 'DESC']);
+        return $this->render('backoffice/configuration/neoo_config/index.html.twig', [
+            'configs' => $configs,
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
+        ]);
     }
 
-    public function configureCrud(Crud $crud): Crud
+    #[Route('/backoffice/neoo-config/new', name: 'backoffice_neoo_config_new', methods: ['GET', 'POST'])]
+    public function new(Request $request): Response
     {
-        return $crud
-            ->setEntityLabelInSingular('Neoo Config')
-            ->setEntityLabelInPlural('Neoo Config')
-            ->setPageTitle(Crud::PAGE_INDEX, 'Neoo Config')
-            ->setPageTitle(Crud::PAGE_NEW, 'Create Config')
-            ->setPageTitle(Crud::PAGE_EDIT, 'Edit Config')
-            ->setPageTitle(Crud::PAGE_DETAIL, 'Config Details')
-            ->setDefaultSort(['updatedAt' => 'DESC']);
+        $config = new NeooConfig();
+        $form = $this->createForm(NeooConfigType::class, $config);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->em->persist($config);
+            $this->em->flush();
+            $this->addFlash('success', 'Config created.');
+            return $this->redirectToRoute('backoffice_neoo_config_index');
+        }
+        return $this->render('backoffice/configuration/neoo_config/form.html.twig', [
+            'form' => $form->createView(),
+            'title' => 'Create Config',
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
+        ]);
     }
 
-    public function configureFields(string $pageName): iterable
+    #[Route('/backoffice/neoo-config/{id}/edit', name: 'backoffice_neoo_config_edit', methods: ['GET', 'POST'], requirements: ['id' => '\\d+'])]
+    public function edit(Request $request, int $id): Response
     {
-        $id = IdField::new('id')->onlyOnDetail();
-        $fix = MoneyField::new('fixNeooMonthly', 'Fix Neoo Monthly')->setCurrency('TND')->setStoredAsCents(false)->setNumDecimals(3);
-        $tConge = NumberField::new('tauxConge', 'Taux Congé')->setNumDecimals(3);
-        $fKm = NumberField::new('fraisKm', 'Frais Km')->setNumDecimals(3);
-        $tPas = NumberField::new('tauxPas', 'Taux PAS')->setNumDecimals(3);
-        $tUrssaf = NumberField::new('tauxUrssaf', 'Taux URSSAF')->setNumDecimals(3);
-        $createdAt = DateTimeField::new('createdAt', 'Created At')->setFormTypeOption('disabled', true)->onlyOnDetail();
-        $updatedAt = DateTimeField::new('updatedAt', 'Updated At')->setFormTypeOption('disabled', true)->onlyOnDetail();
+        $config = $this->em->getRepository(NeooConfig::class)->find($id);
+        if (!$config instanceof NeooConfig) {
+            return $this->redirectToRoute('backoffice_neoo_config_index');
+        }
+        $form = $this->createForm(NeooConfigType::class, $config);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->em->flush();
+            $this->addFlash('success', 'Config updated.');
+            return $this->redirectToRoute('backoffice_neoo_config_index');
+        }
+        return $this->render('backoffice/configuration/neoo_config/form.html.twig', [
+            'form' => $form->createView(),
+            'title' => 'Edit Config',
+            'menuItems' => $this->menuBuilder->build(),
+            'currentPath' => $request->getPathInfo(),
+        ]);
+    }
 
-        if ($pageName === Crud::PAGE_INDEX) {
-            return [$fix, $tConge, $fKm, $tPas, $tUrssaf];
+    #[Route('/backoffice/neoo-config/{id}/delete', name: 'backoffice_neoo_config_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function delete(Request $request, int $id): Response
+    {
+        $config = $this->em->getRepository(NeooConfig::class)->find($id);
+        if (!$config instanceof NeooConfig) {
+            return $this->redirectToRoute('backoffice_neoo_config_index');
         }
-        if ($pageName === Crud::PAGE_NEW) {
-            return [$fix, $tConge, $fKm, $tPas, $tUrssaf];
+        $token = (string) $request->request->get('_token', '');
+        if ($this->isCsrfTokenValid('delete_neoo_config_' . $config->getId(), $token)) {
+            $this->em->remove($config);
+            $this->em->flush();
+            $this->addFlash('success', 'Config deleted.');
         }
-        if ($pageName === Crud::PAGE_EDIT) {
-            return [$fix, $tConge, $fKm, $tPas, $tUrssaf];
-        }
-        return [$id, $fix, $tConge, $fKm, $tPas, $tUrssaf, $createdAt, $updatedAt];
+        return $this->redirectToRoute('backoffice_neoo_config_index');
     }
 }
