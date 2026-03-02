@@ -34,7 +34,8 @@ final class SyncDriverIntegrationsCommand extends Command
     {
         $this
             ->addOption('start', null, InputOption::VALUE_REQUIRED, 'Start date/time in UTC (e.g. 2026-03-01 00:00:00)')
-            ->addOption('end', null, InputOption::VALUE_REQUIRED, 'End date/time in UTC (e.g. 2026-03-02 00:00:00)');
+            ->addOption('end', null, InputOption::VALUE_REQUIRED, 'End date/time in UTC (e.g. 2026-03-02 00:00:00)')
+            ->addOption('hours', null, InputOption::VALUE_REQUIRED, 'Hours back from now in UTC', '2');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -43,10 +44,21 @@ final class SyncDriverIntegrationsCommand extends Command
         $tz = new \DateTimeZone('UTC');
         $startRaw = $input->getOption('start');
         $endRaw = $input->getOption('end');
+        $hoursRaw = $input->getOption('hours');
 
         try {
-            $start = $startRaw ? new \DateTimeImmutable((string) $startRaw, $tz) : new \DateTimeImmutable('today 00:00:00', $tz);
-            $end = $endRaw ? new \DateTimeImmutable((string) $endRaw, $tz) : new \DateTimeImmutable('tomorrow 00:00:00', $tz);
+            if ($startRaw || $endRaw) {
+                $start = $startRaw ? new \DateTimeImmutable((string) $startRaw, $tz) : new \DateTimeImmutable('today 00:00:00', $tz);
+                $end = $endRaw ? new \DateTimeImmutable((string) $endRaw, $tz) : new \DateTimeImmutable('tomorrow 00:00:00', $tz);
+            } else {
+                $hours = is_numeric($hoursRaw) ? (int) $hoursRaw : 0;
+                if ($hours <= 0) {
+                    $io->error('Hours must be a positive number.');
+                    return Command::FAILURE;
+                }
+                $end = new \DateTimeImmutable('now', $tz);
+                $start = $end->modify(sprintf('-%d hours', $hours));
+            }
         } catch (\Throwable $e) {
             $io->error('Invalid start/end date format.');
             return Command::FAILURE;
