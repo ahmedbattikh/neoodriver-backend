@@ -62,6 +62,41 @@
 			</div>
 		</div>
 
+		<div class="col-md-6 col-xl-6">
+			<div class="card border-0 shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Top Driver (Sold)</div>
+					{% if topDriverSold %}
+						{% set soldName = ((topDriverSold.firstName ?? '') ~ ' ' ~ (topDriverSold.lastName ?? ''))|trim %}
+						{% set soldLabel = soldName != '' ? soldName : (topDriverSold.email ?? 'N/A') %}
+						<div class="h5 mb-1">
+							<a href="{{ path('backoffice_user_show', { id: topDriverSold.userId }) }}" class="text-decoration-none">{{ soldLabel }}</a>
+						</div>
+						<div class="text-success fw-semibold">{{ topDriverSold.sold|number_format(3, '.', ' ') }}</div>
+					{% else %}
+						<div class="text-muted small">No data yet</div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+		<div class="col-md-6 col-xl-6">
+			<div class="card border-0 shadow-sm h-100">
+				<div class="card-body">
+					<div class="text-muted small">Top Driver (Operations)</div>
+					{% if topDriverOps %}
+						{% set opsName = ((topDriverOps.firstName ?? '') ~ ' ' ~ (topDriverOps.lastName ?? ''))|trim %}
+						{% set opsLabel = opsName != '' ? opsName : (topDriverOps.email ?? 'N/A') %}
+						<div class="h5 mb-1">
+							<a href="{{ path('backoffice_user_show', { id: topDriverOps.userId }) }}" class="text-decoration-none">{{ opsLabel }}</a>
+						</div>
+						<div class="text-primary fw-semibold">{{ topDriverOps.opsCount }}</div>
+					{% else %}
+						<div class="text-muted small">No data yet</div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+
 		<div class="col-xl-8">
 			<div class="card border-0 shadow-sm h-100">
 				<div class="card-body">

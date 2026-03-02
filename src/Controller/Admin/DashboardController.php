@@ -51,9 +51,32 @@ final class DashboardController extends AbstractController
     #[Route('/backoffice', name: 'backoffice', methods: ['GET'])]
     public function backofficeIndex(Request $request): Response
     {
+        $topDriverSold = $this->em->createQueryBuilder()
+            ->select('u.id AS userId', 'u.firstName AS firstName', 'u.lastName AS lastName', 'u.email AS email', 'b.sold AS sold')
+            ->from(Balance::class, 'b')
+            ->join('b.driver', 'd')
+            ->join('d.user', 'u')
+            ->orderBy('b.sold', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        $topDriverOps = $this->em->createQueryBuilder()
+            ->select('u.id AS userId', 'u.firstName AS firstName', 'u.lastName AS lastName', 'u.email AS email', 'COUNT(o.id) AS opsCount')
+            ->from(PaymentOperation::class, 'o')
+            ->join('o.driver', 'd')
+            ->join('d.user', 'u')
+            ->groupBy('d.id', 'u.id')
+            ->orderBy('opsCount', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
         return $this->render('backoffice/dashboard.html.twig', [
             'menuItems' => $this->menuBuilder->build(),
             'currentPath' => $request->getPathInfo(),
+            'topDriverSold' => $topDriverSold,
+            'topDriverOps' => $topDriverOps,
         ]);
     }
 

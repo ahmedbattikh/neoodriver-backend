@@ -31,6 +31,35 @@ services:
     ports:
       - "127.0.0.1:8080:80"
 
+  scheduler:
+    image: ${IMAGES_PREFIX:-}app-php
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      APP_SECRET: ${APP_SECRET}
+      SERVER_NAME: ${SERVER_NAME}, :80
+      DEFAULT_URI: ${DEFAULT_URI}
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE}
+      JWT_TTL: ${JWT_TTL}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL}
+      MAILER_DSN: ${MAILER_DSN}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET: ${R2_BUCKET}
+      R2_ENDPOINT: ${R2_ENDPOINT}
+    volumes:
+      - ./config/jwt:/app/config/jwt
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -lc 'while true; do
+        php bin/console app:integrations:sync || true;
+        sleep 7200;
+      done'
+
   phpmyadmin:
     image: phpmyadmin:latest
     restart: unless-stopped
