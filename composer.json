@@ -24,6 +24,7 @@
         "symfony/mailer": "7.3.*",
         "symfony/runtime": "7.3.*",
         "symfony/security-bundle": "7.3.*",
+        "symfony/translation": "7.3.*",
         "symfony/twig-bundle": "7.3.*",
         "symfony/ux-twig-component": "^2.0",
         "twig/extra-bundle": "^3.0",
