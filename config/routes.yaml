@@ -3,3 +3,8 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+backoffice_users_import:
+    path: /backoffice/import-users
+    controller: App\Controller\Admin\ImportUsersController
+    methods: [GET, POST]

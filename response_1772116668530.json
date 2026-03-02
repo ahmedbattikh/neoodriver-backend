@@ -1,0 +1,1018 @@
+{
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "drivers": [
+      {
+        "driver_uuid": "d6289b79-3bed-4136-8959-cee3448a6af1",
+        "partner_uuid": "eb6e3161-aa85-4403-8f89-6c1cd2ff3d90",
+        "first_name": "Abdelhak",
+        "last_name": "TEDJANI",
+        "email": "ted.abdou@yahoo.fr",
+        "phone": "+33665953341",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9711580,
+          "model": "Toyota Prius Plus",
+          "year": 2019,
+          "reg_number": "FD-639-YA",
+          "vin": "",
+          "uuid": "dbe721b0-23f9-4618-ba51-97e517cdc96f",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "b1cbcde2-68f6-4117-9fe9-583016498fcb",
+        "partner_uuid": "78b6aebe-9a5e-4ba2-96a1-ea4c2d79812d",
+        "first_name": "Abdellatif",
+        "last_name": "Dlalha",
+        "email": "abdeldlalha4@gmail.com",
+        "phone": "+33662267325",
+        "state": "active",
+        "has_cash_payment": false,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9951406,
+          "model": "Lexus NX300h",
+          "year": 2018,
+          "reg_number": "FC-444-CE",
+          "vin": "",
+          "uuid": "27661cea-dd98-4a42-8214-e5d1bf24f60a",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "df77013e-4bec-4950-ab57-4bdd203397af",
+        "partner_uuid": "f9348d65-e44f-4aa8-b4e1-73beee884803",
+        "first_name": "Abdellatif",
+        "last_name": "El hajjam",
+        "email": "elhabdel61@gmail.com",
+        "phone": "+33665692643",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10208971,
+          "model": "Toyota C-HR",
+          "year": 2023,
+          "reg_number": "GR-852-EN",
+          "vin": "",
+          "uuid": "922d5fcb-3dbf-49db-a20e-40e2872429d1",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "946af215-1722-4679-a00c-39e478863be2",
+        "partner_uuid": "4794f11d-8bbb-454b-bb9d-a066bf9b3c55",
+        "first_name": "Aboubakr",
+        "last_name": "BOUZIANE",
+        "email": "Adou.bouziane69@gmail.com",
+        "phone": "+33767966979",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Premium",
+          "Green",
+          "Pet"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10035597,
+          "model": "Tesla Model 3",
+          "year": 2023,
+          "reg_number": "GS-529-MP",
+          "vin": "",
+          "uuid": "b4f1e465-7d5e-47e3-b289-a8917cabaaa3",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "c761d8f3-4b7e-440a-93c4-c5180cf7ad67",
+        "partner_uuid": "fbf11136-e8d1-4e5b-b692-41b5ab66cddf",
+        "first_name": "Aboudalaye",
+        "last_name": "Sidi SOKHONA",
+        "email": "boudalayesokhona@gmail.com",
+        "phone": "+33768735055",
+        "state": "active",
+        "has_cash_payment": false,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9716632,
+          "model": "Toyota Auris",
+          "year": 2015,
+          "reg_number": "DT-867-DB",
+          "vin": null,
+          "uuid": "1fe3600e-8011-41cf-87b1-564d2a816db1",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "22def149-1274-4a2d-b576-8e9a1bd84565",
+        "partner_uuid": "2cf1cfbc-6701-4523-bf4a-1516cc2762ea",
+        "first_name": "Ahmed",
+        "last_name": "Aroussi",
+        "email": "aroussiahmed91@gmail.com",
+        "phone": "+33659129234",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 82,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9894917,
+          "model": "Toyota Auris",
+          "year": 2017,
+          "reg_number": "DN-321-TC",
+          "vin": "",
+          "uuid": "09d1f6d2-4861-4ebf-a10e-b885cf1ca562",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "423d5853-4fc5-476c-9931-ec369361f7d9",
+        "partner_uuid": "9b98d7f0-eec5-4dcd-a8f4-959f13d849b6",
+        "first_name": "Amine",
+        "last_name": "Abdelkhalek",
+        "email": "Jerbaamine72@gmail.com",
+        "phone": "+33634434635",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 4.4,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10078470,
+          "model": "Toyota Prius Plus",
+          "year": 2018,
+          "reg_number": "EY-273-JJ",
+          "vin": "",
+          "uuid": "75bd59f1-e906-4dd6-b68e-4438abfaa869",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "55bb7ecc-4139-4dfb-abd0-f32c765a9dff",
+        "partner_uuid": "94ce877d-a0d1-4d4e-b683-68e96997f90a",
+        "first_name": "Ammar",
+        "last_name": "Chekh",
+        "email": "ammar.chekh@gmail.com",
+        "phone": "+33622694557",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9711745,
+          "model": "Hyundai Kona",
+          "year": 2024,
+          "reg_number": "GX-853-BP",
+          "vin": null,
+          "uuid": "dfb396e4-4a3f-47b1-ab7c-e3a79298eb2b",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "796608aa-5192-442e-8937-179f73ef45df",
+        "partner_uuid": "46f7dc79-8bcd-4f12-8b25-0f3fe005ae01",
+        "first_name": "Anthony",
+        "last_name": "Erkmen",
+        "email": "ERKMENANTHONY@GMAIL.COM",
+        "phone": "+33601643899",
+        "state": "active",
+        "has_cash_payment": false,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9711524,
+          "model": "Ford Mondeo",
+          "year": 2019,
+          "reg_number": "FJ-899-KS",
+          "vin": null,
+          "uuid": "cdc17617-3434-4230-84fd-4b89b9cf209b",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "54b80fc8-3e66-493c-8ff9-b29aa9e75d53",
+        "partner_uuid": "7a1901ab-d80b-4120-a9d5-66058fdecae9",
+        "first_name": "Azzedine",
+        "last_name": "Hamadouche",
+        "email": "azzedine.expertise@gmail.com",
+        "phone": "+33744973789",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 3.6667,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10009399,
+          "model": "Lexus ES300h",
+          "year": 2022,
+          "reg_number": "GJ-486-BQ",
+          "vin": "",
+          "uuid": "01b46729-685d-409c-9f25-6bde29fce826",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "eb17a6e5-1576-41c5-a67d-3fbb71e6c9bd",
+        "partner_uuid": "1f3e726c-5dd1-4b00-81ef-4778321bee19",
+        "first_name": "Brahim",
+        "last_name": "Azem",
+        "email": "fadhila.azem@hotmail.fr",
+        "phone": "+33656889070",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 94,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10067935,
+          "model": "Toyota Prius",
+          "year": 2010,
+          "reg_number": "HA-184-GT",
+          "vin": "",
+          "uuid": "1b815004-d578-4564-8739-9a3ea3175ed7",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "f45a8964-a391-4b60-96fa-f3104e71236a",
+        "partner_uuid": "7935887f-37f2-4f45-8100-7a019a5bea85",
+        "first_name": "Daoud",
+        "last_name": "Oustarkhanov",
+        "email": "Daoud.Oustar@gmail.com",
+        "phone": "+33635507469",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green",
+          "Pet"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10056285,
+          "model": "Toyota Corolla Hatchback",
+          "year": 2020,
+          "reg_number": "FP-091-SM",
+          "vin": "",
+          "uuid": "bf1fa9da-d843-4bd5-9ad1-bc9a941028ff",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "da1dc6a3-0711-47ea-a778-408a931a9f7e",
+        "partner_uuid": "b05878dc-273f-44eb-98c6-2b5b5fca58ed",
+        "first_name": "Dhaou",
+        "last_name": "Tlig Elarbi",
+        "email": "dhaoutlig@outlook.fr",
+        "phone": "+33666933376",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10216601,
+          "model": "BYD Han",
+          "year": 2025,
+          "reg_number": "HD-246-GT",
+          "vin": "",
+          "uuid": "2b59f981-61e6-43b7-b487-b19d750b9c9c",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "45724737-d743-43fe-ba3d-298ced810b78",
+        "partner_uuid": "b371e163-9ed6-4201-916b-f6c8f1fd1d3f",
+        "first_name": "Diakariaou",
+        "last_name": "GAYE",
+        "email": "diack91700@hotmail.com",
+        "phone": "+33625529874",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 4.8571,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9977622,
+          "model": "Tesla Model Y",
+          "year": 2024,
+          "reg_number": "HA-745-NV",
+          "vin": "",
+          "uuid": "17da7cd7-1fbf-4e2b-9101-a44711589ca0",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "7ffa75bb-e22a-422e-81b6-2ca3dfdde51f",
+        "partner_uuid": "6414f0d9-47ac-42f1-be9d-567136704ab3",
+        "first_name": "Dimitri",
+        "last_name": "VARELA",
+        "email": "dimi9405@gmail.com",
+        "phone": "+33788615853",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 4.9474,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10170260,
+          "model": "Toyota C-HR",
+          "year": 2021,
+          "reg_number": "GD-008-PB",
+          "vin": "",
+          "uuid": "269f7252-88ce-4019-9190-b3f8a847e63f",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "f42a4d86-d29d-41a3-8851-2c13f98c20ae",
+        "partner_uuid": "4c2b436b-5d5f-4104-96e6-613eef00b470",
+        "first_name": "Dinesh",
+        "last_name": "Roy Hector Prabaker",
+        "email": "star-dinesh@hotmail.fr",
+        "phone": "+33659231326",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10000761,
+          "model": "Mercedes-Benz C-class",
+          "year": 2019,
+          "reg_number": "FL-170-TE",
+          "vin": "",
+          "uuid": "22fde118-d237-4093-8f7d-ac4fae35a644",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "7dc09679-3707-45e1-bf6f-e4ad28fccf2e",
+        "partner_uuid": "77029f75-fc59-4eee-9323-fcf242c63ee6",
+        "first_name": "Dragan",
+        "last_name": "Komatina",
+        "email": "bwolf91gb@gmail.com",
+        "phone": "+33632446981",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10008155,
+          "model": "Renault Mégane E-Tech Electric",
+          "year": 2025,
+          "reg_number": "HC-450-QF",
+          "vin": null,
+          "uuid": "36a02e23-2168-420a-bd3b-614de221a29c",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "0dd5a2bc-93e7-42f7-a016-b7bcc526af16",
+        "partner_uuid": "6b6ab96f-19a2-4b33-bdf2-1d507b930799",
+        "first_name": "Emre",
+        "last_name": "Celik",
+        "email": "emre_93390@outlook.com",
+        "phone": "+33651001390",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 83,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9714191,
+          "model": "Toyota Auris",
+          "year": 2015,
+          "reg_number": "FX-900-BG",
+          "vin": null,
+          "uuid": "cc5ebeca-d56d-4fe0-8ed2-1f852a62d1ef",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "b34102b1-6afa-425f-baef-6fd6d73994b4",
+        "partner_uuid": "e234326c-83fa-45d4-9020-4fae129a1c99",
+        "first_name": "Francis",
+        "last_name": "Soumahin Adjobi",
+        "email": "francisadjobi@gmail.com",
+        "phone": "+33778788099",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10252847,
+          "model": "Toyota Prius",
+          "year": 2017,
+          "reg_number": "CC-032-ZQ",
+          "vin": "",
+          "uuid": "1fd2f16f-2bdd-4415-a180-06eb05a6d402",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "ebc28453-a795-4399-8ade-4668388265c0",
+        "partner_uuid": "11017e0d-38f2-4bf4-a0c2-76572bb6b56d",
+        "first_name": "Hadi",
+        "last_name": "Cheguettine",
+        "email": "hadicheguettine@gmail.com",
+        "phone": "+33699180246",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10070216,
+          "model": "Toyota Auris",
+          "year": 2017,
+          "reg_number": "GE-574-HY",
+          "vin": "",
+          "uuid": "dee272b3-81e7-4159-ae41-b3c5a9ee9730",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "9132e602-1eca-4edf-bb6c-56397ae5c139",
+        "partner_uuid": "634d3696-83a6-4eae-9b4c-1126bf728696",
+        "first_name": "Hicham",
+        "last_name": "Laouissi",
+        "email": "hicham21214@hotmail.fr",
+        "phone": "+33668733521",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10266784,
+          "model": "Toyota Prius",
+          "year": 2017,
+          "reg_number": "GV-375-FZ",
+          "vin": "",
+          "uuid": "32475b18-f8e3-4020-8dd8-7379017f499d",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "64a37b51-5842-4899-a09b-e3659a7aeea1",
+        "partner_uuid": "d2dd7b37-830e-49d9-a54b-92bd612211c5",
+        "first_name": "Ibrahim",
+        "last_name": "Bechar",
+        "email": "ibrahimbechar@icloud.com",
+        "phone": "+33783843678",
+        "state": "active",
+        "has_cash_payment": false,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10086688,
+          "model": "Toyota Prius",
+          "year": 2011,
+          "reg_number": "BM-839-JX",
+          "vin": "",
+          "uuid": "c96adbc4-29ed-421f-b258-e223559aab7b",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "ccc19c8a-04f1-4c37-b3b2-30f4f4d1d555",
+        "partner_uuid": "66fa1f94-ded5-4db6-ac96-52ebb421aa0d",
+        "first_name": "Jamel",
+        "last_name": "Bayache",
+        "email": "bayachejamel@hotmail.fr",
+        "phone": "+33761994135",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 95,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10091219,
+          "model": "Ford Mondeo",
+          "year": 2017,
+          "reg_number": "ER-365-XX",
+          "vin": null,
+          "uuid": "f306b0e5-9256-4772-84ad-bd3b5cf4e452",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "04837b2d-437d-4f09-b916-8174bd9d3bf7",
+        "partner_uuid": "d05d076d-16f4-4f4f-a724-d08337f1c6fc",
+        "first_name": "Karim",
+        "last_name": "Faidi",
+        "email": "kimouty28@hotmail.fr",
+        "phone": "+33769995775",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 34,
+        "driver_rating": null,
+        "active_categories": [
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [
+          "Bolt"
+        ],
+        "active_vehicle": {
+          "id": 10078005,
+          "model": "Hyundai Tucson",
+          "year": 2023,
+          "reg_number": "GP-253-NV",
+          "vin": null,
+          "uuid": "c6f3189e-54b1-4510-9ba9-49bf97571001",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "b09a3a04-63fa-4534-87e3-2570ba8dd0da",
+        "partner_uuid": "996cfb1d-5a07-4ab1-9a2d-31e294193475",
+        "first_name": "Koussaila",
+        "last_name": "Behloul",
+        "email": "koussailabehloul821@gmail.com",
+        "phone": "+33667815444",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10016333,
+          "model": "Toyota Corolla Hatchback",
+          "year": 2021,
+          "reg_number": "GD-267-QS",
+          "vin": "",
+          "uuid": "95150ff5-ba75-47c2-a02f-9bc408aaa30c",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "f961ef44-86f9-470a-bee0-594c56f0c104",
+        "partner_uuid": "13ca670a-5140-46bc-8444-0ac02d7e1fda",
+        "first_name": "Mahamadou",
+        "last_name": "WAGGEH",
+        "email": "mahamadou.waggeh944@gmail.com",
+        "phone": "+33629603754",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [],
+        "inactive_categories": [],
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "863b9404-57ec-405b-91fb-9e38d3793462",
+        "partner_uuid": "99dfdb26-ba5f-4920-bf3d-9f145c05d977",
+        "first_name": "Mahamoud",
+        "last_name": "Cisse",
+        "email": "mahamoudcisse14@gmail.com",
+        "phone": "+33652088319",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 90,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9740066,
+          "model": "Toyota Camry",
+          "year": 2020,
+          "reg_number": "FQ-137-VF",
+          "vin": "",
+          "uuid": "250e70ec-b4a1-48bf-b60a-27f0cb58b26e",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "26350f7b-4b8c-4f58-8063-5c328ac1d6ba",
+        "partner_uuid": "1771bf7d-0575-4d7f-9cc1-952db9afc095",
+        "first_name": "Mohammed",
+        "last_name": "Souheyl Cheurfi",
+        "email": "cm.souheyl@gmail.com",
+        "phone": "+33652303138",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9883177,
+          "model": "Toyota Auris",
+          "year": 2015,
+          "reg_number": "FR-114-DW",
+          "vin": "",
+          "uuid": "eda07332-f884-4b7f-8ed1-928521f2feb6",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "ecd5c094-03cf-4536-8ae5-9c449db2385b",
+        "partner_uuid": "b3d590b9-1e8a-492c-91cf-79fbe50b4645",
+        "first_name": "Mouhammad",
+        "last_name": "Dehmous",
+        "email": "dehmous.vtc@gmail.com",
+        "phone": "+33766464848",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9783436,
+          "model": "Toyota Auris",
+          "year": 2017,
+          "reg_number": "EN-872-LS",
+          "vin": null,
+          "uuid": "f524a812-b07f-484c-90ef-10a0bb788b72",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "60a2778b-1a1c-47f1-8843-e38437463f24",
+        "partner_uuid": "f0f17922-46ae-4a52-b7ab-aee76b788d07",
+        "first_name": "Omar",
+        "last_name": "Traore",
+        "email": "nesscay@hotmail.fr",
+        "phone": "+33753957122",
+        "state": "active",
+        "has_cash_payment": false,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10171442,
+          "model": "Toyota C-HR",
+          "year": 2018,
+          "reg_number": "EV-526-SW",
+          "vin": "",
+          "uuid": "90847f9e-d126-4353-8a9b-a3a24d5bb57b",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "c099e143-d94f-47a1-ad3f-c0d6b50ae1d0",
+        "partner_uuid": "640e270d-658c-4593-b6d6-a02ba284d467",
+        "first_name": "Ouadii",
+        "last_name": "Elasraoui",
+        "email": "wadcool@hotmail.fr",
+        "phone": "+33621830370",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green",
+          "Premium"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10171870,
+          "model": "Tesla Model 3",
+          "year": 2019,
+          "reg_number": "GZ-663-BD",
+          "vin": null,
+          "uuid": "82bf525b-70b7-4f77-a212-785a139013da",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "99fac258-4290-42a6-916b-8c667a2a3715",
+        "partner_uuid": "9d538cb5-3289-4fd0-b861-3bb5b606db02",
+        "first_name": "Redouane",
+        "last_name": "Diguer",
+        "email": "redouane.diguer@gmail.com",
+        "phone": "+33641026410",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 3.6667,
+        "active_categories": [
+          "Bolt",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10243446,
+          "model": "Toyota C-HR",
+          "year": 2019,
+          "reg_number": "FD-993-KW",
+          "vin": "",
+          "uuid": "649036a2-4cb7-41b0-9982-11c16e713d11",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "053efe9a-a99f-4c99-9b33-03a151935262",
+        "partner_uuid": "603d31db-68ae-4c47-9fd0-f76501b4f842",
+        "first_name": "Skander",
+        "last_name": "BOUAICHA",
+        "email": "bouaichaskander@gmail.com",
+        "phone": "+336 34 09 56 14",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 4.875,
+        "active_categories": [
+          "Bolt",
+          "Comfort"
+        ],
+        "inactive_categories": [
+          "Green"
+        ],
+        "active_vehicle": {
+          "id": 10125559,
+          "model": "Polestar 2",
+          "year": 2022,
+          "reg_number": "GS-320-NP",
+          "vin": "",
+          "uuid": "9baaea99-3dec-4bfa-a36c-290095ccefcc",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "2ca4bfcd-82f0-4c2d-b082-781f00e7f7e7",
+        "partner_uuid": "26dfb72c-9456-4860-bff9-215c90e39716",
+        "first_name": "Thierry",
+        "last_name": "PHOUANGSY",
+        "email": "clubdriver@hotmail.com",
+        "phone": "+33749332683",
+        "state": "active",
+        "has_cash_payment": false,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10204017,
+          "model": "DS 7 Crossback",
+          "year": 2021,
+          "reg_number": "GN-322-KJ",
+          "vin": "",
+          "uuid": "0267bebc-2dc3-4577-9564-b0286f449ed9",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "206af7d4-477a-48c1-84f3-96c07447fb6d",
+        "partner_uuid": "c5257b23-394b-4058-bb95-ec06e701f8d8",
+        "first_name": "Yasin",
+        "last_name": "Latifi",
+        "email": "Latifi.yasin@outlook.fr",
+        "phone": "+33611190958",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Green",
+          "Pet"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10192121,
+          "model": "Toyota Auris",
+          "year": 2017,
+          "reg_number": "CQ-295-HX",
+          "vin": "",
+          "uuid": "06f1f9c8-51fd-4e57-8827-5fae8a4def57",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "d290bb3b-31c1-4db1-ab58-a05032ba69db",
+        "partner_uuid": "e8fd643f-f750-4658-8d2d-2c1d5dcb22fa",
+        "first_name": "Yassine",
+        "last_name": "Bendahmane",
+        "email": "Yassine.bendahmane.prony@gmail.com",
+        "phone": "+33659732779",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": null,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 10053893,
+          "model": "Renault Arkana",
+          "year": 2021,
+          "reg_number": "GC-397-TD",
+          "vin": "",
+          "uuid": "eb2b9e7c-8515-4648-aa1c-ebdf48d9b437",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      },
+      {
+        "driver_uuid": "bc43674c-bfb2-4a1c-9568-c2dd5683b42d",
+        "partner_uuid": "d524fbb6-44af-44d6-a1fd-5415d95d883a",
+        "first_name": "Yusuf",
+        "last_name": "Tasci",
+        "email": "sufyu93@hotmail.fr",
+        "phone": "+33612152294",
+        "state": "active",
+        "has_cash_payment": true,
+        "driver_score": 100,
+        "driver_rating": 5,
+        "active_categories": [
+          "Bolt",
+          "Comfort",
+          "Green"
+        ],
+        "inactive_categories": [],
+        "active_vehicle": {
+          "id": 9736661,
+          "model": "Lexus ES300h",
+          "year": 2019,
+          "reg_number": "FM-277-LF",
+          "vin": "",
+          "uuid": "5843e117-cf24-43b7-b9a5-54122a5887b4",
+          "state": "active"
+        },
+        "eligible_for_scheduled_ride": false
+      }
+    ]
+  }
+}

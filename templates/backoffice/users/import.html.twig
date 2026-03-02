@@ -1,0 +1,62 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block title %}Import Users{% endblock %}
+
+{% block content_title %}Import Users{% endblock %}
+
+{% block content %}
+	<form method="post" enctype="multipart/form-data" class="card shadow-sm">
+		<div class="card-body">
+			<div class="mb-3">
+				<label class="form-label">Integration</label>
+				<select class="form-select" name="integrationId" required>
+					<option value="">Select integration</option>
+					{% for integration in integrations %}
+						<option value="{{ integration.id }}" {% if selectedIntegrationId == integration.id %}selected{% endif %}>
+							{{ integration.name }}
+						</option>
+					{% endfor %}
+				</select>
+				{% if integrations is empty %}
+					<div class="text-muted mt-2">No enabled integrations available.</div>
+				{% endif %}
+			</div>
+			<div class="mb-3">
+				<label class="form-label">JSON file</label>
+				<input class="form-control" type="file" name="jsonFile" accept="application/json">
+			</div>
+			<div class="mb-3">
+				<label class="form-label">Or paste JSON payload</label>
+				<textarea class="form-control" name="jsonPayload" rows="10" placeholder='{"data":{"drivers":[...]}}'></textarea>
+			</div>
+			<input type="hidden" name="_token" value="{{ csrf_token('import_users') }}">
+			<button class="btn btn-primary" type="submit">Import</button>
+		</div>
+	</form>
+
+	{% if result %}
+		<div class="card mt-4">
+			<div class="card-body">
+				<div class="fw-semibold mb-2">Import summary</div>
+				<ul class="list-group list-group-flush">
+					<li class="list-group-item d-flex justify-content-between">
+						<span>Total records</span>
+						<span>{{ result.total }}</span>
+					</li>
+					<li class="list-group-item d-flex justify-content-between">
+						<span>Created</span>
+						<span>{{ result.created }}</span>
+					</li>
+					<li class="list-group-item d-flex justify-content-between">
+						<span>Skipped</span>
+						<span>{{ result.skipped }}</span>
+					</li>
+					<li class="list-group-item d-flex justify-content-between">
+						<span>Errors</span>
+						<span>{{ result.errors }}</span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	{% endif %}
+{% endblock %}

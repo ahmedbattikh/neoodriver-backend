@@ -26,6 +26,10 @@ final class BackofficeMenuBuilder
                 'url' => $this->urlGenerator->generate('backoffice_users_unverified'),
             ],
             [
+                'label' => 'Import Users',
+                'url' => $this->urlGenerator->generate('backoffice_users_import'),
+            ],
+            [
                 'label' => 'Configuration',
                 'children' => [
                     [

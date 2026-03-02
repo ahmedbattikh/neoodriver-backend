@@ -337,28 +337,36 @@
 							</div>
 							<div class="col-md-6">
 								<div class="fw-bold">Driving License</div>
+								{% set drivingLicenseFrontId = docs.drivingLicenseFront ? docs.drivingLicenseFront.id : null %}
+								{% set drivingLicenseBackId = docs.drivingLicenseBack ? docs.drivingLicenseBack.id : null %}
+								{% set drivingLicenseFrontUrl = drivingLicenseFrontId ? (attachmentUrls[drivingLicenseFrontId] ?? null) : null %}
+								{% set drivingLicenseBackUrl = drivingLicenseBackId ? (attachmentUrls[drivingLicenseBackId] ?? null) : null %}
 								<div class="mb-1">Front:
 									{% if docs.drivingLicenseFront %}
 										{{ docs.drivingLicenseFront.originalFileName ?? docs.drivingLicenseFront.fileName }}
-										{% if attachmentUrls[docs.drivingLicenseFront.id] is defined %}
+										{% if drivingLicenseFrontUrl %}
 											—
-											<a href="{{ attachmentUrls[docs.drivingLicenseFront.id] }}" target="_blank" class="link-primary">Open</a>
+											<a href="{{ drivingLicenseFrontUrl }}" target="_blank" class="link-primary">Open</a>
 										{% endif %}
 										{% else %}Not uploaded
 									{% endif %}
 								</div>
-								{{ ui.preview(docs.drivingLicenseFront, attachmentUrls[docs.drivingLicenseFront.id] ?? null) }}
+								{% if docs.drivingLicenseFront %}
+									{{ ui.preview(docs.drivingLicenseFront, drivingLicenseFrontUrl) }}
+								{% endif %}
 								<div class="mb-1">Back:
 									{% if docs.drivingLicenseBack %}
 										{{ docs.drivingLicenseBack.originalFileName ?? docs.drivingLicenseBack.fileName }}
-										{% if attachmentUrls[docs.drivingLicenseBack.id] is defined %}
+										{% if drivingLicenseBackUrl %}
 											—
-											<a href="{{ attachmentUrls[docs.drivingLicenseBack.id] }}" target="_blank" class="link-primary">Open</a>
+											<a href="{{ drivingLicenseBackUrl }}" target="_blank" class="link-primary">Open</a>
 										{% endif %}
 										{% else %}Not uploaded
 									{% endif %}
 								</div>
-								{{ ui.preview(docs.drivingLicenseBack, attachmentUrls[docs.drivingLicenseBack.id] ?? null) }}
+								{% if docs.drivingLicenseBack %}
+									{{ ui.preview(docs.drivingLicenseBack, drivingLicenseBackUrl) }}
+								{% endif %}
 								<div class="mb-1">Validity:
 									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
 										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_drivingLicenseValid') }}"/>
@@ -375,28 +383,36 @@
 							</div>
 							<div class="col-md-6">
 								<div class="fw-bold">Identity Card</div>
+								{% set identityCardFrontId = docs.identityCardFront ? docs.identityCardFront.id : null %}
+								{% set identityCardBackId = docs.identityCardBack ? docs.identityCardBack.id : null %}
+								{% set identityCardFrontUrl = identityCardFrontId ? (attachmentUrls[identityCardFrontId] ?? null) : null %}
+								{% set identityCardBackUrl = identityCardBackId ? (attachmentUrls[identityCardBackId] ?? null) : null %}
 								<div class="mb-1">Front:
 									{% if docs.identityCardFront %}
 										{{ docs.identityCardFront.originalFileName ?? docs.identityCardFront.fileName }}
-										{% if attachmentUrls[docs.identityCardFront.id] is defined %}
+										{% if identityCardFrontUrl %}
 											—
-											<a href="{{ attachmentUrls[docs.identityCardFront.id] }}" target="_blank" class="link-primary">Open</a>
+											<a href="{{ identityCardFrontUrl }}" target="_blank" class="link-primary">Open</a>
 										{% endif %}
 										{% else %}Not uploaded
 									{% endif %}
 								</div>
-								{{ ui.preview(docs.identityCardFront, attachmentUrls[docs.identityCardFront.id] ?? null) }}
+								{% if docs.identityCardFront %}
+									{{ ui.preview(docs.identityCardFront, identityCardFrontUrl) }}
+								{% endif %}
 								<div class="mb-1">Back:
 									{% if docs.identityCardBack %}
 										{{ docs.identityCardBack.originalFileName ?? docs.identityCardBack.fileName }}
-										{% if attachmentUrls[docs.identityCardBack.id] is defined %}
+										{% if identityCardBackUrl %}
 											—
-											<a href="{{ attachmentUrls[docs.identityCardBack.id] }}" target="_blank" class="link-primary">Open</a>
+											<a href="{{ identityCardBackUrl }}" target="_blank" class="link-primary">Open</a>
 										{% endif %}
 										{% else %}Not uploaded
 									{% endif %}
 								</div>
-								{{ ui.preview(docs.identityCardBack, attachmentUrls[docs.identityCardBack.id] ?? null) }}
+								{% if docs.identityCardBack %}
+									{{ ui.preview(docs.identityCardBack, identityCardBackUrl) }}
+								{% endif %}
 								<div class="mb-1">Validity:
 									<form method="post" action="{{ path('admin_user_doc_valid', { id: user.id }) }}" class="d-inline">
 										<input type="hidden" name="_token" value="{{ csrf_token('update_validation_' ~ user.id ~ '_identityCardValid') }}"/>

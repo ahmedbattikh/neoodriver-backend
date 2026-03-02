@@ -13,10 +13,11 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'app:integrations:sync', description: 'Sync integration orders for all drivers for the current day')]
+#[AsCommand(name: 'app:integrations:sync', description: 'Sync integration orders for all drivers')]
 final class SyncDriverIntegrationsCommand extends Command
 {
     private array $tokenCache = [];
@@ -29,11 +30,31 @@ final class SyncDriverIntegrationsCommand extends Command
         parent::__construct();
     }
 
+    protected function configure(): void
+    {
+        $this
+            ->addOption('start', null, InputOption::VALUE_REQUIRED, 'Start date/time in UTC (e.g. 2026-03-01 00:00:00)')
+            ->addOption('end', null, InputOption::VALUE_REQUIRED, 'End date/time in UTC (e.g. 2026-03-02 00:00:00)');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $start = new \DateTimeImmutable('today 00:00:00', new \DateTimeZone('UTC'));
-        $end = new \DateTimeImmutable('tomorrow 00:00:00', new \DateTimeZone('UTC'));
+        $tz = new \DateTimeZone('UTC');
+        $startRaw = $input->getOption('start');
+        $endRaw = $input->getOption('end');
+
+        try {
+            $start = $startRaw ? new \DateTimeImmutable((string) $startRaw, $tz) : new \DateTimeImmutable('today 00:00:00', $tz);
+            $end = $endRaw ? new \DateTimeImmutable((string) $endRaw, $tz) : new \DateTimeImmutable('tomorrow 00:00:00', $tz);
+        } catch (\Throwable $e) {
+            $io->error('Invalid start/end date format.');
+            return Command::FAILURE;
+        }
+        if ($end <= $start) {
+            $io->error('End date must be after start date.');
+            return Command::FAILURE;
+        }
         $startTs = $start->getTimestamp();
         $endTs = $end->getTimestamp();
 
