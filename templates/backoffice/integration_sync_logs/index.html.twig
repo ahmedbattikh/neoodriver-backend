@@ -1,0 +1,80 @@
+{% extends 'backoffice/layout.html.twig' %}
+
+{% block content_title %}Syncro Integaration
+{% endblock %}
+
+{% block content %}
+	<div class="card shadow-sm">
+		<div class="table-responsive">
+			<table class="table align-middle mb-0">
+				<thead class="table-light">
+					<tr>
+						<th>ID</th>
+						<th>Status</th>
+						<th>Interval</th>
+						<th>Hours</th>
+						<th>Started</th>
+						<th>Finished</th>
+						<th>Result</th>
+						<th>Report</th>
+						<th>Error</th>
+						<th class="text-end">Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% if logs is empty %}
+						<tr>
+							<td colspan="10" class="text-center text-muted py-4">No sync logs found</td>
+						</tr>
+					{% else %}
+						{% for log in logs %}
+							<tr>
+								<td>#{{ log.id }}</td>
+								<td>
+									{% set badgeClass = log.status == 'SUCCESS' ? 'text-bg-success' : (log.status == 'FAILED' ? 'text-bg-danger' : 'text-bg-secondary') %}
+									<span class="badge {{ badgeClass }}">{{ log.status }}</span>
+								</td>
+								<td>
+									<div>{{ log.startAt|date('Y-m-d H:i') }}</div>
+									<div class="text-muted small">{{ log.endAt|date('Y-m-d H:i') }}</div>
+								</td>
+								<td>{{ log.hours }}</td>
+								<td>{{ log.startedAt|date('Y-m-d H:i:s') }}</td>
+								<td>{{ log.finishedAt ? log.finishedAt|date('Y-m-d H:i:s') : '—' }}</td>
+								<td>
+									<div class="small">Ops:
+										{{ log.totalOps ?? 0 }}</div>
+									<div class="small">Accounts:
+										{{ log.syncedAccounts ?? 0 }}</div>
+								</td>
+								<td>
+									{% if log.report %}
+										{% for item in log.report %}
+											<div class="small">
+												<strong>{{ item.integrationCode ?? 'N/A' }}</strong>:
+												{{ item.processed ?? 0 }}/{{ item.orders ?? 0 }}
+											</div>
+										{% endfor %}
+									{% else %}
+										<span class="text-muted">—</span>
+									{% endif %}
+								</td>
+								<td class="small text-danger">{{ log.errorMessage ? log.errorMessage|slice(0, 180) : '—' }}</td>
+								<td class="text-end">
+									{% if log.status == 'FAILED' %}
+										<form method="post" action="{{ path('backoffice_integration_sync_logs_retry', { id: log.id }) }}" class="d-inline">
+											<input type="hidden" name="_token" value="{{ csrf_token('retry_integration_sync_' ~ log.id) }}">
+											<button type="submit" class="btn btn-sm btn-outline-danger">Run Again</button>
+										</form>
+									{% else %}
+										<span class="text-muted">—</span>
+									{% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+{% endblock %}

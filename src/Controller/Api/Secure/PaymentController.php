@@ -110,13 +110,59 @@ final class PaymentController extends AbstractFOSRestController
             ->getOneOrNullResult();
         $neooTotalIn = (float) (($row['totalIn'] ?? 0) ?: 0);
         $neooKm = (float) (($row['totalKm'] ?? 0) ?: 0);
-        $cfg = $this->em->getRepository(NeooConfig::class)->findOneBy([], ['updatedAt' => 'DESC']);
-        if ($cfg instanceof NeooConfig) {
-            $neooFraisKm = (float) $cfg->getFraisKm();
-            $neooCpTaux = (float) $cfg->getTauxConge();
-            $neooUrssaf = (float) $cfg->getTauxUrssaf();
-            $neooTauxPas = (float) $cfg->getTauxPas();
+        $configs = $this->em->getRepository(NeooConfig::class)->findBy([], ['updatedAt' => 'DESC']);
+        $configFixedMonthly = 0.0;
+        $fallbackFraisKm = null;
+        $fallbackCpTaux = null;
+        $fallbackUrssaf = null;
+        $fallbackTauxPas = null;
+        $fallbackFix = null;
+        foreach ($configs as $candidateCfg) {
+            if (!$candidateCfg instanceof NeooConfig) {
+                continue;
+            }
+            $candidateFraisKm = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getFraisKm()));
+            $candidateCp = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getTauxConge()));
+            $candidateUrssaf = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getTauxUrssaf()));
+            $candidatePas = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getTauxPas()));
+            $candidateFix = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getFixNeooMonthly()));
+            $fallbackFraisKm ??= $candidateFraisKm;
+            $fallbackCpTaux ??= $candidateCp;
+            $fallbackUrssaf ??= $candidateUrssaf;
+            $fallbackTauxPas ??= $candidatePas;
+            $fallbackFix ??= $candidateFix;
+            if ($neooFraisKm <= 0.0 && $candidateFraisKm > 0.0) {
+                $neooFraisKm = $candidateFraisKm;
+            }
+            if ($neooCpTaux <= 0.0 && $candidateCp > 0.0) {
+                $neooCpTaux = $candidateCp;
+            }
+            if ($neooUrssaf <= 0.0 && $candidateUrssaf > 0.0) {
+                $neooUrssaf = $candidateUrssaf;
+            }
+            if ($neooTauxPas <= 0.0 && $candidatePas > 0.0) {
+                $neooTauxPas = $candidatePas;
+            }
+            if ($configFixedMonthly <= 0.0 && $candidateFix > 0.0) {
+                $configFixedMonthly = $candidateFix;
+            }
         }
+        if ($neooFraisKm <= 0.0 && $fallbackFraisKm !== null) {
+            $neooFraisKm = $fallbackFraisKm;
+        }
+        if ($neooCpTaux <= 0.0 && $fallbackCpTaux !== null) {
+            $neooCpTaux = $fallbackCpTaux;
+        }
+        if ($neooUrssaf <= 0.0 && $fallbackUrssaf !== null) {
+            $neooUrssaf = $fallbackUrssaf;
+        }
+        if ($neooTauxPas <= 0.0 && $fallbackTauxPas !== null) {
+            $neooTauxPas = $fallbackTauxPas;
+        }
+        if ($configFixedMonthly <= 0.0 && $fallbackFix !== null) {
+            $configFixedMonthly = $fallbackFix;
+        }
+        $neooFixed = 0.0;
         $periodStart = $neooStart;
         $periodEnd = $neooEndQuery;
         $weekStart = (new \DateTimeImmutable($periodStart->format('Y-m-d') . ' 00:00:00'))->modify('monday this week 00:00:00');
@@ -128,8 +174,6 @@ final class PaymentController extends AbstractFOSRestController
                 $weekStart = $weekEnd;
                 continue;
             }
-            $windowDays = (int) $windowStart->diff($windowEnd)->days;
-            $weekFraction = $windowDays / 7;
             $weekRow = $this->em->createQueryBuilder()
                 ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
                 ->from(PaymentOperation::class, 'o')
@@ -148,12 +192,55 @@ final class PaymentController extends AbstractFOSRestController
                 ->where(':ca >= f.start')
                 ->andWhere(':ca <= f.end')
                 ->setParameter('ca', $weekTotalIn)
+                ->orderBy('f.start', 'DESC')
                 ->setMaxResults(1)
                 ->getQuery()
                 ->getOneOrNullResult();
-            $weeklyFixed = $weekFee instanceof NeooFee ? (float) $weekFee->getTaux() : 0.0;
-            $neooFixed += $weeklyFixed * $weekFraction;
+            if (!$weekFee instanceof NeooFee) {
+                $weekFee = $this->em->createQueryBuilder()
+                    ->select('f')
+                    ->from(NeooFee::class, 'f')
+                    ->where(':ca >= f.start')
+                    ->orderBy('f.start', 'DESC')
+                    ->setParameter('ca', $weekTotalIn)
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+            }
+            if (!$weekFee instanceof NeooFee) {
+                $weekFee = $this->em->createQueryBuilder()
+                    ->select('f')
+                    ->from(NeooFee::class, 'f')
+                    ->orderBy('f.start', 'ASC')
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+            }
+            $weeklyFixed = $weekFee instanceof NeooFee
+                ? (float) str_replace(',', '.', str_replace(' ', '', (string) $weekFee->getTaux()))
+                : $configFixedMonthly;
+            if ($weeklyFixed <= 0.0 && $configFixedMonthly > 0.0) {
+                $weeklyFixed = $configFixedMonthly;
+            }
+            $neooFixed += $weeklyFixed;
             $weekStart = $weekEnd;
+        }
+        if ($neooFixed <= 0.0 && $neooTotalIn > 0.0) {
+            $periodFee = $this->em->createQueryBuilder()
+                ->select('f')
+                ->from(NeooFee::class, 'f')
+                ->where(':ca >= f.start')
+                ->andWhere(':ca <= f.end')
+                ->setParameter('ca', $neooTotalIn)
+                ->orderBy('f.start', 'DESC')
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
+            if ($periodFee instanceof NeooFee) {
+                $neooFixed = (float) str_replace(',', '.', str_replace(' ', '', (string) $periodFee->getTaux()));
+            } elseif ($configFixedMonthly > 0.0) {
+                $neooFixed = $configFixedMonthly;
+            }
         }
         $groups = $this->em->createQueryBuilder()
             ->select('n.type AS type, SUM(n.amountTtc) AS total')

@@ -37,6 +37,10 @@ final class BackofficeMenuBuilder
                         'url' => $this->urlGenerator->generate('backoffice_integrations_index'),
                     ],
                     [
+                        'label' => 'Syncro Integaration',
+                        'url' => $this->urlGenerator->generate('backoffice_integration_sync_logs_index'),
+                    ],
+                    [
                         'label' => 'Goals',
                         'url' => $this->urlGenerator->generate('backoffice_goals_index'),
                     ],

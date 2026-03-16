@@ -4,14 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\Driver;
-use App\Entity\DriverIntegration;
-use App\Entity\DriverIntegrationAccount;
-use App\Entity\PaymentOperation;
-use App\Enum\PaymentMethodType;
-use App\Service\BoltService;
-use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
+use App\Service\IntegrationSyncService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,12 +15,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'app:integrations:sync', description: 'Sync integration orders for all drivers')]
 final class SyncDriverIntegrationsCommand extends Command
 {
-    private array $tokenCache = [];
-
     public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly BoltService $bolt,
-        private readonly ?LoggerInterface $logger = null,
+        private readonly IntegrationSyncService $integrationSyncService,
     ) {
         parent::__construct();
     }
@@ -52,6 +41,7 @@ final class SyncDriverIntegrationsCommand extends Command
             if ($startRaw || $endRaw) {
                 $start = $startRaw ? new \DateTimeImmutable((string) $startRaw, $tz) : new \DateTimeImmutable('today 00:00:00', $tz);
                 $end = $endRaw ? new \DateTimeImmutable((string) $endRaw, $tz) : new \DateTimeImmutable('tomorrow 00:00:00', $tz);
+                $hours = (int) max(1, (int) floor(($end->getTimestamp() - $start->getTimestamp()) / 3600));
             } else {
                 $hours = is_numeric($hoursRaw) ? (int) $hoursRaw : 0;
                 if ($hours <= 0) {
@@ -69,210 +59,17 @@ final class SyncDriverIntegrationsCommand extends Command
             $io->error('End date must be after start date.');
             return Command::FAILURE;
         }
-        $startTs = $start->getTimestamp();
-        $endTs = $end->getTimestamp();
-
-        $accounts = $this->em->getRepository(DriverIntegrationAccount::class)->findAll();
-        if (!$accounts) {
-            $io->success('No integration accounts found.');
-            return Command::SUCCESS;
+        $log = $this->integrationSyncService->runForWindow($start, $end, $hours, 'command');
+        if ($log->getStatus() !== 'SUCCESS') {
+            $io->error((string) ($log->getErrorMessage() ?? 'Sync failed'));
+            return Command::FAILURE;
         }
 
-        $totalOps = 0;
-        $syncedAccounts = 0;
-
-        $accountsByIntegration = [];
-        foreach ($accounts as $acc) {
-            if (!$acc instanceof DriverIntegrationAccount) {
-                continue;
-            }
-            $integration = $acc->getIntegration();
-            if (!$integration instanceof DriverIntegration || !$integration->isEnabled()) {
-                continue;
-            }
-            $key = $integration->getId() ?? $integration->getCode();
-            if (!isset($accountsByIntegration[$key])) {
-                $accountsByIntegration[$key] = [
-                    'integration' => $integration,
-                    'accounts' => [],
-                ];
-            }
-            $accountsByIntegration[$key]['accounts'][] = $acc;
-        }
-
-        foreach ($accountsByIntegration as $group) {
-            $integration = $group['integration'];
-            $accountsGroup = $group['accounts'];
-            $accessToken = $this->getAccessToken($integration);
-            if ($accessToken === '') {
-                continue;
-            }
-            $companyIds = $integration->getBoltCompanyIds();
-            $ordersPayload = $this->bolt->getFleetOrders($accessToken, 0, 1000, $companyIds, $startTs, $endTs, 'price_review');
-            $orders = $this->extractOrders($ordersPayload);
-            if ($orders === []) {
-                continue;
-            }
-            $ordersByDriver = $this->groupOrdersByDriver($orders);
-            foreach ($accountsGroup as $acc) {
-                if (!$acc instanceof DriverIntegrationAccount) {
-                    continue;
-                }
-                $externalRef = strtolower(trim($acc->getIdDriver()));
-                if ($externalRef === '') {
-                    continue;
-                }
-                $driverOrders = $ordersByDriver[$externalRef] ?? [];
-                if ($driverOrders === []) {
-                    continue;
-                }
-                $processed = $this->syncOrdersForDriver($acc->getDriver(), $integration, $driverOrders);
-                if ($processed > 0) {
-                    $syncedAccounts++;
-                    $totalOps += $processed;
-                }
-            }
-        }
-
-        $io->success(sprintf('Synced %d operations across %d accounts.', $totalOps, $syncedAccounts));
+        $io->success(sprintf(
+            'Synced %d operations across %d accounts.',
+            (int) ($log->getTotalOps() ?? 0),
+            (int) ($log->getSyncedAccounts() ?? 0)
+        ));
         return Command::SUCCESS;
-    }
-
-    private function syncOrdersForDriver(Driver $driver, DriverIntegration $integration, array $orders): int
-    {
-        if ($orders === []) {
-            return 0;
-        }
-
-        $opRepo = $this->em->getRepository(PaymentOperation::class);
-        $processed = 0;
-
-        foreach ($orders as $ord) {
-            $ref = (string) ($ord['order_reference'] ?? '');
-            $price = is_array($ord['order_price'] ?? null) ? $ord['order_price'] : [];
-            $net = (float) ($price['net_earnings'] ?? 0);
-            $tip = (float) ($price['tip'] ?? 0);
-            $bonus = (float) (($price['in_app_discount'] ?? 0) + ($price['cash_discount'] ?? 0));
-            $methodRaw = strtolower((string) ($ord['payment_method'] ?? ''));
-            $pmEnum = $methodRaw === 'cash' ? PaymentMethodType::CASH : PaymentMethodType::CB;
-            $ts = (int) ($ord['payment_confirmed_timestamp'] ?? $ord['order_finished_timestamp'] ?? $ord['order_drop_off_timestamp'] ?? $ord['order_created_timestamp'] ?? time());
-            $occurredAt = (new \DateTimeImmutable('@' . $ts))->setTimezone(new \DateTimeZone('UTC'));
-            $status = strtoupper((string) ($ord['order_status'] ?? 'FINISHED'));
-            $rideDistance = (float) ($ord['ride_distance'] / 1000 ?? 0);
-            $existing = null;
-
-            if ($ref !== '') {
-                $existing = $opRepo->findOneBy([
-                    'driver' => $driver,
-                    'integrationCode' => $integration->getCode(),
-                    'externalReference' => $ref,
-                ]);
-            }
-
-            if ($existing instanceof PaymentOperation) {
-                $existing->setOperationType('ORDER');
-                $existing->setDirection('IN');
-                $existing->setAmount(number_format($net, 3, '.', ''));
-                $existing->setCurrency('EUR');
-                $existing->setStatus($status);
-                $existing->setDescription(null);
-                $existing->setOriginalObject(is_array($ord) ? $ord : null);
-                $existing->setPaymentMethodEnum($pmEnum);
-                $existing->setTips(number_format($tip, 3, '.', ''));
-                $existing->setBonus(number_format($bonus, 3, '.', ''));
-                $existing->setOccurredAt($occurredAt);
-                $existing->setRideDistance(number_format($rideDistance, 3, '.', ''));
-                $processed++;
-                continue;
-            }
-
-            $op = new PaymentOperation();
-            $op->setDriver($driver);
-            $op->setIntegrationCode($integration->getCode());
-            $op->setOperationType('ORDER');
-            $op->setDirection('IN');
-            $op->setAmount(number_format($net, 3, '.', ''));
-            $op->setCurrency('EUR');
-            $op->setStatus($status);
-            $op->setExternalReference($ref !== '' ? $ref : null);
-            $op->setDescription(null);
-            $op->setOriginalObject(is_array($ord) ? $ord : null);
-            $op->setPaymentMethodEnum($pmEnum);
-            $op->setTips(number_format($tip, 3, '.', ''));
-            $op->setBonus(number_format($bonus, 3, '.', ''));
-            $op->setOccurredAt($occurredAt);
-            $op->setRideDistance(number_format($rideDistance, 3, '.', ''));
-            $this->em->persist($op);
-            $processed++;
-        }
-
-        $this->em->flush();
-        return $processed;
-    }
-
-    private function groupOrdersByDriver(array $orders): array
-    {
-        $grouped = [];
-        foreach ($orders as $ord) {
-            $uuid = strtolower(trim((string) ($ord['driver_uuid'] ?? '')));
-            if ($uuid === '') {
-                continue;
-            }
-            if (!isset($grouped[$uuid])) {
-                $grouped[$uuid] = [];
-            }
-            $grouped[$uuid][] = $ord;
-        }
-        return $grouped;
-    }
-
-    private function getAccessToken(DriverIntegration $integration): string
-    {
-        $key = $integration->getId() ?? $integration->getCode();
-        if (array_key_exists($key, $this->tokenCache)) {
-            return (string) $this->tokenCache[$key];
-        }
-
-        try {
-            $cid = $integration->getBoltCustomerId();
-            $secret = $integration->getBoltCustomerSecret();
-            $scope = $integration->getBoltScope() ?? 'fleet-integration:api';
-            $tokenPayload = ($cid && $secret) ? $this->bolt->getTokenUsing($cid, $secret, $scope) : $this->bolt->getToken();
-            $accessToken = (string) ($tokenPayload['access_token'] ?? '');
-            $this->tokenCache[$key] = $accessToken;
-            if ($this->logger) {
-                $this->logger->info('bolt_token_retrieved', [
-                    'integration_code' => $integration->getCode(),
-                    'has_access_token' => $accessToken !== '',
-                ]);
-            }
-            return $accessToken;
-        } catch (\Throwable $e) {
-            if ($this->logger) {
-                $this->logger->error('integration_sync_failed', [
-                    'integration_code' => $integration->getCode(),
-                    'error' => $e->getMessage(),
-                ]);
-            }
-            $this->tokenCache[$key] = '';
-            return '';
-        }
-    }
-
-    private function extractOrders(array $ordersPayload): array
-    {
-        $orders = [];
-        if (isset($ordersPayload['data'])) {
-            if (isset($ordersPayload['data']['orders']) && is_array($ordersPayload['data']['orders'])) {
-                $orders = $ordersPayload['data']['orders'];
-            } elseif (is_array($ordersPayload['data'])) {
-                foreach ($ordersPayload['data'] as $item) {
-                    if (is_array($item) && isset($item['orders']) && is_array($item['orders'])) {
-                        $orders = array_merge($orders, $item['orders']);
-                    }
-                }
-            }
-        }
-        return $orders;
     }
 }

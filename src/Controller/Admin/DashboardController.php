@@ -437,6 +437,21 @@ final class DashboardController extends AbstractController
             $neooCommissionVariable = $neooData['neooCommissionVariable'];
             $neooTotalCommission = $neooData['neooTotalCommission'];
             $neooReversementBrut = $neooData['neooReversementBrut'];
+            $neooVatRecoverable = $neooVatRate > 0 ? ($neooExpenseTotal * $neooVatRate / (1 + $neooVatRate)) : 0.0;
+            $neooC27 = $neooExpenseTotal - $neooVatRecoverable;
+            $neooIk = $neooKm * $neooFraisKm;
+            $netSocialDenominator = (1 / 0.78) + ($neooUrssaf / 100);
+            $neooNetSocialNumerator = $neooTotalIn - $neooFixed - $neooC27 - $neooIk;
+            $neooNetSocial = $netSocialDenominator > 0 ? ($neooNetSocialNumerator / $netSocialDenominator) : 0.0;
+            $neooSalaireBrutCotisations = $neooNetSocial / 0.78;
+            $neooMontantPas = $neooNetSocial * ($neooTauxPas / 100);
+            $neooCpIndemnite = $neooSalaireBrutCotisations * ($neooCpTaux / 100);
+            $neooNetSocialAfter = $neooNetSocial - $neooMontantPas - $neooAcompte;
+            $neooRemboursementsNonImposables = $neooExpenseTotal + $neooIk + $neooCpIndemnite;
+            $neooNetFinalPayer = $neooNetSocialAfter + $neooRemboursementsNonImposables;
+            $neooCommissionVariable = $neooNetSocial * ($neooUrssaf / 100);
+            $neooTotalCommission = $neooFixed + $neooCommissionVariable;
+            $neooReversementBrut = $neooTotalIn - $neooTotalCommission;
             try {
                 $balance = $this->em->getRepository(Balance::class)->findOneBy(['driver' => $driver]);
                 if (!$balance instanceof Balance) {
@@ -706,12 +721,54 @@ final class DashboardController extends AbstractController
                 ->getOneOrNullResult();
             $neooTotalIn = (float) (($row['totalIn'] ?? 0) ?: 0);
             $neooKm = (float) (($row['totalKm'] ?? 0) ?: 0);
-            $cfg = $this->em->getRepository(NeooConfig::class)->findOneBy([], ['updatedAt' => 'DESC']);
-            if ($cfg instanceof NeooConfig) {
-                $neooFraisKm = (float) $cfg->getFraisKm();
-                $neooCpTaux = (float) $cfg->getTauxConge();
-                $neooUrssaf = (float) $cfg->getTauxUrssaf();
-                $neooTauxPas = (float) $cfg->getTauxPas();
+            $configs = $this->em->getRepository(NeooConfig::class)->findBy([], ['updatedAt' => 'DESC']);
+            $configFixedMonthly = 0.0;
+            $fallbackFraisKm = null;
+            $fallbackCpTaux = null;
+            $fallbackUrssaf = null;
+            $fallbackTauxPas = null;
+            $fallbackFix = null;
+            foreach ($configs as $candidateCfg) {
+                if (!$candidateCfg instanceof NeooConfig) {
+                    continue;
+                }
+                $candidateFraisKm = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getFraisKm()));
+                $candidateCp = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getTauxConge()));
+                $candidateUrssaf = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getTauxUrssaf()));
+                $candidatePas = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getTauxPas()));
+                $candidateFix = (float) str_replace(',', '.', str_replace(' ', '', (string) $candidateCfg->getFixNeooMonthly()));
+                $fallbackFraisKm ??= $candidateFraisKm;
+                $fallbackCpTaux ??= $candidateCp;
+                $fallbackUrssaf ??= $candidateUrssaf;
+                $fallbackTauxPas ??= $candidatePas;
+                $fallbackFix ??= $candidateFix;
+                if ($neooFraisKm <= 0.0 && $candidateFraisKm > 0.0) {
+                    $neooFraisKm = $candidateFraisKm;
+                }
+                if ($neooCpTaux <= 0.0 && $candidateCp > 0.0) {
+                    $neooCpTaux = $candidateCp;
+                }
+                if ($neooUrssaf <= 0.0 && $candidateUrssaf > 0.0) {
+                    $neooUrssaf = $candidateUrssaf;
+                }
+                $neooTauxPas = $candidatePas;
+
+                if ($configFixedMonthly <= 0.0 && $candidateFix > 0.0) {
+                    $configFixedMonthly = $candidateFix;
+                }
+            }
+            if ($neooFraisKm <= 0.0 && $fallbackFraisKm !== null) {
+                $neooFraisKm = $fallbackFraisKm;
+            }
+            if ($neooCpTaux <= 0.0 && $fallbackCpTaux !== null) {
+                $neooCpTaux = $fallbackCpTaux;
+            }
+            if ($neooUrssaf <= 0.0 && $fallbackUrssaf !== null) {
+                $neooUrssaf = $fallbackUrssaf;
+            }
+
+            if ($configFixedMonthly <= 0.0 && $fallbackFix !== null) {
+                $configFixedMonthly = $fallbackFix;
             }
             $neooFixed = 0.0;
             $periodStart = $neooStart;
@@ -725,8 +782,6 @@ final class DashboardController extends AbstractController
                     $weekStart = $weekEnd;
                     continue;
                 }
-                $windowDays = (int) $windowStart->diff($windowEnd)->days;
-                $weekFraction = $windowDays / 7;
                 $weekRow = $this->em->createQueryBuilder()
                     ->select("SUM(CASE WHEN LOWER(o.direction) IN ('in','credit') THEN o.amount ELSE 0 END) AS totalIn")
                     ->from(PaymentOperation::class, 'o')
@@ -745,12 +800,55 @@ final class DashboardController extends AbstractController
                     ->where(':ca >= f.start')
                     ->andWhere(':ca <= f.end')
                     ->setParameter('ca', $weekTotalIn)
+                    ->orderBy('f.start', 'DESC')
                     ->setMaxResults(1)
                     ->getQuery()
                     ->getOneOrNullResult();
-                $weeklyFixed = $weekFee instanceof NeooFee ? (float) $weekFee->getTaux() : 0.0;
-                $neooFixed += $weeklyFixed * $weekFraction;
+                if (!$weekFee instanceof NeooFee) {
+                    $weekFee = $this->em->createQueryBuilder()
+                        ->select('f')
+                        ->from(NeooFee::class, 'f')
+                        ->where(':ca >= f.start')
+                        ->orderBy('f.start', 'DESC')
+                        ->setParameter('ca', $weekTotalIn)
+                        ->setMaxResults(1)
+                        ->getQuery()
+                        ->getOneOrNullResult();
+                }
+                if (!$weekFee instanceof NeooFee) {
+                    $weekFee = $this->em->createQueryBuilder()
+                        ->select('f')
+                        ->from(NeooFee::class, 'f')
+                        ->orderBy('f.start', 'ASC')
+                        ->setMaxResults(1)
+                        ->getQuery()
+                        ->getOneOrNullResult();
+                }
+                $weeklyFixed = $weekFee instanceof NeooFee
+                    ? (float) str_replace(',', '.', str_replace(' ', '', (string) $weekFee->getTaux()))
+                    : $configFixedMonthly;
+                if ($weeklyFixed <= 0.0 && $configFixedMonthly > 0.0) {
+                    $weeklyFixed = $configFixedMonthly;
+                }
+                $neooFixed += $weeklyFixed;
                 $weekStart = $weekEnd;
+            }
+            if ($neooFixed <= 0.0 && $neooTotalIn > 0.0) {
+                $periodFee = $this->em->createQueryBuilder()
+                    ->select('f')
+                    ->from(NeooFee::class, 'f')
+                    ->where(':ca >= f.start')
+                    ->andWhere(':ca <= f.end')
+                    ->setParameter('ca', $neooTotalIn)
+                    ->orderBy('f.start', 'DESC')
+                    ->setMaxResults(1)
+                    ->getQuery()
+                    ->getOneOrNullResult();
+                if ($periodFee instanceof NeooFee) {
+                    $neooFixed = (float) str_replace(',', '.', str_replace(' ', '', (string) $periodFee->getTaux()));
+                } elseif ($configFixedMonthly > 0.0) {
+                    $neooFixed = $configFixedMonthly;
+                }
             }
             $groups = $this->em->createQueryBuilder()
                 ->select('n.type AS type, SUM(n.amountTtc) AS total')
@@ -873,7 +971,53 @@ final class DashboardController extends AbstractController
                     'error' => $e->getMessage(),
                 ]);
             }
+            $neooVatRecoverable = $neooVatRate > 0 ? ($neooExpenseTotal * $neooVatRate / (1 + $neooVatRate)) : 0.0;
+            $neooC27 = $neooExpenseTotal - $neooVatRecoverable;
+            $neooIk = $neooKm * $neooFraisKm;
+            $netSocialDenominator = (1 / 0.78) + ($neooUrssaf / 100);
+            $netSocialNumerator = $neooTotalIn - $neooFixed - $neooC27 - $neooIk;
+            $neooNetSocialNumerator = $netSocialNumerator;
+            $neooNetSocial = $netSocialDenominator > 0 ? ($netSocialNumerator / $netSocialDenominator) : 0.0;
+            $neooSalaireBrutCotisations = $neooNetSocial / 0.78;
+            $neooMontantPas = $neooNetSocial * ($neooTauxPas / 100);
+            $neooCpIndemnite = $neooSalaireBrutCotisations * ($neooCpTaux / 100);
+            $neooNetSocialAfter = $neooNetSocial - $neooMontantPas - $neooAcompte;
+            $neooRemboursementsNonImposables = $neooExpenseTotal + $neooIk + $neooCpIndemnite;
+            $neooNetFinalPayer = $neooNetSocialAfter + $neooRemboursementsNonImposables;
+            $neooCommissionVariable = $neooNetSocial * ($neooUrssaf / 100);
+            $neooTotalCommission = $neooFixed + $neooCommissionVariable;
+            $neooReversementBrut = $neooTotalIn - $neooTotalCommission;
         }
+        if (
+            $neooTotalIn > 0
+            && abs($neooReversementBrut) < 0.000001
+            && abs($neooNetSocial) < 0.000001
+        ) {
+            $neooVatRecoverable = $neooVatRate > 0 ? ($neooExpenseTotal * $neooVatRate / (1 + $neooVatRate)) : 0.0;
+            $neooC27 = $neooExpenseTotal - $neooVatRecoverable;
+            $neooIk = $neooKm * $neooFraisKm;
+            $netSocialDenominator = (1 / 0.78) + ($neooUrssaf / 100);
+            $netSocialNumerator = $neooTotalIn - $neooFixed - $neooC27 - $neooIk;
+            $neooNetSocialNumerator = $netSocialNumerator;
+            $neooNetSocial = $netSocialDenominator > 0 ? ($netSocialNumerator / $netSocialDenominator) : 0.0;
+            $neooSalaireBrutCotisations = $neooNetSocial / 0.78;
+            $neooMontantPas = $neooNetSocial * ($neooTauxPas / 100);
+            $neooCpIndemnite = $neooSalaireBrutCotisations * ($neooCpTaux / 100);
+            $neooNetSocialAfter = $neooNetSocial - $neooMontantPas - $neooAcompte;
+            $neooRemboursementsNonImposables = $neooExpenseTotal + $neooIk + $neooCpIndemnite;
+            $neooNetFinalPayer = $neooNetSocialAfter + $neooRemboursementsNonImposables;
+            $neooCommissionVariable = $neooNetSocial * ($neooUrssaf / 100);
+            $neooTotalCommission = $neooFixed + $neooCommissionVariable;
+            $neooReversementBrut = $neooTotalIn - $neooTotalCommission;
+        }
+        if (!is_finite($neooNetSocial)) {
+            $neooNetSocial = 0.0;
+        }
+        if (!is_finite($neooCommissionVariable)) {
+            $neooCommissionVariable = 0.0;
+        }
+        $neooTotalCommission = $neooFixed + $neooCommissionVariable;
+        $neooReversementBrut = $neooTotalIn - $neooTotalCommission;
         return [
             'neooTotalIn' => $neooTotalIn,
             'neooFixed' => $neooFixed,
@@ -1324,5 +1468,4 @@ final class DashboardController extends AbstractController
     {
         return str_starts_with($request->getPathInfo(), '/backoffice');
     }
-
 }
