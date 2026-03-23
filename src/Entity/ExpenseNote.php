@@ -27,11 +27,11 @@ class ExpenseNote
     #[JMS\Groups(['me:read'])]
     private \DateTimeImmutable $noteDate;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     #[JMS\Groups(['me:read'])]
     private string $amountTtc;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3, nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
     #[JMS\Groups(['me:read'])]
     private ?string $vat = null;
 

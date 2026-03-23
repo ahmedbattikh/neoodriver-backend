@@ -19,7 +19,7 @@ class Goals
     #[ORM\Column(length: 100)]
     private string $name = '';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     private string $amount;
 
     #[ORM\Column(enumType: GoalFrequency::class)]
@@ -41,7 +41,7 @@ class Goals
     {
         $this->createdAt = new \DateTimeImmutable('now');
         $this->updatedAt = new \DateTimeImmutable('now');
-        $this->amount = '0.000';
+        $this->amount = '0.00';
     }
 
     public function getId(): ?int
@@ -149,4 +149,3 @@ class Goals
         $this->updatedAt = new \DateTimeImmutable('now');
     }
 }
-

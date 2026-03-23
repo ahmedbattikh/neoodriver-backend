@@ -24,7 +24,7 @@ class PaymentBatch
     #[ORM\Column(type: 'date_immutable')]
     private \DateTimeImmutable $periodEnd;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     private string $totalAmount;
 
     public function getId(): ?int
@@ -72,4 +72,3 @@ class PaymentBatch
         return $this;
     }
 }
-

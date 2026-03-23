@@ -32,3 +32,7 @@ vendor/
 .env.local
 .env.local.php
 .env.test
+.env
+.env.dev
+.env.prod
+.env.prod.example

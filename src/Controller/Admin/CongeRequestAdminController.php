@@ -8,11 +8,11 @@ use App\Entity\Balance;
 use App\Entity\CongeRequest;
 use App\Enum\CongeRequestStatus;
 use Doctrine\ORM\EntityManagerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_SUPER_ADMIN')]
 final class CongeRequestAdminController extends AbstractController
@@ -24,7 +24,7 @@ final class CongeRequestAdminController extends AbstractController
     {
         $req = $this->em->getRepository(CongeRequest::class)->find($id);
         if (!$req instanceof CongeRequest) {
-            return $this->redirectToRoute('admin_dashboard');
+            return $this->redirectToRoute('admin');
         }
         $driver = $req->getDriver();
         $user = $driver->getUser();
@@ -43,7 +43,7 @@ final class CongeRequestAdminController extends AbstractController
         }
         $current = (float) $balance->getSoldConge();
         $delta = (float) $req->getAmount();
-        $balance->setSoldConge(number_format($current - $delta, 3, '.', ''));
+        $balance->setSoldConge(number_format($current - $delta, 2, '.', ''));
         $balance->setLastUpdate(new \DateTimeImmutable('now'));
         $this->em->flush();
         return $this->redirectToRoute('admin_user_show', ['id' => $user?->getId(), 'tab' => 'conge']);
@@ -54,7 +54,7 @@ final class CongeRequestAdminController extends AbstractController
     {
         $req = $this->em->getRepository(CongeRequest::class)->find($id);
         if (!$req instanceof CongeRequest) {
-            return $this->redirectToRoute('admin_dashboard');
+            return $this->redirectToRoute('admin');
         }
         $driver = $req->getDriver();
         $user = $driver->getUser();

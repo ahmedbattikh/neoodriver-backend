@@ -200,16 +200,16 @@ final class IntegrationSyncService
             if ($existing instanceof PaymentOperation) {
                 $existing->setOperationType('ORDER');
                 $existing->setDirection('IN');
-                $existing->setAmount(number_format($net, 3, '.', ''));
+                $existing->setAmount(number_format($net, 2, '.', ''));
                 $existing->setCurrency('EUR');
                 $existing->setStatus($status);
                 $existing->setDescription(null);
                 $existing->setOriginalObject(is_array($ord) ? $ord : null);
                 $existing->setPaymentMethodEnum($pmEnum);
-                $existing->setTips(number_format($tip, 3, '.', ''));
-                $existing->setBonus(number_format($bonus, 3, '.', ''));
+                $existing->setTips(number_format($tip, 2, '.', ''));
+                $existing->setBonus(number_format($bonus, 2, '.', ''));
                 $existing->setOccurredAt($occurredAt);
-                $existing->setRideDistance(number_format($rideDistance, 3, '.', ''));
+                $existing->setRideDistance(number_format($rideDistance, 2, '.', ''));
                 $processed++;
                 continue;
             }
@@ -219,17 +219,17 @@ final class IntegrationSyncService
             $op->setIntegrationCode($integration->getCode());
             $op->setOperationType('ORDER');
             $op->setDirection('IN');
-            $op->setAmount(number_format($net, 3, '.', ''));
+            $op->setAmount(number_format($net, 2, '.', ''));
             $op->setCurrency('EUR');
             $op->setStatus($status);
             $op->setExternalReference($ref !== '' ? $ref : null);
             $op->setDescription(null);
             $op->setOriginalObject(is_array($ord) ? $ord : null);
             $op->setPaymentMethodEnum($pmEnum);
-            $op->setTips(number_format($tip, 3, '.', ''));
-            $op->setBonus(number_format($bonus, 3, '.', ''));
+            $op->setTips(number_format($tip, 2, '.', ''));
+            $op->setBonus(number_format($bonus, 2, '.', ''));
             $op->setOccurredAt($occurredAt);
-            $op->setRideDistance(number_format($rideDistance, 3, '.', ''));
+            $op->setRideDistance(number_format($rideDistance, 2, '.', ''));
             $this->em->persist($op);
             $processed++;
         }

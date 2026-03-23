@@ -1,0 +1,809 @@
+{
+  "info": {
+    "name": "NeoDriver API",
+    "_postman_id": "f57cd3be-2132-43ca-b8f5-7d2b4ed44780",
+    "description": "Collection generated from Symfony API routes with ready-to-test request objects.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwtToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "Open Ping",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/open/ping"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (Request OTP)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "value": "{{email}}",
+                  "type": "text"
+                },
+                {
+                  "key": "firstName",
+                  "value": "John",
+                  "type": "text"
+                },
+                {
+                  "key": "lastName",
+                  "value": "Doe",
+                  "type": "text"
+                },
+                {
+                  "key": "mobileNumber",
+                  "value": "+33600000000",
+                  "type": "text"
+                },
+                {
+                  "key": "photo",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/register"
+          }
+        },
+        {
+          "name": "Request OTP by Email",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/login/email"
+          }
+        },
+        {
+          "name": "Login with OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.environment.set('jwtToken', data.token);",
+                  "if (data.refreshToken) pm.environment.set('refreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/login/otp"
+          }
+        },
+        {
+          "name": "Login with Password (json_login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.environment.set('jwtToken', data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/login"
+          }
+        },
+        {
+          "name": "Refresh JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.environment.set('jwtToken', data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/token/refresh"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Secure Basic",
+      "item": [
+        {
+          "name": "Secure Ping",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/ping"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/me"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"mobileNumber\": \"+33600000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/secure/user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Driver & Vehicle",
+      "item": [
+        {
+          "name": "Create or Update Driver Profile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "vtcCardExpirationDate",
+                  "value": "2027-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "drivingLicenseExpirationDate",
+                  "value": "2029-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "identityCardExpirationDate",
+                  "value": "2030-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "socialSecurityNumber",
+                  "value": "1900000000000",
+                  "type": "text"
+                },
+                {
+                  "key": "iban",
+                  "value": "FR7630001007941234567890185",
+                  "type": "text"
+                },
+                {
+                  "key": "isHosted",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "identityPhoto",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "vtcCardFront",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "vtcCardBack",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "drivingLicenseFront",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "drivingLicenseBack",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "identityCardFront",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "identityCardBack",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "healthCard",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "bankStatement",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "proofOfResidence",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "secureDrivingRightCertificate",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/secure/driver"
+          }
+        },
+        {
+          "name": "Create Vehicle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.vehicleId) pm.environment.set('vehicleId', data.vehicleId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "registrationNumber",
+                  "value": "AA-123-BB",
+                  "type": "text"
+                },
+                {
+                  "key": "make",
+                  "value": "Toyota",
+                  "type": "text"
+                },
+                {
+                  "key": "model",
+                  "value": "Corolla",
+                  "type": "text"
+                },
+                {
+                  "key": "firstRegistrationYear",
+                  "value": "2022",
+                  "type": "text"
+                },
+                {
+                  "key": "registrationDate",
+                  "value": "2022-07-15",
+                  "type": "text"
+                },
+                {
+                  "key": "seatCount",
+                  "value": "4",
+                  "type": "text"
+                },
+                {
+                  "key": "energyType",
+                  "value": "HYBRID",
+                  "type": "text"
+                },
+                {
+                  "key": "insuranceExpirationDate",
+                  "value": "2027-01-01",
+                  "type": "text"
+                },
+                {
+                  "key": "registrationCertificate",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "paidTransportInsuranceCertificate",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "technicalInspection",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "vehicleFrontPhoto",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "insuranceNote",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/secure/vehicle"
+          }
+        },
+        {
+          "name": "Update Driver Documents",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "vtcCardExpirationDate",
+                  "value": "2028-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "drivingLicenseExpirationDate",
+                  "value": "2030-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "identityCardExpirationDate",
+                  "value": "2031-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "socialSecurityNumber",
+                  "value": "1900000000000",
+                  "type": "text"
+                },
+                {
+                  "key": "iban",
+                  "value": "FR7630001007941234567890185",
+                  "type": "text"
+                },
+                {
+                  "key": "isHosted",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "identityPhoto",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "vtcCardFront",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "vtcCardBack",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "drivingLicenseFront",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "drivingLicenseBack",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "identityCardFront",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "identityCardBack",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "healthCard",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "bankStatement",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "proofOfResidence",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "secureDrivingRightCertificate",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/secure/driver-documents"
+          }
+        },
+        {
+          "name": "Update Vehicle",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "registrationNumber",
+                  "value": "BB-234-CC",
+                  "type": "text"
+                },
+                {
+                  "key": "make",
+                  "value": "Tesla",
+                  "type": "text"
+                },
+                {
+                  "key": "model",
+                  "value": "Model 3",
+                  "type": "text"
+                },
+                {
+                  "key": "seatCount",
+                  "value": "4",
+                  "type": "text"
+                },
+                {
+                  "key": "energyType",
+                  "value": "ELECTRIC",
+                  "type": "text"
+                },
+                {
+                  "key": "registrationCertificate",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/secure/vehicle/{{vehicleId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Expense Notes",
+      "item": [
+        {
+          "name": "Create Expense Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.environment.set('expenseNoteId', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "noteDate",
+                  "value": "2026-03-20",
+                  "type": "text"
+                },
+                {
+                  "key": "amountTtc",
+                  "value": "45.90",
+                  "type": "text"
+                },
+                {
+                  "key": "vat",
+                  "value": "0.20",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "fuel",
+                  "type": "text"
+                },
+                {
+                  "key": "invoice",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/secure/expense-notes"
+          }
+        },
+        {
+          "name": "List Expense Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/expense-notes?page=1&size=20&sort=noteDate&dir=DESC"
+          }
+        },
+        {
+          "name": "Get Expense Note by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/expense-notes/{{expenseNoteId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Driver Integrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/driver-integrations"
+          }
+        },
+        {
+          "name": "Payments Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/payments-summary?dateBegin={{dateBegin}}&dateEnd={{dateEnd}}"
+          }
+        },
+        {
+          "name": "Payment Operations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/payment-operations?page=1&size=20&sort=occurredAt&dir=DESC&currency=EUR"
+          }
+        },
+        {
+          "name": "Payment Batches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/payment-batches?page=1&size=20&sort=periodStart&dir=DESC"
+          }
+        },
+        {
+          "name": "Payslip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/secure/payslip?dateBegin={{dateBegin}}&dateEnd={{dateEnd}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Driver Requests",
+      "item": [
+        {
+          "name": "List Conge Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/me/conge-requests"
+          }
+        },
+        {
+          "name": "Create Conge Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "amount",
+                  "value": "150.00",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Paid leave advance",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/me/conge-requests"
+          }
+        },
+        {
+          "name": "List Advance Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/me/advance-requests"
+          }
+        },
+        {
+          "name": "Allowed Advance Amount",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/me/advance-requests/allowed-amount"
+          }
+        },
+        {
+          "name": "Create Advance Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "amount",
+                  "value": "100.00",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Weekly advance",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/me/advance-requests"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost"
+    }
+  ]
+}

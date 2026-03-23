@@ -14,11 +14,11 @@ use App\Enum\PaymentMethodType;
 use App\Service\Storage\R2Client;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_SUPER_ADMIN')]
 final class AdvanceRequestAdminController extends AbstractController
@@ -30,7 +30,7 @@ final class AdvanceRequestAdminController extends AbstractController
     {
         $req = $this->em->getRepository(AdvanceRequest::class)->find($id);
         if (!$req instanceof AdvanceRequest) {
-            return $this->redirectToRoute('admin_dashboard');
+            return $this->redirectToRoute('admin');
         }
         $driver = $req->getDriver();
         $user = $driver->getUser();
@@ -54,10 +54,10 @@ final class AdvanceRequestAdminController extends AbstractController
         $op->setOperationType('CASH_ADVANCE');
         $op->setDirection('OUT');
         $op->setAmount($req->getAmount());
-        $op->setCurrency('TND');
+        $op->setCurrency('EUR');
         $op->setPaymentMethodEnum(PaymentMethodType::CASH);
-        $op->setBonus('0.000');
-        $op->setTips('0.000');
+        $op->setBonus('0.00');
+        $op->setTips('0.00');
         $op->setStatus('completed');
         $op->setExternalReference('ADV-' . $req->getId());
         $op->setDescription('Cash advance approval');
@@ -73,7 +73,7 @@ final class AdvanceRequestAdminController extends AbstractController
     {
         $req = $this->em->getRepository(AdvanceRequest::class)->find($id);
         if (!$req instanceof AdvanceRequest) {
-            return $this->redirectToRoute('admin_dashboard');
+            return $this->redirectToRoute('admin');
         }
         $driver = $req->getDriver();
         $user = $driver->getUser();

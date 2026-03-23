@@ -84,8 +84,8 @@ final class PaymentOperationBalanceSubscriber implements EventSubscriber
             $sold -= $amt;
             $debit += $amt;
         }
-        $balance->setSold(number_format($sold, 3, '.', ''));
-        $balance->setTotalDebit(number_format($debit, 3, '.', ''));
+        $balance->setSold(number_format($sold, 2, '.', ''));
+        $balance->setTotalDebit(number_format($debit, 2, '.', ''));
         $balance->setLastUpdate(new \DateTimeImmutable('now'));
     }
 }

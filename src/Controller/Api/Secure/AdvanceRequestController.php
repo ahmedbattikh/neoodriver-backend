@@ -79,11 +79,11 @@ final class AdvanceRequestController extends AbstractController
         $neoofee = $weekIn * $taux;
         $allowed = max(0.0, $sold - $neoofee);
         return $this->json([
-            'allowedAmount' => number_format($allowed, 3, '.', ''),
-            'sold' => number_format($sold, 3, '.', ''),
-            'neoofee' => number_format($neoofee, 3, '.', ''),
-            'taux' => number_format($taux, 3, '.', ''),
-            'weekTotalIn' => number_format($weekIn, 3, '.', ''),
+            'allowedAmount' => number_format($allowed, 2, '.', ''),
+            'sold' => number_format($sold, 2, '.', ''),
+            'neoofee' => number_format($neoofee, 2, '.', ''),
+            'taux' => number_format($taux, 2, '.', ''),
+            'weekTotalIn' => number_format($weekIn, 2, '.', ''),
             'weekStart' => $weekStart->format('Y-m-d'),
             'weekEnd' => $weekEnd->format('Y-m-d'),
         ], Response::HTTP_OK);
@@ -130,17 +130,17 @@ final class AdvanceRequestController extends AbstractController
             return $this->json([
                 'error' => 'amount_exceeds_allowed',
                 'message' => 'Requested amount exceeds allowed advance',
-                'allowedAmount' => number_format($allowed, 3, '.', ''),
-                'requestedAmount' => number_format($requested, 3, '.', ''),
-                'sold' => number_format($sold, 3, '.', ''),
-                'neoofee' => number_format($neoofee, 3, '.', ''),
-                'taux' => number_format($taux, 3, '.', ''),
-                'weekTotalIn' => number_format($weekIn, 3, '.', ''),
+                'allowedAmount' => number_format($allowed, 2, '.', ''),
+                'requestedAmount' => number_format($requested, 2, '.', ''),
+                'sold' => number_format($sold, 2, '.', ''),
+                'neoofee' => number_format($neoofee, 2, '.', ''),
+                'taux' => number_format($taux, 2, '.', ''),
+                'weekTotalIn' => number_format($weekIn, 2, '.', ''),
             ], Response::HTTP_BAD_REQUEST);
         }
         $req = new AdvanceRequest();
         $req->setDriver($driver);
-        $req->setAmount(number_format((float)$amount, 3, '.', ''));
+        $req->setAmount(number_format((float)$amount, 2, '.', ''));
         $req->setDescription($description !== '' ? $description : null);
         $this->em->persist($req);
         $this->em->flush();

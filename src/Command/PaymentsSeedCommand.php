@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Command;
@@ -81,11 +82,11 @@ final class PaymentsSeedCommand extends Command
                 $op->setIntegrationCode($integration->getCode());
                 $op->setOperationType('ride_payment');
                 $op->setDirection('credit');
-                $op->setAmount(number_format($amount, 3, '.', ''));
-                $op->setCurrency('TND');
+                $op->setAmount(number_format($amount, 2, '.', ''));
+                $op->setCurrency('EUR');
                 $op->setPaymentMethod(random_int(0, 1) === 0 ? 'CASH' : 'CB');
-                $op->setBonus(number_format(random_int(0, 300) / 100.0, 3, '.', ''));
-                $op->setTips(number_format(random_int(0, 500) / 100.0, 3, '.', ''));
+                $op->setBonus(number_format(random_int(0, 300) / 100.0, 2, '.', ''));
+                $op->setTips(number_format(random_int(0, 500) / 100.0, 2, '.', ''));
                 $op->setStatus('completed');
                 $op->setExternalReference('RID-' . strtoupper(bin2hex(random_bytes(4))));
                 $op->setDescription(null);
@@ -101,11 +102,11 @@ final class PaymentsSeedCommand extends Command
             $op2->setIntegrationCode($integration->getCode());
             $op2->setOperationType('commission');
             $op2->setDirection('debit');
-            $op2->setAmount(number_format($commission, 3, '.', ''));
-            $op2->setCurrency('TND');
+            $op2->setAmount(number_format($commission, 2, '.', ''));
+            $op2->setCurrency('EUR');
             $op2->setPaymentMethod('CB');
-            $op2->setBonus('0.000');
-            $op2->setTips('0.000');
+            $op2->setBonus('0.00');
+            $op2->setTips('0.00');
             $op2->setStatus('completed');
             $op2->setExternalReference('COM-' . strtoupper(bin2hex(random_bytes(4))));
             $op2->setDescription(null);
@@ -121,11 +122,11 @@ final class PaymentsSeedCommand extends Command
                 $op3->setIntegrationCode($integration->getCode());
                 $op3->setOperationType('refund');
                 $op3->setDirection('credit');
-                $op3->setAmount(number_format($refund, 3, '.', ''));
-                $op3->setCurrency('TND');
+                $op3->setAmount(number_format($refund, 2, '.', ''));
+                $op3->setCurrency('EUR');
                 $op3->setPaymentMethod('CB');
-                $op3->setBonus('0.000');
-                $op3->setTips('0.000');
+                $op3->setBonus('0.00');
+                $op3->setTips('0.00');
                 $op3->setStatus('completed');
                 $op3->setExternalReference('REF-' . strtoupper(bin2hex(random_bytes(4))));
                 $op3->setDescription(null);
@@ -149,7 +150,7 @@ final class PaymentsSeedCommand extends Command
             $batch->setPeriodStart(\DateTimeImmutable::createFromFormat('Y-m-d', $weekStart->format('Y-m-d')));
             $batch->setPeriodEnd(\DateTimeImmutable::createFromFormat('Y-m-d', $weekEnd->format('Y-m-d')));
             $net = max(0.0, $credits - $debits) / 4.0;
-            $batch->setTotalAmount(number_format($net, 3, '.', ''));
+            $batch->setTotalAmount(number_format($net, 2, '.', ''));
             $this->em->persist($batch);
 
             $payout = new PaymentOperation();
@@ -157,11 +158,11 @@ final class PaymentsSeedCommand extends Command
             $payout->setIntegrationCode($integration->getCode());
             $payout->setOperationType('payout');
             $payout->setDirection('credit');
-            $payout->setAmount(number_format($net, 3, '.', ''));
-            $payout->setCurrency('TND');
+            $payout->setAmount(number_format($net, 2, '.', ''));
+            $payout->setCurrency('EUR');
             $payout->setPaymentMethod('CB');
-            $payout->setBonus('0.000');
-            $payout->setTips('0.000');
+            $payout->setBonus('0.00');
+            $payout->setTips('0.00');
             $payout->setStatus('completed');
             $payout->setExternalReference('PAY-' . strtoupper(bin2hex(random_bytes(4))));
             $payout->setDescription('Weekly payout');

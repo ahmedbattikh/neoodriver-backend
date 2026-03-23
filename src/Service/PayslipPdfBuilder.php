@@ -75,17 +75,17 @@ final class PayslipPdfBuilder
 
     private function money(float $value): string
     {
-        return number_format($value, 3, '.', ' ') . ' EUR';
+        return number_format($value, 2, '.', ' ') . ' EUR';
     }
 
     private function percent(float $value): string
     {
-        return number_format($value, 3, '.', ' ') . ' %';
+        return number_format($value, 2, '.', ' ') . ' %';
     }
 
     private function number(float $value): string
     {
-        return number_format($value, 3, '.', ' ');
+        return number_format($value, 2, '.', ' ');
     }
 
     private function logoDataUri(): string

@@ -245,12 +245,12 @@ final class EditController extends AbstractFOSRestController
             $bonus = (float) (($r['totalBonus'] ?? 0) ?: 0);
             $integrationsToday[] = [
                 'integrationCode' => (string) $r['code'],
-                'totalIn' => number_format($in, 3, '.', ''),
-                'net' => number_format($in - $out, 3, '.', ''),
-                'totalCB' => number_format($cb, 3, '.', ''),
-                'totalCash' => number_format($cash, 3, '.', ''),
-                'totalTips' => number_format($tips, 3, '.', ''),
-                'totalBonus' => number_format($bonus, 3, '.', ''),
+                'totalIn' => number_format($in, 2, '.', ''),
+                'net' => number_format($in - $out, 2, '.', ''),
+                'totalCB' => number_format($cb, 2, '.', ''),
+                'totalCash' => number_format($cash, 2, '.', ''),
+                'totalTips' => number_format($tips, 2, '.', ''),
+                'totalBonus' => number_format($bonus, 2, '.', ''),
             ];
         }
         $beginRaw = (string) $request->query->get('dateBegin', '');
@@ -352,12 +352,12 @@ final class EditController extends AbstractFOSRestController
         foreach ($daysMap as $d => $vals) {
             $days[] = [
                 'date' => $d,
-                'totalIn' => number_format((float) $vals['totalIn'], 3, '.', ''),
-                'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 3, '.', ''),
-                'totalCB' => number_format((float) $vals['totalCb'], 3, '.', ''),
-                'totalCash' => number_format((float) $vals['totalCash'], 3, '.', ''),
-                'totalTips' => number_format((float) $vals['totalTips'], 3, '.', ''),
-                'totalBonus' => number_format((float) $vals['totalBonus'], 3, '.', ''),
+                'totalIn' => number_format((float) $vals['totalIn'], 2, '.', ''),
+                'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 2, '.', ''),
+                'totalCB' => number_format((float) $vals['totalCb'], 2, '.', ''),
+                'totalCash' => number_format((float) $vals['totalCash'], 2, '.', ''),
+                'totalTips' => number_format((float) $vals['totalTips'], 2, '.', ''),
+                'totalBonus' => number_format((float) $vals['totalBonus'], 2, '.', ''),
             ];
         }
         usort($days, function ($a, $b) {
@@ -369,12 +369,12 @@ final class EditController extends AbstractFOSRestController
             foreach ($map as $d => $vals) {
                 $list[] = [
                     'date' => $d,
-                    'totalIn' => number_format((float) $vals['totalIn'], 3, '.', ''),
-                    'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 3, '.', ''),
-                    'totalCB' => number_format((float) $vals['totalCb'], 3, '.', ''),
-                    'totalCash' => number_format((float) $vals['totalCash'], 3, '.', ''),
-                    'totalTips' => number_format((float) $vals['totalTips'], 3, '.', ''),
-                    'totalBonus' => number_format((float) $vals['totalBonus'], 3, '.', ''),
+                    'totalIn' => number_format((float) $vals['totalIn'], 2, '.', ''),
+                    'net' => number_format((float) ($vals['totalIn'] - $vals['totalOut']), 2, '.', ''),
+                    'totalCB' => number_format((float) $vals['totalCb'], 2, '.', ''),
+                    'totalCash' => number_format((float) $vals['totalCash'], 2, '.', ''),
+                    'totalTips' => number_format((float) $vals['totalTips'], 2, '.', ''),
+                    'totalBonus' => number_format((float) $vals['totalBonus'], 2, '.', ''),
                 ];
             }
             usort($list, function ($a, $b) {
@@ -578,11 +578,11 @@ final class EditController extends AbstractFOSRestController
             'size' => $size,
             'total' => $total,
             'totalPages' => $totalPages,
-            'totalAmount' => number_format($totalAmount, 3, '.', ''),
-            'totalCB' => number_format($totalCB, 3, '.', ''),
-            'totalCash' => number_format($totalCash, 3, '.', ''),
-            'totalTips' => number_format($totalTips, 3, '.', ''),
-            'totalBonus' => number_format($totalBonus, 3, '.', ''),
+            'totalAmount' => number_format($totalAmount, 2, '.', ''),
+            'totalCB' => number_format($totalCB, 2, '.', ''),
+            'totalCash' => number_format($totalCash, 2, '.', ''),
+            'totalTips' => number_format($totalTips, 2, '.', ''),
+            'totalBonus' => number_format($totalBonus, 2, '.', ''),
         ], Response::HTTP_OK);
         return $this->handleView($view);
     }

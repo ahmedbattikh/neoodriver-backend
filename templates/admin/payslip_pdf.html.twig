@@ -105,13 +105,13 @@
 				<div>
 					<h3>Summary</h3>
 					<div>Net final à payer:
-						{{ data.neooNetFinalPayer|number_format(3, '.', ' ') }}
+						{{ data.neooNetFinalPayer|number_format(2, '.', ' ') }}
 						EUR</div>
 					<div>Reversement brut:
-						{{ data.neooReversementBrut|number_format(3, '.', ' ') }}
+						{{ data.neooReversementBrut|number_format(2, '.', ' ') }}
 						EUR</div>
 					<div>Total commission:
-						{{ data.neooTotalCommission|number_format(3, '.', ' ') }}
+						{{ data.neooTotalCommission|number_format(2, '.', ' ') }}
 						EUR</div>
 				</div>
 			</div>
@@ -123,32 +123,32 @@
 				<tbody>
 					<tr>
 						<td>CA HT reversé plateformes</td>
-						<td class="text-end">{{ data.neooTotalIn|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooTotalIn|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr>
 						<td>Fixe NEOO mensuel</td>
-						<td class="text-end">{{ data.neooFixed|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooFixed|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr>
 						<td>Taux global charges URSSAF</td>
-						<td class="text-end">{{ data.neooUrssaf|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooUrssaf|number_format(2, '.', ' ') }}
 							%</td>
 					</tr>
 					<tr>
 						<td>Commission variable</td>
-						<td class="text-end">{{ data.neooCommissionVariable|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooCommissionVariable|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr>
 						<td>Total commission NEOO</td>
-						<td class="text-end">{{ data.neooTotalCommission|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooTotalCommission|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr class="highlight">
 						<td>Reversement chauffeur BRUT</td>
-						<td class="text-end">{{ data.neooReversementBrut|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooReversementBrut|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 				</tbody>
@@ -168,20 +168,20 @@
 					{% if data.neooExpenseGroups is empty %}
 						<tr>
 							<td>-</td>
-							<td class="text-end">0.000 EUR</td>
+							<td class="text-end">0.00 EUR</td>
 						</tr>
 					{% else %}
 						{% for t, v in data.neooExpenseGroups %}
 							<tr>
 								<td>{{ t }}</td>
-								<td class="text-end">{{ v|number_format(3, '.', ' ') }}
+								<td class="text-end">{{ v|number_format(2, '.', ' ') }}
 									EUR</td>
 							</tr>
 						{% endfor %}
 					{% endif %}
 					<tr class="highlight">
 						<td>Total frais TTC</td>
-						<td class="text-end">{{ data.neooExpenseTotal|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooExpenseTotal|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 				</tbody>
@@ -195,12 +195,12 @@
 					<tbody>
 						<tr>
 							<td>TVA récupérable</td>
-							<td class="text-end">{{ data.neooVatRecoverable|number_format(3, '.', ' ') }}
+							<td class="text-end">{{ data.neooVatRecoverable|number_format(2, '.', ' ') }}
 								EUR</td>
 						</tr>
 						<tr>
 							<td>C27</td>
-							<td class="text-end">{{ data.neooC27|number_format(3, '.', ' ') }}
+							<td class="text-end">{{ data.neooC27|number_format(2, '.', ' ') }}
 								EUR</td>
 						</tr>
 					</tbody>
@@ -212,17 +212,17 @@
 					<tbody>
 						<tr>
 							<td>Kilomètres professionnels</td>
-							<td class="text-end">{{ data.neooKm|number_format(3, '.', ' ') }}
+							<td class="text-end">{{ data.neooKm|number_format(2, '.', ' ') }}
 								km</td>
 						</tr>
 						<tr>
 							<td>Taux IK</td>
-							<td class="text-end">{{ data.neooFraisKm|number_format(3, '.', ' ') }}
+							<td class="text-end">{{ data.neooFraisKm|number_format(2, '.', ' ') }}
 								EUR/km</td>
 						</tr>
 						<tr>
 							<td>Indemnité kilométrique</td>
-							<td class="text-end">{{ data.neooIk|number_format(3, '.', ' ') }}
+							<td class="text-end">{{ data.neooIk|number_format(2, '.', ' ') }}
 								EUR</td>
 						</tr>
 					</tbody>
@@ -236,32 +236,32 @@
 				<tbody>
 					<tr>
 						<td>Net social</td>
-						<td class="text-end">{{ data.neooNetSocial|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooNetSocial|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr>
 						<td>Salaire brut cotisations</td>
-						<td class="text-end">{{ data.neooSalaireBrutCotisations|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooSalaireBrutCotisations|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr>
 						<td>Taux PAS</td>
-						<td class="text-end">{{ data.neooTauxPas|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooTauxPas|number_format(2, '.', ' ') }}
 							%</td>
 					</tr>
 					<tr>
 						<td>Montant PAS</td>
-						<td class="text-end">{{ data.neooMontantPas|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooMontantPas|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr>
 						<td>Acompte</td>
-						<td class="text-end">{{ data.neooAcompte|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooAcompte|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr class="highlight">
 						<td>Net social après PAS et acompte</td>
-						<td class="text-end">{{ data.neooNetSocialAfter|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooNetSocialAfter|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 				</tbody>
@@ -274,21 +274,21 @@
 				<tbody>
 					<tr>
 						<td>Taux congés payés</td>
-						<td class="text-end">{{ data.neooCpTaux|number_format(3, '.', ' ') }}</td>
+						<td class="text-end">{{ data.neooCpTaux|number_format(2, '.', ' ') }}</td>
 					</tr>
 					<tr>
 						<td>Indemnité congés payés</td>
-						<td class="text-end">{{ (data.neooCpIndemnite ?? 0)|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ (data.neooCpIndemnite ?? 0)|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr>
 						<td>Remboursements non imposables</td>
-						<td class="text-end">{{ data.neooRemboursementsNonImposables|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooRemboursementsNonImposables|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 					<tr class="highlight">
 						<td>NET FINAL À PAYER</td>
-						<td class="text-end">{{ data.neooNetFinalPayer|number_format(3, '.', ' ') }}
+						<td class="text-end">{{ data.neooNetFinalPayer|number_format(2, '.', ' ') }}
 							EUR</td>
 					</tr>
 				</tbody>

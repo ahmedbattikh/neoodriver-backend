@@ -30,7 +30,7 @@
 						{% for goal in goals %}
 							<tr>
 								<td>{{ goal.name }}</td>
-								<td>{{ goal.amount|number_format(3, '.', ' ') }}</td>
+								<td>{{ goal.amount|number_format(2, '.', ' ') }}</td>
 								<td>{{ goal.frequency }}</td>
 								<td>{{ goal.targetClasses|join(', ') }}</td>
 								<td>

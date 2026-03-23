@@ -16,8 +16,8 @@ class NeooFee
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $taux = '0';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $taux = '0.00';
 
     #[ORM\Column(type: 'float')]
     private float $start = 0.0;

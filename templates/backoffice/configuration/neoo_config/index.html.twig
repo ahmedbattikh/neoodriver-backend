@@ -29,11 +29,11 @@
 					{% else %}
 						{% for config in configs %}
 							<tr>
-								<td>{{ config.fixNeooMonthly|number_format(3, '.', ' ') }}</td>
-								<td>{{ config.tauxConge|number_format(3, '.', ' ') }}</td>
-								<td>{{ config.fraisKm|number_format(3, '.', ' ') }}</td>
-								<td>{{ config.tauxPas|number_format(3, '.', ' ') }}</td>
-								<td>{{ config.tauxUrssaf|number_format(3, '.', ' ') }}</td>
+								<td>{{ config.fixNeooMonthly|number_format(2, '.', ' ') }}</td>
+								<td>{{ config.tauxConge|number_format(2, '.', ' ') }}</td>
+								<td>{{ config.fraisKm|number_format(2, '.', ' ') }}</td>
+								<td>{{ config.tauxPas|number_format(2, '.', ' ') }}</td>
+								<td>{{ config.tauxUrssaf|number_format(2, '.', ' ') }}</td>
 								<td>{{ config.updatedAt|date('Y-m-d H:i') }}</td>
 								<td class="text-end">
 									<a class="btn btn-sm btn-outline-primary" href="{{ path('backoffice_neoo_config_edit', { id: config.id }) }}">Edit</a>

@@ -91,8 +91,10 @@ jobs:
               echo "DATABASE_URL=mysql://${{ secrets.MYSQL_USER }}:${{ secrets.MYSQL_PASSWORD }}@mysql:3306/${{ secrets.MYSQL_DATABASE }}?serverVersion=8.0&charset=utf8mb4"
               echo ""
               echo "# phpMyAdmin"
-              echo "PMA_USER=neooadmin"
-              echo "PMA_PASSWORD=NeooDriver@9090"
+              PMA_USER_VAL="${{ secrets.PMA_USER }}"
+              PMA_PASSWORD_VAL="${{ secrets.PMA_PASSWORD }}"
+              echo "PMA_USER=$PMA_USER_VAL"
+              echo "PMA_PASSWORD=$PMA_PASSWORD_VAL"
               echo ""
               echo "# Mailer"
               MAILER_DSN_VAL="${{ secrets.MAILER_DSN }}"
@@ -198,5 +200,11 @@ jobs:
             set -eu
             cd ~/apps/neoodriver-backend
             MYSQL_ROOT_PASS=$(grep -E '^MYSQL_ROOT_PASSWORD=' .env | sed -E 's/^MYSQL_ROOT_PASSWORD=//')
-            # Create admin user if missing and grant privileges
-            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASS" -e "CREATE USER IF NOT EXISTS 'neooadmin'@'%' IDENTIFIED BY 'NeooDriver@9090'; GRANT ALL PRIVILEGES ON *.* TO 'neooadmin'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+            MYSQL_DB=$(grep -E '^MYSQL_DATABASE=' .env | sed -E 's/^MYSQL_DATABASE=//')
+            PMA_USER=$(grep -E '^PMA_USER=' .env | sed -E 's/^PMA_USER=//')
+            PMA_PASSWORD=$(grep -E '^PMA_PASSWORD=' .env | sed -E 's/^PMA_PASSWORD=//')
+            if [ -z "$PMA_USER" ] || [ -z "$PMA_PASSWORD" ]; then
+              echo "[INFO] PMA credentials are empty; skipping phpMyAdmin MySQL user provisioning."
+              exit 0
+            fi
+            docker compose -p neoodriver-backend -f compose.yaml -f compose.prod.yaml exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASS" -e "CREATE USER IF NOT EXISTS '$PMA_USER'@'%' IDENTIFIED BY '$PMA_PASSWORD'; GRANT ALL PRIVILEGES ON \`$MYSQL_DB\`.* TO '$PMA_USER'@'%'; FLUSH PRIVILEGES;"

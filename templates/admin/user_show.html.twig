@@ -160,7 +160,7 @@
 						<div class="card h-100">
 							<div class="card-body">
 								<div class="fw-bold">Total</div>
-								<div class="display-6">{{ balanceSold|number_format(3, '.', ' ') }}</div>
+								<div class="display-6">{{ balanceSold|number_format(2, '.', ' ') }}</div>
 							</div>
 						</div>
 					</div>
@@ -168,7 +168,7 @@
 						<div class="card h-100">
 							<div class="card-body">
 								<div class="fw-bold">Total Debits</div>
-								<div class="display-6 text-danger">{{ balanceTotalDebit|number_format(3, '.', ' ') }}</div>
+								<div class="display-6 text-danger">{{ balanceTotalDebit|number_format(2, '.', ' ') }}</div>
 							</div>
 						</div>
 					</div>
@@ -176,7 +176,7 @@
 						<div class="card h-100">
 							<div class="card-body">
 								<div class="fw-bold">Sold Congé</div>
-								<div class="display-6">{{ balanceSoldConge|number_format(3, '.', ' ') }}</div>
+								<div class="display-6">{{ balanceSoldConge|number_format(2, '.', ' ') }}</div>
 							</div>
 						</div>
 					</div>
@@ -264,13 +264,13 @@
 											→
 											{{ weekEnd|date_modify('-1 day')|date('Y-m-d') }}</div>
 										<div class="mt-2">In:
-											{{ weekIn|number_format(3, '.', ' ') }}
+											{{ weekIn|number_format(2, '.', ' ') }}
 											{{ weekCurrency ?? '' }}</div>
 										<div>Out:
-											{{ weekOut|number_format(3, '.', ' ') }}
+											{{ weekOut|number_format(2, '.', ' ') }}
 											{{ weekCurrency ?? '' }}</div>
 										<div class="mt-2">Net:
-											<span class="{{ weekNet >= 0 ? 'text-success' : 'text-danger' }}">{{ weekNet|number_format(3, '.', ' ') }}
+											<span class="{{ weekNet >= 0 ? 'text-success' : 'text-danger' }}">{{ weekNet|number_format(2, '.', ' ') }}
 												{{ weekCurrency ?? '' }}</span>
 										</div>
 									</div>
@@ -571,7 +571,7 @@
 												{% for r in advanceRequests %}
 													<tr>
 														<td>{{ r.id }}</td>
-														<td>{{ r.amount|number_format(3, '.', ' ') }}</td>
+														<td>{{ r.amount|number_format(2, '.', ' ') }}</td>
 														<td>{{ r.status.value }}</td>
 														<td>{{ r.description ?? '' }}</td>
 														<td>{{ r.createdAt|date('Y-m-d H:i') }}</td>
@@ -640,7 +640,7 @@
 												{% for r in congeRequests %}
 													<tr>
 														<td>{{ r.id }}</td>
-														<td>{{ r.amount|number_format(3, '.', ' ') }}</td>
+														<td>{{ r.amount|number_format(2, '.', ' ') }}</td>
 														<td>{{ r.status.value }}</td>
 														<td>{{ r.description ?? '' }}</td>
 														<td>{{ r.createdAt|date('Y-m-d H:i') }}</td>
@@ -939,17 +939,17 @@
 												<td>{{ op.integrationCode }}</td>
 												<td>{{ op.operationType }}</td>
 												<td>{{ op.direction }}</td>
-												<td>{{ op.amount|number_format(3, '.', ' ') ~ ' ' ~ op.currency }}</td>
+												<td>{{ op.amount|number_format(2, '.', ' ') ~ ' ' ~ op.currency }}</td>
 												<td>
 													{% if op.rideDistance is not null %}
-														{{ op.rideDistance|number_format(3, '.', ' ') }}
+														{{ op.rideDistance|number_format(2, '.', ' ') }}
 														km
 													{% else %}
 														<span class="text-muted">N/A</span>
 													{% endif %}
 												</td>
-												<td>{{ op.tips|number_format(3, '.', ' ') }}</td>
-												<td>{{ op.bonus|number_format(3, '.', ' ') }}</td>
+												<td>{{ op.tips|number_format(2, '.', ' ') }}</td>
+												<td>{{ op.bonus|number_format(2, '.', ' ') }}</td>
 												<td>{{ op.status }}</td>
 												<td>{{ op.externalReference ?? '' }}</td>
 												<td>{{ op.description ?? '' }}</td>
@@ -1109,10 +1109,10 @@
 											{% for n in expenseNotes %}
 												<tr>
 													<td>{{ n.noteDate|date('Y-m-d') }}</td>
-													<td>{{ n.amountTtc|number_format(3, '.', ' ') }}</td>
+													<td>{{ n.amountTtc|number_format(2, '.', ' ') }}</td>
 													<td>
 														{% if n.vat is not null %}
-															{{ n.vat|number_format(3, '.', ' ') }}
+															{{ n.vat|number_format(2, '.', ' ') }}
 														{% else %}
 															<span class="text-muted">N/A</span>
 														{% endif %}
@@ -1192,7 +1192,7 @@
 												<td>{{ b.periodStart|date('Y-m-d') }}
 													→
 													{{ b.periodEnd|date('Y-m-d') }}</td>
-												<td>{{ b.totalAmount|number_format(3, '.', ' ') }}</td>
+												<td>{{ b.totalAmount|number_format(2, '.', ' ') }}</td>
 											</tr>
 										{% endfor %}
 									</tbody>
@@ -1256,34 +1256,34 @@
 								<tbody>
 									<tr>
 										<td>CA HT reversé plateformes</td>
-										<td class="text-end">{{ neooTotalIn|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooTotalIn|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>Fixe NEOO mensuel (selon tranche CA)</td>
-										<td class="text-end">{{ neooFixed|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooFixed|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>Taux global charges URSSAF (paramètre)</td>
 										<td class="text-end">
-											{{ neooUrssaf|number_format(3, '.', ' ') }}
+											{{ neooUrssaf|number_format(2, '.', ' ') }}
 											%
 										</td>
 									</tr>
 									<tr>
 										<td>Commission variable (égale aux CHARGES URSSAF)</td>
-										<td class="text-end">{{ neooCommissionVariable|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooCommissionVariable|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>Total commission NEOO (fixe + variable)</td>
-										<td class="text-end">{{ neooTotalCommission|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooTotalCommission|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>Reversement chauffeur BRUT (enveloppe)</td>
-										<td class="text-end">{{ neooReversementBrut|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooReversementBrut|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 								</tbody>
@@ -1304,14 +1304,14 @@
 									{% for t, v in neooExpenseGroups %}
 										<tr>
 											<td>{{ t }}</td>
-											<td class="text-end">{{ v|number_format(3, '.', ' ') }}
+											<td class="text-end">{{ v|number_format(2, '.', ' ') }}
 												EUR</td>
 										</tr>
 										{% set totalExp = totalExp + v %}
 									{% endfor %}
 									<tr class="fw-bold">
 										<td>Total</td>
-										<td class="text-end">{{ totalExp|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ totalExp|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 								</tbody>
@@ -1328,7 +1328,7 @@
 									</tr>
 									<tr>
 										<td>TVA récupérable (part TVA dans TTC)</td>
-										<td class="text-end">{{ neooVatRecoverable|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooVatRecoverable|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 								</tbody>
@@ -1342,40 +1342,40 @@
 									<tr>
 										<td>Frais professionnels HT (calcul)</td>
 										<td class="text-end">
-											{{ neooC27|number_format(3, '.', ' ') }}
+											{{ neooC27|number_format(2, '.', ' ') }}
 											EUR
 										</td>
 									</tr>
 									<tr>
 										<td>Salaire brut soumis à cotisations</td>
 										<td class="text-end">
-											{{ neooSalaireBrutCotisations|number_format(3, '.', ' ') }}
+											{{ neooSalaireBrutCotisations|number_format(2, '.', ' ') }}
 											EUR
 										</td>
 									</tr>
 									<tr>
 										<td>SALAIRE NET SOCIAL (avant PAS)</td>
-										<td class="text-end">{{ neooNetSocial|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooNetSocial|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>Taux PAS</td>
-										<td class="text-end">{{ neooTauxPas|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooTauxPas|number_format(2, '.', ' ') }}
 											%</td>
 									</tr>
 									<tr>
 										<td>Montant PAS</td>
-										<td class="text-end">{{ neooMontantPas|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooMontantPas|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>Acompte sur salaire déjà versé</td>
-										<td class="text-end">{{ neooAcompte|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooAcompte|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>Net social après PAS et acompte</td>
-										<td class="text-end">{{ neooNetSocialAfter|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooNetSocialAfter|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 								</tbody>
@@ -1388,17 +1388,17 @@
 								<tbody>
 									<tr>
 										<td>Kilomètres professionnels du mois (km)</td>
-										<td class="text-end">{{ neooKm|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooKm|number_format(2, '.', ' ') }}
 											km</td>
 									</tr>
 									<tr>
 										<td>Taux IK (€/km) – barème fiscal</td>
-										<td class="text-end">{{ neooFraisKm|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooFraisKm|number_format(2, '.', ' ') }}
 											EUR/km</td>
 									</tr>
 									<tr>
 										<td>Indemnité kilométrique (montant)</td>
-										<td class="text-end">{{ neooIk|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooIk|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 								</tbody>
@@ -1411,11 +1411,11 @@
 								<tbody>
 									<tr>
 										<td>Taux congés payés</td>
-										<td class="text-end">{{ neooCpTaux|number_format(3, '.', ' ') }}</td>
+										<td class="text-end">{{ neooCpTaux|number_format(2, '.', ' ') }}</td>
 									</tr>
 									<tr>
 										<td>Indemnité congés payés (non soumise)</td>
-										<td class="text-end">{{ neooCpIndemnite|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooCpIndemnite|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 								</tbody>
@@ -1428,12 +1428,12 @@
 								<tbody>
 									<tr>
 										<td>Remboursements NON imposables</td>
-										<td class="text-end">{{ neooRemboursementsNonImposables|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooRemboursementsNonImposables|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 									<tr>
 										<td>NET FINAL À PAYER</td>
-										<td class="text-end">{{ neooNetFinalPayer|number_format(3, '.', ' ') }}
+										<td class="text-end">{{ neooNetFinalPayer|number_format(2, '.', ' ') }}
 											EUR</td>
 									</tr>
 								</tbody>

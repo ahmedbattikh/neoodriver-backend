@@ -51,7 +51,7 @@ final class CongeRequestController extends AbstractController
         $description = (string) $request->request->get('description', '');
         $req = new CongeRequest();
         $req->setDriver($driver);
-        $req->setAmount(number_format((float) $amount, 3, '.', ''));
+        $req->setAmount(number_format((float) $amount, 2, '.', ''));
         $req->setDescription($description !== '' ? $description : null);
         $this->em->persist($req);
         $this->em->flush();

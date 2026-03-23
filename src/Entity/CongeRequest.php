@@ -22,7 +22,7 @@ class CongeRequest
     #[ORM\JoinColumn(nullable: false)]
     private Driver $driver;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     #[JMS\Groups(['me:read'])]
     private string $amount;
 
@@ -54,7 +54,7 @@ class CongeRequest
         $now = new \DateTimeImmutable('now');
         $this->createdAt = $now;
         $this->updatedAt = $now;
-        $this->amount = '0.000';
+        $this->amount = '0.00';
     }
 
     public function getId(): ?int

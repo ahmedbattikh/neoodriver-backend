@@ -20,17 +20,17 @@ class Balance
     #[ORM\JoinColumn(nullable: false, unique: true)]
     private Driver $driver;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     #[JMS\Groups(['me:read'])]
-    private string $sold = '0.000';
+    private string $sold = '0.00';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     #[JMS\Groups(['me:read'])]
-    private string $soldConge = '0.000';
+    private string $soldConge = '0.00';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     #[JMS\Groups(['me:read'])]
-    private string $totalDebit = '0.000';
+    private string $totalDebit = '0.00';
 
     #[ORM\Column(type: 'datetime_immutable')]
     #[JMS\Groups(['me:read'])]

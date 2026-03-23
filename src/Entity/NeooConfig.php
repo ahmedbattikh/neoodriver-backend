@@ -15,20 +15,20 @@ class NeooConfig
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $fixNeooMonthly = '0';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $fixNeooMonthly = '0.00';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $tauxConge = '0';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $tauxConge = '0.00';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $fraisKm = '0';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $fraisKm = '0.00';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $tauxPas = '0';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $tauxPas = '0.00';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $tauxUrssaf = '0';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $tauxUrssaf = '0.00';
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;

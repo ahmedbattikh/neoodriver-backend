@@ -27,9 +27,9 @@
 					{% else %}
 						{% for fee in fees %}
 							<tr>
-								<td>{{ fee.taux|number_format(3, '.', ' ') }}</td>
-								<td>{{ fee.start|number_format(3, '.', ' ') }}</td>
-								<td>{{ fee.end|number_format(3, '.', ' ') }}</td>
+								<td>{{ fee.taux|number_format(2, '.', ' ') }}</td>
+								<td>{{ fee.start|number_format(2, '.', ' ') }}</td>
+								<td>{{ fee.end|number_format(2, '.', ' ') }}</td>
 								<td>{{ fee.updatedAt|date('Y-m-d H:i') }}</td>
 								<td class="text-end">
 									<a class="btn btn-sm btn-outline-primary" href="{{ path('backoffice_neoo_fees_edit', { id: fee.id }) }}">Edit</a>

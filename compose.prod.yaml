@@ -40,7 +40,7 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
-      PMA_USER: ${PMA_USER:-neooadmin}
-      PMA_PASSWORD: ${PMA_PASSWORD:-NeooDriver@9090}
+      PMA_USER: ${PMA_USER}
+      PMA_PASSWORD: ${PMA_PASSWORD}
     ports:
       - "127.0.0.1:8081:80"

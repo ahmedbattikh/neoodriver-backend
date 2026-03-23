@@ -1,0 +1,19 @@
+nelmio_api_doc:
+  documentation:
+    info:
+      title: NeoDriver API
+      description: API documentation for NeoDriver backend
+      version: 1.0.0
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+    security:
+      - bearerAuth: []
+  areas:
+    default:
+      path_patterns:
+        - ^/api(?!/doc(?:\.json)?$)
+        - ^/token/refresh

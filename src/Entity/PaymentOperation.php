@@ -29,20 +29,20 @@ class PaymentOperation
     #[ORM\Column(length: 10)]
     private string $direction;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
     private string $amount;
 
     #[ORM\Column(enumType: PaymentMethodType::class)]
     private PaymentMethodType $paymentMethod = PaymentMethodType::CB;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $bonus = '0.000';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $bonus = '0.00';
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3)]
-    private string $tips = '0.000';
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2)]
+    private string $tips = '0.00';
 
     #[ORM\Column(length: 3)]
-    private string $currency = 'TND';
+    private string $currency = 'EUR';
 
     #[ORM\Column(length: 20)]
     private string $status;
@@ -56,7 +56,7 @@ class PaymentOperation
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $originalObject = null;
 
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 3, nullable: true)]
+    #[ORM\Column(type: 'decimal', precision: 12, scale: 2, nullable: true)]
     private ?string $rideDistance = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
